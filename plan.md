@@ -1,321 +1,313 @@
-# Project plan: How does a floorplan determine chip temperature?
+# Project plan: a lightweight temperature predictor built on HotSpot
 
-**Working title:** *Lightweight Thermal Predictor: floorplan-driven temperature analysis with
-HotSpot, and a fast surrogate model*
+**Course project:** *Thermal management: lightweight temperature predictor*.
 
-**One-line pitch:** Generate many chip floorplans (real and synthetic), simulate each with
-HotSpot to find where and how hot the chip gets, work out *which floorplan decisions matter
-most*, and finally build a lightweight predictor that estimates temperature without running
-the simulator.
+**One-line pitch:** Build `ltp`, a small Python library and command-line tool that predicts the
+temperatures HotSpot would compute, but thousands of times faster and with a model small
+enough to run inside a floorplanner's search loop or a run-time thermal manager. HotSpot is the
+*teacher* that generates training data and ground truth. The *predictor* is the product.
 
-Read `hotspot_for_dummies.md` first if any term here is unfamiliar. `lit_review.md` explains
-where each experiment comes from.
-
----
-
-## 0. Can Claude run all of this automatically?
-
-**Mostly yes.** From this VS Code session I can run any command inside your Ubuntu (WSL)
-using `wsl -d Ubuntu -- ...`. I already used this to install packages, build HotSpot, and run
-examples 1, 2, 3, 5 and 6. So I can write the scripts, run the experiments (in the background
-for long sweeps), collect results, make plots, and write up findings.
-
-What **you** must do:
-
-| Step | Why I can't do it |
-|---|---|
-| Review and approve `plan.md` (choose which optional experiments to keep) | It's your project and your grade |
-| Keep the session and PC on during long runs | WSL stops if Windows sleeps or the session ends. The longest planned runs are about 1–2 h |
-| Approve tool permission prompts when they appear | VS Code asks before some commands |
-| Read the scripts and results until you understand every step (the course requires it) | I'll explain each script, and the "what you learn" lines below are a checklist |
-| Ask your professor: is synthetic power data acceptable, or do they expect McPAT/CoMeT-generated power? | Only they can answer (see Risks) |
-| Give any course-specific constraints: deadline, team size, report format | I don't know them |
-
-What you do **not** need to do: install anything else, type commands, or paste into the
-Ubuntu terminal. If you want to run something yourself, every experiment will be one command
-(see §2).
+Read `hotspot_for_dummies.md` for terms. `lit_review.md` covers prior work on fast temperature
+prediction and explains where each experiment comes from.
 
 ---
 
-## 1. Research questions
+## 1. What exactly are we building?
 
-1. **RQ1, model fidelity:** how much do HotSpot's own modelling choices (block vs grid,
-   resolution, package parameters) change the answer?
-2. **RQ2, floorplan → temperature:** for a fixed total power, which floorplan properties
-   control the *peak* temperature and the *gradient* across the die? Candidates: power
-   density, hot-block placement (centre/edge/corner), clustering vs spreading, aspect ratio.
-3. **RQ3, optimisation:** how much peak temperature can thermal-aware floorplanning save,
-   and what does it cost in area and wire length?
-4. **RQ4, 3D and 2.5D (linked to Prof. Kedia's work):** in stacked and chiplet designs,
-   how do layer order and spacing change the hot spot?
-5. **RQ5, lightweight prediction:** can a cheap model predict HotSpot's output, how
-   accurately, how fast, and does it generalise to *new* floorplans?
+### 1.1 Two use cases, two modes
 
----
+A temperature predictor is only "lightweight" relative to a use. There are two typical uses,
+so `ltp` has one mode for each:
 
-## 2. Infrastructure (built first, used by every experiment)
+| Mode | Who calls it | Fixed | Changes | Question it answers | Must be fast because |
+|---|---|---|---|---|---|
+| **R (run-time)** | Workload mapper, DTM, OS scheduler | Floorplan, package | Power every interval (e.g. 1–10 ms) | "If I run *this* mapping for the next 10 ms, how hot will each core get?" | It runs on the chip itself, every interval |
+| **D (design-time)** | Floorplanner | Package | Floorplan *and* power | "If I put the blocks *here*, what is the peak temperature?" | A floorplanner evaluates thousands of candidate layouts |
+
+Mode R is the classic meaning of "temperature predictor" in the thermal-management literature
+(Coskun 2009, Yeo 2008, Zhang 2018; lit review §4). Mode D is the ML-surrogate line (ThermEDGe,
+GCN, ThePlace; lit review §5). In each mode we compare a simple physics-based model against a
+learned one.
+
+### 1.2 Inputs and outputs
 
 ```
-Lightweight Thermal Predictor/          (Windows; git repo)
-├── hotspot_for_dummies.md, lit_review.md, plan.md
-├── configs/          base HotSpot config + materials, versioned
-├── floorplans/       hand-written (ev6 variants) and generated .flp files
-├── power/            .ptrace files (gcc example + synthetic)
-├── src/
-│   ├── run_hotspot.py     one function: run(flp, ptrace, config, options) -> results folder
-│   ├── flpgen.py          synthetic floorplan generator (grid of cores, random slicing, chiplets)
-│   ├── powergen.py        synthetic power traces (constant, step, random, per-workload)
-│   ├── parse.py           .steady / .ttrace / grid files -> pandas
-│   ├── plots.py           heat maps, bar charts, Pareto plots
-│   └── sweep.py           runs a parameter grid in parallel, writes results.csv
-├── experiments/      one script per experiment (A1.py, B1.py, ...): the exact recipe
-└── results/<exp_id>/ raw outputs, results.csv, figures, the exact command lines used
+Mode R:  ltp.steady(model, P[N])                      ->  T[N]           (per block/core)
+         ltp.forecast(model, T_history, P_next, k)    ->  T for the next k steps
+Mode D:  ltp.predict(flp, P[N])                       ->  T[N] per block, 64×64 map, T_peak
+Build:   ltp.fit(...)  ->  model file (.npz)
 ```
 
-Principles:
-- **Every run is reproducible.** The results folder stores the inputs, the config, the exact
-  HotSpot command and the HotSpot version.
-- **One command per experiment**, for example `python3 experiments/C1.py`.
-- **Simulations run on the Linux side** (`~/projects/...`) for speed. Results are copied back
-  to the Windows folder for reading.
-- **Units:** inputs in SI (metres, watts). Report in °C and mm.
+### 1.3 What "lightweight" means: our targets
 
-Measured costs on this machine (single run, from earlier tests):
+These are *targets*, set from the literature, not promises. The report states whether each
+was met.
 
-| Run type | Time |
-|---|---|
-| Block model, steady state, EV6 | about 0.01 s |
-| Grid 64×64 steady state | about 1 s |
-| Grid 128×128 steady state (iterative solver) | about 4 s |
-| 3D two-die stack, transient, 64×64 (example3) | about 3 min |
-| HotFloorplan on EV6 (example6) | about 90 s |
+| Property | Mode R target | Mode D target | HotSpot (measured on this PC) |
+|---|---|---|---|
+| Mean abs. error per block | ≤ 0.5 K | ≤ 1 K | (ground truth) |
+| Error in T_peak | ≤ 1 K | ≤ 2 K | |
+| Hottest block identified correctly | ≥ 95 % | ≥ 90 % | |
+| Time per prediction (one CPU core) | ≤ 100 µs | ≤ 5 ms | ≈ 10 ms block; ≈ 1 s grid 64×64 |
+| Model size | ≤ 100 kB | ≤ 5 MB | n/a |
 
-So a sweep of a few thousand block or 64×64 grid runs takes minutes to an hour, which is fine.
-
-Metrics used throughout:
-- **T_peak**: hottest block or grid cell (°C). The usual thermal limit is about 85–100 °C.
-- **T_avg**: area-weighted average die temperature.
-- **ΔT_grad**: T_peak − T_min across the die (a reliability concern).
-- **Hot-spot location**: which block or cell is hottest.
-- For transients: **time above threshold**, and **thermal time constant**.
+We report accuracy, speed, model size and how many HotSpot runs each model needed to build.
+Most papers report only the first two (lit review §7).
 
 ---
 
-## 3. Experiments
+## 2. Research questions
 
-Each experiment lists the question, the setup, what we expect, cost, and what you learn.
-**[CORE]** = recommended minimum for a solid project. **[OPT]** = pick based on time and
-interest.
-
-### Phase A: Setup and sanity checks
-
-**A1 [CORE] Reproduce example1 and understand every file.** *Mostly done.*
-Re-run EV6 + gcc, confirm IntReg is the hot spot (about 70 °C steady state), and walk through
-`.flp`, `.ptrace`, `.config`, `.steady` and `.ttrace` line by line.
-*Learn:* the HotSpot inputs and outputs and the full pipeline.
-
-**A2 [CORE] Physics sanity checks.**
-1. *Linearity:* scale all power by 0.5×, 2× and 3×. Without leakage the temperature *rise*
-   above ambient should scale exactly. Verify.
-2. *Energy balance:* heat-sink temperature rise ≈ total power × `r_convec`
-   (40 W × 0.1 K/W ≈ 4 °C, plus a little for spreading).
-3. *Zero power* gives ambient everywhere.
-
-*Expect:* all three hold to within rounding. If not, we've misunderstood something, and it's
-better to find out now. *Cost:* seconds.
-*Learn:* that HotSpot is a linear RC network. This sets up the predictor in Phase E.
-
-### Phase B: Understanding the simulator (RQ1)
-
-**B1 [CORE] Block vs grid model, and grid resolution.**
-Run EV6 with the block model and with the grid model at 16, 32, 64, 128 and 256. Compare
-per-block temperatures against the 256 grid as the reference, and record runtime.
-*Expect:* the block model is close for compact blocks but off for long, thin blocks (the
-HotSpot 4.0 paper's finding). The grid result converges by about 64. Our first test already
-shows Dcache at 338.9 K (block) vs 335.9 K (grid 64), a 3 K difference.
-*Output:* error-vs-runtime plot. *Cost:* minutes.
-*Learn:* modelling resolution and the accuracy/speed trade-off, which justifies the setting
-used in later experiments.
-
-**B2 [CORE] Power density: same power, smaller chip.**
-Keep EV6's relative layout but scale the die from 8 mm to 24 mm per side (power fixed). Also:
-keep the die fixed and scale only IntReg's area.
-*Expect:* T_peak rises as power density rises, roughly as 1/area for the local hot spot.
-This is the core reason chips get hotter at each technology node.
-*Learn:* the difference between power and power density, which is the most important idea in
-the field.
-
-**B3 [CORE] Cooling and package sensitivity.**
-One-at-a-time sweep: `r_convec` (fan/heat-sink quality, 0.05–1.0 K/W), TIM thickness and
-conductivity, spreader thickness, ambient temperature, die thickness. Present as a "tornado"
-chart of which knob moves T_peak the most.
-*Expect:* `r_convec` dominates T_avg. TIM and spreader mostly affect *local* hot spots.
-Ambient shifts everything equally.
-*Learn:* the vertical heat path and why packaging matters as much as layout.
-
-**B4 [OPT] Transient behaviour and time constants.**
-Apply a power step (idle → busy) and record the temperature rise over time. Fit time
-constants. Vary `sampling_intvl` (0.1 ms–10 ms).
-*Expect:* a fast component (silicon, about milliseconds) and a slow one (heat sink, tens of
-seconds). The example's 1 s trace never reaches true steady state on its own.
-*Learn:* why the examples first run steady state and then use it as the initial temperature,
-and why DTM can react fast while sinks warm slowly.
-
-### Phase C: Floorplan studies (RQ2, RQ3), the heart of the project
-
-Uses `flpgen.py` to make **synthetic floorplans** in which one property changes at a time.
-
-**C1 [CORE] Where should the hot block go?**
-On a 10×10 mm die with uniform low-power "background" tiles, place one high-power block at the
-centre, at an edge midpoint, and in a corner. Then place two hot blocks adjacent, a quarter of
-the die apart, and on opposite corners.
-*Hypothesis (to test, not a known result):* corner and edge placement is likely *hotter* than
-centre placement. There's less surrounding silicon to spread heat into, and the die edge does
-not conduct heat sideways out of the chip. The heat spreader underneath may partly
-compensate, which is exactly why it's worth simulating. Separating hot blocks lowers T_peak,
-and clustering creates a single much hotter spot.
-*Output:* heat maps (grid model) and a T_peak table.
-*Learn:* lateral heat spreading, the physical basis of thermal-aware floorplanning.
-
-**C2 [CORE] Multi-core layouts and "which cores to switch on."**
-Generate N-core chips (4, 9, 16 cores in a grid, with an L2/cache region). For a 16-core chip
-with only 4 cores active (the "dark silicon" situation), compare activation patterns:
-clustered block, row, diagonal, checkerboard, and spread to the corners. Also try die aspect
-ratios 1:1, 2:1 and 4:1 with the same area.
-*Expect:* spread or checkerboard patterns are several °C cooler than clustered ones at
-identical total power. I don't have a confident prediction for the aspect-ratio sweep; it's
-an open question for us.
-*Learn:* the bridge from floorplanning to *run-time* thermal management (task mapping), which
-connects to Prof. Kedia's DTM and mapping work.
-
-**C3 [CORE] Thermal-aware floorplanning with HotFloorplan (replicates JILP 2005).**
-Run `hotfloorplan` on the EV6 block description with the default weights, then with the
-temperature weight set to zero (area and wire length only). Simulate both resulting floorplans
-with HotSpot using the gcc power.
-*Expect:* the thermal-aware floorplan has a lower T_peak and a smaller gradient, but a similar
-T_avg (the paper's key observation), at some cost in wire length or area.
-*Cost:* about 90 s per floorplan.
-*Learn:* simulated annealing, the cost function, and that floorplanning *redistributes* heat
-rather than removing it.
-
-**C4 [OPT] Pareto front: temperature vs wire length vs area.**
-Sweep `lambdaT` and `lambdaW` (about 20–40 runs; with several random seeds, roughly
-1 h in parallel). Plot T_peak against total wire length.
-*Learn:* multi-objective optimisation and how to present trade-offs.
-
-**C5 [OPT] Hand-designed EV6 variants.**
-Hand-edit ev6.flp: move the integer register file next to the L2 cache; swap IntExec and FP
-units; and so on. Predict the result *before* simulating, then check. A good exercise for
-building intuition.
-
-### Phase D: 3D, 2.5D and beyond (RQ4), linked to Kedia's research
-
-**D1 [CORE] 3D stacking: which die goes near the heat sink?**
-Using an `.lcf` stack (as in example3): a hot "logic" die and a cooler "memory" die, with a TIM
-or bonding layer between. Swap their order. Vary the number of memory layers (1, 2, 4) and the
-inter-layer thickness and conductivity.
-*Expect:* the layer *farthest* from the sink is the hot spot, even if it dissipates less
-power. This reproduces CoMeT's 3D-stacked finding in simplified form. Putting the hot logic
-next to the sink is the right choice.
-*Cost:* grid model, steady state only, seconds to minutes per configuration.
-*Learn:* vertical heat flow and why 3D chips are thermally hard, with a direct link to the
-professor's papers.
-
-**D2 [OPT] 2.5D chiplets: spacing vs temperature (a mini TAP-2.5D).**
-Four chiplets on an interposer floorplan. Sweep the gap between them (0–5 mm) with fixed
-power, and report T_peak against total footprint and a wire-length proxy.
-*Expect:* diminishing returns. The first millimetre of spacing helps most.
-*Learn:* the chiplet design problem currently common in industry.
-
-**D3 [OPT] Microfluidic (liquid) cooling.**
-Example5 now runs (HotSpot rebuilt with SuperLU). Sweep pumping pressure and inlet temperature,
-and compare against air cooling for the same stack.
-*Learn:* advanced cooling. This is mainly "it's possible" content and gives less insight per hour.
-
-**D4 [OPT] Leakage–temperature feedback (linked to Kedia's FastCool).**
-Model leakage as P_leak(T) = P0·exp(β(T − T0)). Iterate: HotSpot → temperature → new
-leakage → HotSpot, until it converges. Sweep cooling quality (`r_convec`) and find where the
-iteration no longer converges (*thermal runaway*).
-*Learn:* the positive feedback loop at the centre of Kedia's 3D-memory papers.
-
-**D5 [OPT, stretch] Simple DTM emulation.**
-Run a transient in short chunks. After each chunk, if T_peak exceeds the threshold, scale the
-next chunk's power down (throttle) until the chip cools. Compare peak temperature and
-"performance lost" (time throttled) for different thresholds.
-*Learn:* closed-loop thermal management, which is what CoMeT does properly. Also shows the
-limitation of pre-recorded power traces.
-
-### Phase E: The lightweight thermal predictor (RQ5)
-
-**E1 [CORE] Exact linear predictor for a fixed floorplan (superposition).**
-For a floorplan with N blocks, run HotSpot N times, each with 1 W in one block only. This
-gives the N×N *thermal influence matrix* R. Then for any power vector P:
-T = T_ambient + R·P. Validate on random power vectors and on the gcc trace.
-*Expect:* error about 0 K (exact up to solver tolerance), at microseconds per prediction
-instead of seconds.
-*Learn:* superposition, linear systems, and that "the simulator" is just a matrix for a
-fixed design. Every ML model must beat this baseline where it applies.
-
-**E2 [CORE] Learned predictor across *different* floorplans.**
-The matrix trick breaks when the floorplan changes, so learning is needed there.
-1. Generate a dataset: about 2,000–5,000 random floorplans × random power (block and grid
-   64×64; about 1–2 h in parallel).
-2. *Model 1 (simple, interpretable):* per-block regression (linear, then gradient boosting)
-   on hand-made features: own power density, area, aspect ratio, distance to die edge, power
-   of neighbours within radius r, total chip power.
-3. *Model 2 (image-based):* small CNN / U-Net from power-density map (64×64) to temperature map
-   (64×64), as in ThermEDGe.
-4. Report MAE / max error (K), and prediction time vs HotSpot.
-
-*Hypothesis:* the CNN does better than boosting on full spatial maps, and both are orders of
-magnitude faster than HotSpot. Published learned predictors report errors around 0.3–1 K
-within a design family (see lit_review.md §4). That gives a reasonable target, not a
-guarantee.
-*Learn:* dataset generation, feature engineering, train/validation/test methodology, and
-surrogate modelling.
-
-**E3 [OPT] Generalisation stress test.**
-Train on one family (for example grid-of-cores chips) and test on another (random slicing
-floorplans, different die size, different cooling). Then fine-tune with 10–50 samples of the
-new family.
-*Expect:* large error on unseen families, recovering with a few samples. This mirrors the
-IC-ThermBench finding.
-*Learn:* the main open problem in ML for EDA, and the honest reporting of limitations.
+1. **RQ1, fixed chip:** for a fixed floorplan, how accurately and how cheaply can simple
+   linear models (influence matrix, autoregressive forecasters) predict HotSpot's steady
+   and future temperatures?
+2. **RQ2, new floorplans:** can a cheap model predict temperature for a floorplan it has never
+   seen? Compare a physics kernel (power blurring), gradient boosting, and a small CNN.
+3. **RQ3, robustness:** where does each predictor break (realistic unseen floorplans, a
+   different heat sink)?
+4. **RQ4, usefulness:** does the predictor lead to the *same decisions* as HotSpot, and how
+   much faster?
 
 ---
 
-## 4. Suggested schedule (adjust to your deadline)
+## 3. The models
 
-| Week | Work | Deliverable |
+### Mode R (fixed floorplan)
+
+| ID | Model | Needs | Expected behaviour | Source idea |
+|---|---|---|---|---|
+| R0 | **Persistence**: next T = current T | nothing | Good only at very short horizons; the minimum to beat | standard |
+| R1 | **Influence matrix**: T = T_amb + R·P | N HotSpot runs (1 W in one block each) | Exact for steady state without leakage | superposition |
+| R2 | **AR**: next T from the last few temperatures only (least squares) | one training trace | Fine within a workload phase, misses phase changes | Coskun 2009 (ARMA) |
+| R3 | **ARX**: next T from the last few temperatures *and* power (least squares) | one training trace | Close to exact, since HotSpot is linear | system identification |
+| R4 *(opt.)* | **Exact state-space** from HotSpot's internal R and C matrices, plus a reduced version | C helper linked to HotSpot | Exact; shows how small the model can get | MatEx (Pagani 2015) |
+
+### Mode D (new floorplans)
+
+| ID | Model | Needs | Expected behaviour | Source idea |
+|---|---|---|---|---|
+| D1 | **Power blurring**: power-density map convolved with a heat-spread kernel | ~5 HotSpot runs | Fast, no training; errors near die edges | Ziabari 2014 |
+| D2 | **Gradient boosting** on per-block features (power density, area, distance to edge, neighbours' power, total power) | dataset | Cheap and explainable | Zhang 2018 |
+| D3 | **Small CNN**, trained two ways: (a) power map → temperature map; (b) learns only the error of D1 ("hybrid") | dataset | Best accuracy; the hybrid should generalise better | ThermEDGe 2021 |
+
+D3a and D3b are the same network and code; only the training target differs.
+
+The final `ltp` ships the best model per mode. Expected (to be tested): **R3** for mode R and
+**D3b** for mode D.
+
+---
+
+## 4. Ground truth and data
+
+### 4.1 HotSpot settings
+- Package: example1 config (ambient 45 °C). Leakage off unless stated.
+- Mode R: block model, transient, 1 ms sampling interval.
+- Mode D: grid model, steady state, 64×64 (confirmed in P0-3).
+
+### 4.2 Floorplans
+| Family | What | Count | Used for |
+|---|---|---|---|
+| **EV6** | The stock Alpha 21264 floorplan from example1 | 1 | Mode R; sanity checks |
+| **16-core** | 4×4 grid of cores, one block per core | 1 | Mode R; Demo 1 |
+| **Random** | Random floorplans from recursive cutting of the die, 8–30 blocks, die 8–20 mm | ~1,500 | Mode D train/val/test |
+| **HotFloorplan-EV6** | HotFloorplan layouts of the EV6 blocks, different weights and seeds | ~20 | Mode D realistic test set (never trained on); Demo 2 |
+
+### 4.3 Power
+- **gcc.ptrace** (the only real-workload trace we have) for EV6.
+- **Synthetic traces** for mode R: each core switches between idle, medium and busy power
+  levels with random phase lengths, kept within EV6's realistic power densities
+  (≈ 0.01–3 W/mm²). Different random seeds for training and test traces.
+- **Mode D:** random per-block power, total 20–120 W, realistic densities.
+
+### 4.4 Splits (fixed before training)
+- Mode R: train on one set of traces, test on traces with different seeds and on gcc.
+- Mode D: 70/15/15 train/val/test *by floorplan*. HotFloorplan-EV6 is test-only.
+
+---
+
+## 5. Experiments
+
+**Difficulty:** ★ easy (run HotSpot, a short script, a plot). ★★ medium (new code or a model
+to train, some debugging). ★★★ hard (a technique you'd need to learn first, or C-level work).
+**[CORE]** = needed. **[OPT]** = only if time allows.
+
+### Summary
+
+| ID | Experiment | Type | Difficulty |
+|---|---|---|---|
+| P0-1 | Example1 reproduced | CORE | ★ (done) |
+| P0-2 | Linearity checks | CORE | ★ |
+| P0-3 | Grid resolution choice | CORE | ★ |
+| P0-4 | Infrastructure scripts | CORE | ★★ |
+| P1-1 | Steady state: influence matrix (R1) | CORE | ★ |
+| P1-2 | Forecasting: persistence, AR, ARX (R0, R2, R3) | CORE | ★★ |
+| P1-3 | Exact and reduced state-space (R4) | OPT | ★★★ |
+| P2-1 | Mode D dataset | CORE | ★★ |
+| P2-2 | Power blurring (D1) | CORE | ★★ |
+| P2-3 | Gradient boosting (D2) | CORE | ★★ |
+| P2-4 | Small CNN, direct and hybrid (D3) | CORE | ★★★ |
+| P3-1 | Robustness: realistic floorplans, different heat sink | CORE | ★ |
+| P3-2 | Few-shot fine-tuning on the new heat sink | OPT | ★★ |
+| P3-3 | Leakage (nonlinear power) | OPT | ★★ |
+| P4-1 | `ltp` package and command line | CORE | ★★ |
+| P4-2 | Demo 1: which cores to switch on | CORE | ★ |
+| P4-3 | Demo 2: ranking floorplans | CORE | ★ |
+| P4-4 | Demo 3: closed-loop run-time management | OPT | ★★ |
+
+### Phase P0: Ground truth you can trust
+
+**P0-1 [CORE] ★ Example1 reproduced and understood.** *Done* (see `README_SETUP.md`).
+
+**P0-2 [CORE] ★ Linearity checks.**
+Scale all power by 0.5×, 2× and 3×; run two power patterns separately and together; zero power.
+*Expect:* temperature rise scales exactly, patterns add up, zero power gives ambient.
+*Why it matters:* this is what makes R1 and R3 work. If it holds, any later error in them is a
+bug, not physics.
+
+**P0-3 [CORE] ★ Grid resolution.**
+EV6 with the block model and grid 16, 32, 64, 128. Error against grid 128, and runtime.
+*Output:* the grid size for mode D (expected 64) and HotSpot's own accuracy-vs-time curve.
+
+**P0-4 [CORE] ★★ Infrastructure.** Python scripts to run HotSpot and save everything
+(`run_hotspot.py`), read its outputs (`parse.py`), generate floorplans (`flpgen.py`) and power
+(`powergen.py`), and run many simulations in parallel with resume (`sweep.py`).
+
+### Phase P1: Mode R, fixed floorplan
+
+Cases: EV6 and the 16-core chip.
+
+**P1-1 [CORE] ★ Steady state: influence matrix (R1).**
+N runs with 1 W in one block each give the matrix R. Test on gcc and 1,000 random power vectors.
+*Expect:* error ≈ 0 (≪ 0.01 K), microseconds per prediction.
+*Output:* error and time table; heat map of R (which blocks heat which).
+
+**P1-2 [CORE] ★★ Forecasting future temperature (R0, R2, R3).**
+Fit AR and ARX by least squares on training traces. Forecast 1, 10 and 100 ms ahead on test
+traces and on gcc.
+*Expect:* ARX is close to exact, because HotSpot is linear. AR does well within a workload
+phase but fails when power changes, because it can't see the change coming. Both beat
+persistence beyond the shortest horizon.
+*Output:* **error vs forecast horizon** plot (the main mode R result); time per forecast.
+
+**P1-3 [OPT] ★★★ Exact and reduced state-space (R4).**
+Write a small C helper that extracts HotSpot's internal R and C matrices, turn them into an
+exact forecaster, then shrink it to a few states. *Output:* error vs model size.
+Only worth it if P1-2's ARX turns out clearly inexact.
+
+### Phase P2: Mode D, new floorplans
+
+**P2-1 [CORE] ★★ Dataset.** ~1,500 random floorplans, each with random power, grid 64×64 steady
+state (≈ 30 min in parallel). Plus ~20 HotFloorplan-EV6 layouts (≈ 90 s each). Saved as `.npz`.
+
+**P2-2 [CORE] ★★ Power blurring (D1).**
+Take the heat-spread kernel from a 1 W point source in HotSpot, then predict any floorplan by
+convolution (with mirrored edges).
+*Expect:* about 1–2 K in the middle of the die, worse at edges and corners.
+
+**P2-3 [CORE] ★★ Gradient boosting (D2).** Per-block features, scikit-learn, tuned on the
+validation set.
+
+**P2-4 [CORE] ★★★ Small CNN (D3a direct, D3b hybrid).**
+A small U-Net (< 1 M parameters, CPU training) trained once on temperature maps and once on the
+error of D1.
+*Expect:* D3b is the most accurate and generalises best, because the physics part carries over
+to new layouts.
+*Output:* results table for D1, D2, D3a, D3b: error, T_peak error, hottest-block accuracy,
+ms per prediction, size.
+
+### Phase P3: Robustness
+
+**P3-1 [CORE] ★ Where does it break?** No new models, only new test data:
+(a) mode D models on HotFloorplan-EV6 (realistic, never seen);
+(b) all models on a different heat sink (`r_convec` changed), mode R and mode D.
+*Expect:* physics-based models (R1, D1, D3b) cope best; purely learned ones degrade most.
+
+**P3-2 [OPT] ★★ Few-shot fine-tuning.** Retrain the mode D models with 10 and 50 samples
+from the new heat sink and measure how much accuracy comes back.
+
+**P3-3 [OPT] ★★ Leakage.** Turn on temperature-dependent leakage, so HotSpot is no longer
+linear. Measure how much R1 and R3 degrade. Linked to Prof. Kedia's FastCool work.
+
+### Phase P4: The product and demonstrations
+
+**P4-1 [CORE] ★★ Package `ltp`.** Commands `ltp fit`, `ltp predict`, `ltp forecast`;
+models saved as `.npz`; a few tests against stored HotSpot outputs; a short README.
+
+The demos are small scripts that show the predictor reaching the same decisions as HotSpot,
+much faster. They are not full mappers or floorplanners.
+
+**P4-2 [CORE] ★ Demo 1: which cores to switch on.** On the 16-core chip, choose which 4 cores
+run a busy task. Score all 1,820 choices with `ltp` (R1) and with HotSpot.
+*Report:* is the coolest choice the same? How long does each take?
+
+**P4-3 [CORE] ★ Demo 2: ranking floorplans.** Rank the HotFloorplan-EV6 layouts plus some
+random EV6 layouts by predicted T_peak (D3b) and by HotSpot.
+*Report:* do the rankings agree (Spearman correlation), and is the best layout the same?
+
+**P4-4 [OPT] ★★ Demo 3: closed-loop run-time management.** Every 10 ms, use `ltp.forecast`
+(R3) to decide whether to move a task to a cooler core before a temperature limit is reached.
+
+---
+
+## 6. Evaluation rules
+
+- **Metrics:** mean and max absolute error (K), T_peak error, hottest-block accuracy; error vs
+  horizon for forecasts.
+- **Speed:** median over many predictions, single CPU thread. HotSpot is timed the same way.
+- **Baselines always shown:** persistence for mode R, power blurring for mode D.
+- **Test sets are used once**, at the end.
+
+---
+
+## 7. Repository layout
+
+```
+Lightweight Thermal Predictor/
+├── hotspot_for_dummies.md, lit_review.md, plan.md, README_SETUP.md
+├── configs/        HotSpot configs (base + different heat sink)
+├── floorplans/     ev6, 16-core, generated (generated ones git-ignored, regenerable by seed)
+├── src/sim/        run_hotspot.py, parse.py, flpgen.py, powergen.py, sweep.py
+├── src/ltp/        the product: models, fit/predict/forecast, command line
+├── experiments/    one script per experiment
+└── results/<exp>/  outputs, CSVs, figures
+```
+
+Simulations run in WSL Ubuntu for speed; results are copied back. Tools: NumPy/SciPy,
+scikit-learn, PyTorch (CPU).
+
+---
+
+## 8. Order of work
+
+| Step | Work | Deliverable |
 |---|---|---|
-| 1 | Read the beginner guide and lit review; build infrastructure; A1, A2 | Working pipeline, sanity-check plots |
-| 2 | B1, B2, B3 (+B4) | "How the simulator behaves" section |
-| 3 | C1, C2, C3 (+C4/C5) | "What floorplans do" section, heat maps |
-| 4 | D1 (+D2/D4) | 3D section linked to Kedia/CoMeT |
-| 5 | E1, E2 (+E3) | Predictor section: accuracy and speed table |
-| 6 | Write-up, slides, cleanup | Report and presentation |
+| 1 | P0 | Trusted ground truth and scripts |
+| 2 | P1-1, P1-2 | Mode R results; start the P2-1 dataset in the background |
+| 3 | P2-2, P2-3, P2-4 | Mode D results table |
+| 4 | P3-1, P4-1 | Robustness table; `ltp` usable from the command line |
+| 5 | P4-2, P4-3; report and slides | Final product, demos, write-up |
 
-**Minimum viable project** (if time is short): A1, A2, B1, B3, C1, C2, C3, D1, E1, plus a simple
-E2 (gradient boosting only).
+**Minimum viable project** (if time is short): P0, P1-1, P1-2, P2-1, P2-2, P2-3, P3-1, P4-1,
+P4-2. That skips the CNN (the only ★★★ core item) and still gives a complete predictor for
+mode R and a physics-plus-ML baseline for mode D.
 
 ---
 
-## 5. Risks and assumptions
+## 9. Risks
 
 | Risk | Mitigation |
 |---|---|
-| **No real workload power data** beyond the EV6/gcc example | Use the gcc trace plus documented synthetic power (uniform, random, "hot core" patterns). Check with the professor. A stretch option is generating real power with CoMeT/Sniper+McPAT, but that is a large setup effort and I'd treat it as out of scope |
-| Trace-based simulation ignores feedback (throttling, contention), the limitation CoMeT highlights | State it in the report. D5 demonstrates the effect in a simplified way |
-| HotSpot is a compact model, not ground truth | Cite its validation papers. Never claim absolute accuracy below about 1–2 °C |
-| Synthetic floorplans may be unrealistic | Anchor everything with EV6 results. Keep power densities in realistic ranges (≈0.01–3 W/mm², as in EV6) |
-| Long runs interrupted (PC sleep) | Sweeps write results incrementally and can resume |
-| Without SuperLU, grid sizes must be powers of two | Already handled: HotSpot rebuilt with SuperLU |
+| No real workload power beyond gcc | Synthetic phase traces with realistic densities; ask the professor |
+| HotSpot is not ground truth for real silicon | Say so plainly: we predict *HotSpot*, which is itself within about 1–2 °C of detailed tools |
+| Random floorplans are unrealistic | Realistic test set (HotFloorplan-EV6) |
+| The CNN takes too long to get working | It is the last core model; the minimum viable project doesn't need it |
 
 ---
 
-## 6. Decisions I need from you
+## 10. Decisions needed from you
 
-1. Which **[OPT]** experiments to include. My recommendation: B4, C4, D4, E3.
-2. Team size and deadline, to size the scope.
-3. Whether the professor expects real (McPAT/CoMeT) power or accepts synthetic power.
-4. Whether to set up the git repo and directory structure now (recommended next step).
+1. What exactly did the professor say about the scope? If only one mode is wanted, we drop the
+   other and go deeper on the chosen one.
+2. Is synthetic power acceptable, or is McPAT/CoMeT-generated power expected?
+3. Deadline and team size, to decide which [OPT] items stay.
+4. OK to start P0 now?

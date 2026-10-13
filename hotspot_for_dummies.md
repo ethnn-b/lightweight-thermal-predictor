@@ -259,7 +259,7 @@ microfluidic cooling doesn't run.
 Without leakage, everything in HotSpot is linear: double every block's power and every temperature
 *rise* above ambient doubles. Temperatures from two power patterns *add up* (superposition).
 So for a fixed floorplan, HotSpot is really just a matrix: **T = T_ambient + R × P**.
-Experiment E1 in the plan exploits this.
+Experiments P1-1 and P1-2 in the plan rely on this.
 
 ---
 
@@ -332,7 +332,29 @@ The **biggest drop is between silicon and spreader**. That's why the TIM matters
 
 ---
 
-## Part 10: The ML / predictor vocabulary (for the last phase)
+## Part 10: The predictor vocabulary (the main subject of the project)
+
+**Physics-based and time-series predictors:**
+- **Mode R / mode D:** our names for the two jobs. *Run-time*: fixed chip, predict the next few
+  milliseconds. *Design-time*: predict temperature for a new floorplan.
+- **Persistence:** the "do nothing" forecast, where next temperature = current temperature.
+  Every run-time predictor must beat it.
+- **State-space model:** x[k+1] = A·x[k] + B·p[k]. The temperatures now (x) and the power now (p)
+  give the temperatures one step later. HotSpot's RC network turns into exactly this form.
+- **Matrix exponential:** the maths that turns C·dT/dt = −G·T + P into the A and B above. MatEx
+  is built on it.
+- **Model-order reduction:** shrinking a state-space model from hundreds of states to a handful
+  while keeping most of the accuracy. Works because a few slow modes (heat sink) dominate.
+- **System identification:** fitting A and B (or a similar formula) from recorded
+  power and temperature, without seeing the simulator's insides. This is what a real chip
+  with sensors can do.
+- **AR / ARMA:** forecasting a temperature from its own recent values only (no power input).
+- **ARX:** the same, but also using the power that is about to be applied. The "X" is the extra input.
+- **Forecast horizon:** how far ahead you predict (1 ms, 10 ms, 100 ms). Error grows with it.
+- **Power blurring:** temperature map ≈ power map convolved with the "blur" a single point of
+  heat makes. A fast, physics-based way to handle new floorplans.
+
+**Learned predictors:**
 
 - **Surrogate model:** a fast model trained to imitate a slow simulator.
 - **Dataset:** many (input, output) pairs, here (floorplan + power, temperatures) produced by running
@@ -345,6 +367,12 @@ The **biggest drop is between silicon and spreader**. That's why the TIM matters
 - **Gradient boosting:** a strong, simple ML method for tabular features (e.g. XGBoost, LightGBM).
 - **Superposition baseline:** for a fixed floorplan, the exact linear matrix trick from Part 6. An ML
   model should be compared against it.
+- **Hybrid / residual model:** a physics model does most of the work and a small network learns
+  only what it gets wrong (the residual).
+- **Few-shot fine-tuning:** adapting a trained model to a new kind of chip with only 10–50 new
+  examples.
+- **The four costs of "lightweight":** accuracy, time per prediction, model size, and how many
+  simulator runs it takes to build.
 
 ---
 
