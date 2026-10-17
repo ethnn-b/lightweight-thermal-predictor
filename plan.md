@@ -1,158 +1,249 @@
-# Project plan: a lightweight temperature predictor built on HotSpot
+# Project plan: a lightweight temperature predictor (calibrate once, predict fast)
 
 **Course project:** *Thermal management: lightweight temperature predictor*.
 
-**One-line pitch:** Build `ltp`, a small Python library and command-line tool that predicts the
-temperatures HotSpot would compute, but thousands of times faster and with a model small
-enough to run inside a floorplanner's search loop or a run-time thermal manager. HotSpot is the
-*teacher* that generates training data and ground truth. The *predictor* is the product.
+**One-line pitch:** Build `ltp`, a small Python library and command-line tool that works in two
+stages. **Calibration** runs HotSpot a small number of times on a given heterogeneous floorplan
+and fits a compact set of coefficients. **Prediction** then uses only those coefficients to give
+steady-state or transient temperatures for any power input, thousands of times faster than
+HotSpot and with a model of a few kilobytes. HotSpot is the *reference* used for calibration and
+for checking accuracy. The *calibrated predictor* is the product.
 
-Read `hotspot_for_dummies.md` for terms. `lit_review.md` covers prior work on fast temperature
-prediction and explains where each experiment comes from.
+This file is the short plan. `hotspot_for_dummies.md` is the beginner's companion: Part A
+explains every concept used here, and Part B goes through each experiment (why, what you need to
+know, steps, what you should see). `lit_review.md` covers prior work and explains where each
+model comes from.
+
+---
+
+## 0. The problem statement, and where this plan answers it
+
+> Develop a lightweight temperature predictor. Two stages:
+> **Calibration** (one-time per floorplan): tune predictor coefficients as per given floorplan
+> for heterogeneous cores.
+> **Predictor**: predict the temperature (steady state or transient) for a given power input.
+> **Metrics:** predictor accuracy, prediction time, model size.
+> **Wishlist:** show the effectiveness of the predictor for proactive DTM.
+
+| Requirement | Where it is handled |
+|---|---|
+| Calibration, one-time per floorplan | §1.2, models in §3, Phase P1 |
+| Given floorplan, heterogeneous cores | Floorplans in §4.1 (big/little/GPU cores of different size and power); P1-3 shows why per-floorplan calibration is needed |
+| Predict steady state | Models S0–S2, Phase P2 |
+| Predict transient | Models T0–T4, Phase P3 |
+| For a given power input | API in §1.3; test power in §4.2 |
+| Accuracy, prediction time, model size | Defined in §1.4 and §6; every result table reports all three |
+| Wishlist: proactive DTM | Phase P6 |
+
+Work from the earlier plan that does not serve these stages (learned predictors for floorplans
+never seen before: gradient boosting, CNN, the 1,500-floorplan dataset) has been moved to §11,
+*Out of scope*. Power blurring stays, as the uncalibrated baseline.
 
 ---
 
 ## 1. What exactly are we building?
 
-### 1.1 Two use cases, two modes
-
-A temperature predictor is only "lightweight" relative to a use. There are two typical uses,
-so `ltp` has one mode for each:
-
-| Mode | Who calls it | Fixed | Changes | Question it answers | Must be fast because |
-|---|---|---|---|---|---|
-| **R (run-time)** | Workload mapper, DTM, OS scheduler | Floorplan, package | Power every interval (e.g. 1–10 ms) | "If I run *this* mapping for the next 10 ms, how hot will each core get?" | It runs on the chip itself, every interval |
-| **D (design-time)** | Floorplanner | Package | Floorplan *and* power | "If I put the blocks *here*, what is the peak temperature?" | A floorplanner evaluates thousands of candidate layouts |
-
-Mode R is the classic meaning of "temperature predictor" in the thermal-management literature
-(Coskun 2009, Yeo 2008, Zhang 2018; lit review §4). Mode D is the ML-surrogate line (ThermEDGe,
-GCN, ThePlace; lit review §5). In each mode we compare a simple physics-based model against a
-learned one.
-
-### 1.2 Inputs and outputs
+### 1.1 The two stages
 
 ```
-Mode R:  ltp.steady(model, P[N])                      ->  T[N]           (per block/core)
-         ltp.forecast(model, T_history, P_next, k)    ->  T for the next k steps
-Mode D:  ltp.predict(flp, P[N])                       ->  T[N] per block, 64×64 map, T_peak
-Build:   ltp.fit(...)  ->  model file (.npz)
+            ONE-TIME, PER FLOORPLAN                         MANY TIMES, FAST
+ ┌──────────────────────────────────────────┐     ┌──────────────────────────────────────┐
+ │ CALIBRATION                              │     │ PREDICTOR                            │
+ │ floorplan.flp + package config           │     │ model.npz + power input P            │
+ │   -> a few planned HotSpot runs          │ ──► │   -> steady T[N]       (S models)    │
+ │   -> fit coefficients                    │     │   -> transient T[k][N] (T models)    │
+ │   -> model.npz  (a few kB)               │     │ no HotSpot, NumPy only, µs per call  │
+ └──────────────────────────────────────────┘     └──────────────────────────────────────┘
 ```
 
-### 1.3 What "lightweight" means: our targets
+Calibration may be slow (seconds to minutes) because it runs once. The predictor must be fast
+and small because it runs inside a DTM controller or a scheduler, every 1–10 ms.
 
-These are *targets*, set from the literature, not promises. The report states whether each
-was met.
+### 1.2 What "coefficients" are being calibrated
 
-| Property | Mode R target | Mode D target | HotSpot (measured on this PC) |
+HotSpot is a linear RC network when leakage is off (checked in P0-2). That fixes the shape of
+the predictor; calibration finds the numbers for one specific floorplan.
+
+| Part | Coefficients | Physical meaning | Size for N cores/blocks |
 |---|---|---|---|
-| Mean abs. error per block | ≤ 0.5 K | ≤ 1 K | (ground truth) |
-| Error in T_peak | ≤ 1 K | ≤ 2 K | |
-| Hottest block identified correctly | ≥ 95 % | ≥ 90 % | |
-| Time per prediction (one CPU core) | ≤ 100 µs | ≤ 5 ms | ≈ 10 ms block; ≈ 1 s grid 64×64 |
-| Model size | ≤ 100 kB | ≤ 5 MB | n/a |
+| Steady state | Influence matrix **G** (K/W): `T = T_amb + G·P` | G_ii is how much core i heats itself; G_ij is how much core j heats core i | N² |
+| Transient | A few time constants τ_m and weights a_ijm, or a discrete state-space (A, B, C) | How fast each core heats up and cools down, and how heat travels between cores | N²·M (M ≈ 3–5) or r² + 2rN |
 
-We report accuracy, speed, model size and how many HotSpot runs each model needed to build.
-Most papers report only the first two (lit review §7).
+**Why heterogeneity matters.** A big core and a little core differ in area, power range and
+heat capacity. So they differ in self-heating (G_ii), in coupling to their neighbours, and in
+time constants. A generic model with one coefficient per core type cannot capture where each
+core sits on the die (edge, corner, next to the GPU). Calibration measures every core
+individually. P1-3 shows the gap.
+
+### 1.3 Inputs and outputs
+
+```
+Calibrate: ltp.calibrate(flp, config, method)            ->  model.npz
+Steady:    ltp.steady(model, P[N])                        ->  T[N]
+Transient: ltp.transient(model, T0, P[K][N])              ->  T[K][N]  (open-loop, from start temps)
+Forecast:  ltp.forecast(model, T_measured, P_next, k)     ->  T for the next k steps (used by DTM)
+```
+
+`transient` answers "what will HotSpot give for this power trace". It needs only the power trace
+and a starting condition (cold chip at ambient, or warm chip at the steady state of the first
+power row). Every model then feeds its *own* predicted temperatures forward step by step; no
+measured temperature is used. This is the core predictor the problem statement asks for.
+
+`forecast` is the run-time version used by DTM (P6). On a real chip, thermal sensors give the
+current temperature every interval; in our experiments HotSpot's output stands in for those
+sensors. The model restarts from the measured value at each step, so its errors cannot build up.
+
+### 1.4 The three metrics and our targets
+
+These are *targets* taken from the literature, not promises. The report states whether each was
+met. N ≈ 10–20 blocks.
+
+| Metric | Steady predictor | Transient predictor | HotSpot (measured in P0) |
+|---|---|---|---|
+| **Accuracy**: mean abs. error per block | ≤ 0.1 K | ≤ 0.5 K over the trace | reference |
+| Accuracy: error in T_peak | ≤ 0.2 K | ≤ 1 K | |
+| Accuracy: hottest core identified correctly | ≥ 99 % | ≥ 95 % | |
+| **Prediction time** (median, one CPU thread) | ≤ 20 µs per call | ≤ 50 µs per step | ≈ 10 ms per block steady run |
+| **Model size** (bytes in the model file) | ≤ 5 kB | ≤ 50 kB | n/a |
+| *Calibration cost* (secondary) | ≤ N+1 HotSpot runs | ≤ 2 min wall time | n/a |
+
+Calibration cost is not one of the three required metrics. We report it anyway because "one-time"
+only helps if it is cheap.
 
 ---
 
 ## 2. Research questions
 
-1. **RQ1, fixed chip:** for a fixed floorplan, how accurately and how cheaply can simple
-   linear models (influence matrix, autoregressive forecasters) predict HotSpot's steady
-   and future temperatures?
-2. **RQ2, new floorplans:** can a cheap model predict temperature for a floorplan it has never
-   seen? Compare a physics kernel (power blurring), gradient boosting, and a small CNN.
-3. **RQ3, robustness:** where does each predictor break (realistic unseen floorplans, a
-   different heat sink)?
-4. **RQ4, usefulness:** does the predictor lead to the *same decisions* as HotSpot, and how
-   much faster?
+1. **RQ1, calibration:** what is the cheapest calibration (fewest HotSpot runs, shortest trace)
+   that gives accurate coefficients for a heterogeneous floorplan? Is calibrating per floorplan
+   actually necessary?
+2. **RQ2, steady state:** how accurate, fast and small is the calibrated steady predictor?
+3. **RQ3, transient:** how does transient accuracy depend on model order (and so size) and on
+   how far ahead we forecast?
+4. **RQ4, trade-off:** what is the accuracy / time / size Pareto front across all models?
+5. **RQ5, wishlist:** does a forecast from the predictor make DTM *proactive* (acting before the
+   limit) and better than reactive DTM?
 
 ---
 
 ## 3. The models
 
-### Mode R (fixed floorplan)
+All models except the baselines are fitted by the calibration stage. Their families come from
+the lit review: superposition (§3.1), MatEx and exponential models (§3.2), model-order reduction
+(§3.3), power blurring (§3.4), AR/ARX run-time predictors (§4.1, §4.2).
 
-| ID | Model | Needs | Expected behaviour | Source idea |
+### Steady state
+
+| ID | Model | Calibration needs | Size | Expected |
 |---|---|---|---|---|
-| R0 | **Persistence**: next T = current T | nothing | Good only at very short horizons; the minimum to beat | standard |
-| R1 | **Influence matrix**: T = T_amb + R·P | N HotSpot runs (1 W in one block each) | Exact for steady state without leakage | superposition |
-| R2 | **AR**: next T from the last few temperatures only (least squares) | one training trace | Fine within a workload phase, misses phase changes | Coskun 2009 (ARMA) |
-| R3 | **ARX**: next T from the last few temperatures *and* power (least squares) | one training trace | Close to exact, since HotSpot is linear | system identification |
-| R4 *(opt.)* | **Exact state-space** from HotSpot's internal R and C matrices, plus a reduced version | C helper linked to HotSpot | Exact; shows how small the model can get | MatEx (Pagani 2015) |
+| S0 | **Uncalibrated baseline**: power blurring with a generic heat-spread kernel (no floorplan-specific fitting) | 1 point-source run, shared by all floorplans | kernel only | 1–3 K error, worst at die edges; shows what calibration buys |
+| S1 | **Influence matrix G** | N runs, 1 W in one block each (or N step runs, shared with T3) | N² | Exact without leakage (≪ 0.01 K) |
+| S2 | **Compressed G**: one shared "package" term for all cores (every watt warms the common spreader and sink) plus only the k nearest-neighbour couplings per core | same as S1 | ≈ N·(k+1) + 1 | Small accuracy loss; only matters for many cores (e.g. a 64-core floorplan), since G for N = 20 is just 3 kB |
 
-### Mode D (new floorplans)
+### Transient
 
-| ID | Model | Needs | Expected behaviour | Source idea |
+| ID | Model | Calibration needs | Size | Expected |
 |---|---|---|---|---|
-| D1 | **Power blurring**: power-density map convolved with a heat-spread kernel | ~5 HotSpot runs | Fast, no training; errors near die edges | Ziabari 2014 |
-| D2 | **Gradient boosting** on per-block features (power density, area, distance to edge, neighbours' power, total power) | dataset | Cheap and explainable | Zhang 2018 |
-| D3 | **Small CNN**, trained two ways: (a) power map → temperature map; (b) learns only the error of D1 ("hybrid") | dataset | Best accuracy; the hybrid should generalise better | ThermEDGe 2021 |
+| T0 | **Persistence**: next T = current T | nothing | 0 | Only good for very short horizons; the minimum to beat |
+| T1 | **First-order lag**: each core moves toward its S1 steady value with its own time constant τ_i | S1 runs + N step responses | N² + N | Very small; misses the slow heat-sink tail |
+| T2 | **ARX**: next T from the last few *predicted* temperatures and the power (least squares), steady gain fixed to match G | one calibration trace with rich power changes | N²·(n_a + n_b) | Close to exact with 2–3 lags; needs long-enough calibration trace |
+| T3 | **Sum of exponentials**: G_ij(t) = Σ_m a_ijm (1 − e^{−t/τ_m}) with M shared τ's. Run as N·M filtered power values, each updated once per step | N step-response runs (same runs as S1) | N²·M + M | Near-exact with M = 3–5; one set of runs gives steady and transient |
+| T4 *(opt.)* | **Exact state-space** from HotSpot's own R and C matrices (4N + 12 nodes in the block model), then **reduced** by balanced truncation to r ≪ 4N + 12 states | small C helper linked to HotSpot | r² + 2rN | Exact at full order; shows how small the model can get |
 
-D3a and D3b are the same network and code; only the training target differs.
+**Where do the "past temperatures" come from?** In `transient` (open loop), T2 uses its own
+earlier predictions, starting from the initial condition, so the only input is power. In
+`forecast` (DTM), it uses sensor readings. T1, T3 and T4 never need past temperatures at all; they
+carry an internal state that is computed from the power alone.
 
-The final `ltp` ships the best model per mode. Expected (to be tested): **R3** for mode R and
-**D3b** for mode D.
+**Do the coefficients depend on the workload or the mapping?** No, not in principle. With leakage
+off, HotSpot is a fixed linear system set by the floorplan and package. A workload or a mapping
+only changes the *input* (how many watts each core gets, and when). Moving a task from core 2 to
+core 5 means moving its watts from P_2 to P_5; the coefficients stay the same. Two practical
+caveats: (1) a least-squares fit (T2) is only as good as its calibration trace, so that trace
+must excite every core independently over short and long time scales, rather than look like one
+real workload; (2) leakage makes power depend on temperature (P4-3). P4-1 tests both by checking
+models on workloads and mappings unlike the calibration data. (A pure AR model, which uses
+temperature only and no power, *is* workload-dependent; that is why it is not in this plan.)
+
+**A trap to plan for:** HotSpot's block model has hidden package nodes (interface, spreader,
+sink) besides the N blocks we observe. The sink has a time constant of tens of seconds. A model
+that only looks at the N block temperatures with one lag cannot be exact. This is why T2 uses
+several lags with the steady gain fixed, T3 uses several time constants, and the calibration
+traces must be long enough to show the slow tail.
+
+The final `ltp` ships **S1** for steady state and the best transient model from P3. We expect
+T3, since it is near-exact and shares its calibration runs with S1.
 
 ---
 
 ## 4. Ground truth and data
 
-### 4.1 HotSpot settings
-- Package: example1 config (ambient 45 °C). Leakage off unless stated.
-- Mode R: block model, transient, 1 ms sampling interval.
-- Mode D: grid model, steady state, 64×64 (confirmed in P0-3).
+### 4.1 HotSpot settings and floorplans
 
-### 4.2 Floorplans
-| Family | What | Count | Used for |
+- Package: example1 config (ambient 45 °C). **Block model** is the reference (one temperature
+  per core, which is what DTM uses). Leakage is off unless stated.
+- Transient sampling interval Δt = 1 ms (the DTM interval). The predictor runs at the same Δt.
+- A grid-model check (P0-3) shows how much hotter the hottest spot *inside* a big core is than
+  its block average.
+
+| Floorplan | What | N | Role |
 |---|---|---|---|
-| **EV6** | The stock Alpha 21264 floorplan from example1 | 1 | Mode R; sanity checks |
-| **16-core** | 4×4 grid of cores, one block per core | 1 | Mode R; Demo 1 |
-| **Random** | Random floorplans from recursive cutting of the die, 8–30 blocks, die 8–20 mm | ~1,500 | Mode D train/val/test |
-| **HotFloorplan-EV6** | HotFloorplan layouts of the EV6 blocks, different weights and seeds | ~20 | Mode D realistic test set (never trained on); Demo 2 |
+| **EV6** | Stock Alpha 21264 from example1; already mixed-size blocks | 30 | Sanity check; the only real trace (gcc) |
+| **HET-A** | big.LITTLE: 2 big cores, 4 little cores, shared L2, interconnect | ≈ 8 | Main heterogeneous case |
+| **HET-B** | 4 big, 4 little, GPU, L2, laid out differently, larger die | ≈ 10 | Shows calibration works on any floorplan; transfer test in P1-3 |
+| **HOM-16** | 4×4 identical cores | 16 | Homogeneous control |
+| **HOM-64** | 8×8 identical cores | 64 | Only for the model-size story of compressed G (S2) |
+| **Given** | The professor's floorplan, if one is provided | ? | Replaces or joins HET-A/B |
 
-### 4.3 Power
-- **gcc.ptrace** (the only real-workload trace we have) for EV6.
-- **Synthetic traces** for mode R: each core switches between idle, medium and busy power
-  levels with random phase lengths, kept within EV6's realistic power densities
-  (≈ 0.01–3 W/mm²). Different random seeds for training and test traces.
-- **Mode D:** random per-block power, total 20–120 W, realistic densities.
+### 4.2 Power
 
-### 4.4 Splits (fixed before training)
-- Mode R: train on one set of traces, test on traces with different seeds and on gcc.
-- Mode D: 70/15/15 train/val/test *by floorplan*. HotFloorplan-EV6 is test-only.
+Every core type gets its own power range, kept within realistic power densities
+(≈ 0.01–3 W/mm²). First guesses: big 1–8 W, little 0.2–1.5 W, GPU 2–15 W, L2 0.5–2 W.
+
+- **Calibration inputs:** 1 W impulses or steps per block (S1, T1, T3); one long excitation trace
+  where each core randomly switches power level with mixed phase lengths, from 1 ms to several
+  seconds (T2).
+- **Test inputs (never used in calibration):** random power vectors within the ranges (steady);
+  phase-based workload traces with other random seeds (transient); gcc.ptrace for EV6.
 
 ---
 
 ## 5. Experiments
 
-**Difficulty:** ★ easy (run HotSpot, a short script, a plot). ★★ medium (new code or a model
-to train, some debugging). ★★★ hard (a technique you'd need to learn first, or C-level work).
-**[CORE]** = needed. **[OPT]** = only if time allows.
+**Difficulty:** ★ easy (run HotSpot, a short script, a plot). ★★ medium (new code or a model to
+fit, some debugging). ★★★ hard (a technique you'd need to learn first, or C-level work).
+**[CORE]** = needed. **[OPT]** = only if time allows. **[WISH]** = the wishlist item.
 
 ### Summary
 
-| ID | Experiment | Type | Difficulty |
-|---|---|---|---|
-| P0-1 | Example1 reproduced | CORE | ★ (done) |
-| P0-2 | Linearity checks | CORE | ★ |
-| P0-3 | Grid resolution choice | CORE | ★ |
-| P0-4 | Infrastructure scripts | CORE | ★★ |
-| P1-1 | Steady state: influence matrix (R1) | CORE | ★ |
-| P1-2 | Forecasting: persistence, AR, ARX (R0, R2, R3) | CORE | ★★ |
-| P1-3 | Exact and reduced state-space (R4) | OPT | ★★★ |
-| P2-1 | Mode D dataset | CORE | ★★ |
-| P2-2 | Power blurring (D1) | CORE | ★★ |
-| P2-3 | Gradient boosting (D2) | CORE | ★★ |
-| P2-4 | Small CNN, direct and hybrid (D3) | CORE | ★★★ |
-| P3-1 | Robustness: realistic floorplans, different heat sink | CORE | ★ |
-| P3-2 | Few-shot fine-tuning on the new heat sink | OPT | ★★ |
-| P3-3 | Leakage (nonlinear power) | OPT | ★★ |
-| P4-1 | `ltp` package and command line | CORE | ★★ |
-| P4-2 | Demo 1: which cores to switch on | CORE | ★ |
-| P4-3 | Demo 2: ranking floorplans | CORE | ★ |
-| P4-4 | Demo 3: closed-loop run-time management | OPT | ★★ |
+**Owner:** E or K (see §12 for the reasoning behind the split). Every experiment is explained
+for beginners, with the concepts it needs, in `hotspot_for_dummies.md` Part B.
+
+| ID | Experiment | Stage | Type | Difficulty | Owner |
+|---|---|---|---|---|---|
+| J0 | Agree on shared interfaces (file formats, model API) | setup | CORE | ★ | E + K |
+| P0-1 | Example1 reproduced | ground truth | CORE | ★ (done) | E |
+| P0-2 | Linearity checks | ground truth | CORE | ★ | E |
+| P0-3 | Block vs grid model on a big core | ground truth | CORE | ★ | K |
+| P0-4a | Infrastructure: run HotSpot, parse, parallel sweep | ground truth | CORE | ★★ | E |
+| P0-4b | Infrastructure: floorplan and power generators | ground truth | CORE | ★ | K |
+| P0-5 | Heterogeneous floorplans and power ranges | ground truth | CORE | ★ | K |
+| P1-1 | Calibration by impulse/step runs (S1, T1, T3) | calibration | CORE | ★★ | E |
+| P1-2 | Calibration from one trace (T2), and how long it must be | calibration | CORE | ★★ | K |
+| P1-3 | Is per-floorplan calibration needed? (includes building S0) | calibration | CORE | ★★ | K |
+| P2-1 | Steady predictor: S0, S1, S2 | predictor | CORE | ★ | E |
+| P3-1 | Transient simulation: T1, T2, T3 | predictor | CORE | ★★ | E |
+| P3-2 | Forecasting: error vs horizon | predictor | CORE | ★ | K |
+| P3-3 | Accuracy vs size vs time (Pareto) | predictor | CORE | ★★ | K |
+| P3-4 | Exact state-space and balanced truncation (T4) | predictor | OPT | ★★★ | E |
+| P4-1 | Robustness: power outside calibration range, other workloads and mappings | both | CORE | ★ | E |
+| P4-2 | Recalibration after a package change | calibration | OPT | ★ | K |
+| P4-3 | Leakage (nonlinear power) | both | OPT | ★★ | E |
+| P5-1a | `ltp` package skeleton; `calibrate`, `steady`, `transient`, `forecast` commands | product | CORE | ★ | E |
+| P5-1b | `ltp bench` (the three metrics) and tests | product | CORE | ★ | K |
+| P6-1 | Closed-loop HotSpot for DTM | DTM | WISH | ★★ | E |
+| P6-2 | Reactive vs proactive DTM | DTM | WISH | ★★ | K |
+| P6-3 | Demo: which cores to switch on | DTM | WISH | ★ | E |
 
 ### Phase P0: Ground truth you can trust
 
@@ -161,101 +252,143 @@ to train, some debugging). ★★★ hard (a technique you'd need to learn first
 **P0-2 [CORE] ★ Linearity checks.**
 Scale all power by 0.5×, 2× and 3×; run two power patterns separately and together; zero power.
 *Expect:* temperature rise scales exactly, patterns add up, zero power gives ambient.
-*Why it matters:* this is what makes R1 and R3 work. If it holds, any later error in them is a
-bug, not physics.
+*Why it matters:* this is what makes S1, T2 and T3 work. If it holds, any later error in them is
+a bug or a calibration problem, not physics.
 
-**P0-3 [CORE] ★ Grid resolution.**
-EV6 with the block model and grid 16, 32, 64, 128. Error against grid 128, and runtime.
-*Output:* the grid size for mode D (expected 64) and HotSpot's own accuracy-vs-time curve.
+**P0-3 [CORE] ★ Block vs grid model.**
+Run HET-A with the block model and with the grid model (32, 64, 128).
+*Output:* how much hotter the peak inside a big core is than its block average, plus HotSpot's
+runtime for each. This tells us whether block-level prediction is enough for DTM, or whether a
+"hot-spot offset" per core should be calibrated too.
 
 **P0-4 [CORE] ★★ Infrastructure.** Python scripts to run HotSpot and save everything
-(`run_hotspot.py`), read its outputs (`parse.py`), generate floorplans (`flpgen.py`) and power
-(`powergen.py`), and run many simulations in parallel with resume (`sweep.py`).
+(`run_hotspot.py`), read its outputs (`parse.py`), write floorplans (`flpgen.py`) and power traces
+(`powergen.py`), and run many simulations in parallel with resume (`sweep.py`). Also time one
+HotSpot steady run and one transient step, to fill the HotSpot column in §1.4.
+**Precision fix (E):** HotSpot prints temperatures with only 2 decimals (`%.2f`, i.e. 0.01 K
+steps) in `.steady` and `.ttrace`. That rounding would swamp "≪ 0.01 K" errors and add noise to
+every fit. Keep a small patch file (`patches/precision.patch`, `%.2f` → `%.6f` in `dump_temp` in
+`temperature_block.c`, `write_vals` in `hotspot.c`, and the grid dump functions) that both of us apply after building the submodule. As a cross-check, also run
+calibration with 10 W steps instead of 1 W, which makes the rounding relatively 10× smaller.
 
-### Phase P1: Mode R, fixed floorplan
+**P0-5 [CORE] ★ Heterogeneous floorplans.** Write HET-A, HET-B and HOM-16 as `.flp` files.
+Check that the power ranges give realistic densities and peak temperatures (roughly 60–110 °C at
+full load). Swap in the professor's floorplan if one is provided.
 
-Cases: EV6 and the 16-core chip.
+### Phase P1: Calibration stage
 
-**P1-1 [CORE] ★ Steady state: influence matrix (R1).**
-N runs with 1 W in one block each give the matrix R. Test on gcc and 1,000 random power vectors.
-*Expect:* error ≈ 0 (≪ 0.01 K), microseconds per prediction.
-*Output:* error and time table; heat map of R (which blocks heat which).
+Cases: EV6, HET-A, HET-B, HOM-16.
 
-**P1-2 [CORE] ★★ Forecasting future temperature (R0, R2, R3).**
-Fit AR and ARX by least squares on training traces. Forecast 1, 10 and 100 ms ahead on test
-traces and on gcc.
-*Expect:* ARX is close to exact, because HotSpot is linear. AR does well within a workload
-phase but fails when power changes, because it can't see the change coming. Both beat
-persistence beyond the shortest horizon.
-*Output:* **error vs forecast horizon** plot (the main mode R result); time per forecast.
+**P1-1 [CORE] ★★ Calibration by impulse/step runs.**
+For each block, run HotSpot with a 1 W step in that block alone, long enough to reach steady
+state. The final values give **G** (S1). The curves give the time constants τ_i (T1) and the
+exponential weights a_ijm with shared τ_m (T3, fitted by least squares).
+*Output:* calibrated model files; a heat map of G that shows the big/little differences;
+calibration cost (runs, seconds); fit error on the calibration runs themselves.
 
-**P1-3 [OPT] ★★★ Exact and reduced state-space (R4).**
-Write a small C helper that extracts HotSpot's internal R and C matrices, turn them into an
-exact forecaster, then shrink it to a few states. *Output:* error vs model size.
-Only worth it if P1-2's ARX turns out clearly inexact.
+**P1-2 [CORE] ★★ Calibration from one trace.**
+Fit ARX (T2) by least squares on one excitation trace, with the steady gain fixed to G.
+Repeat with traces of 1, 5, 20 and 60 s.
+*Output:* **test error vs calibration trace length.** This shows the cheapest calibration that
+still works and makes the slow heat-sink tail visible.
 
-### Phase P2: Mode D, new floorplans
+**P1-3 [CORE] ★★ Is per-floorplan calibration needed?**
+(a) Uncalibrated S0 vs calibrated S1 on HET-A and HET-B. (b) A "per core type" model: one shared
+self-heating and coupling value for all big cores, and another for all little cores.
+(c) Transfer: use HET-A's coefficients on HET-B where the core types match.
+*Expect:* (a)–(c) are all clearly worse than S1. That justifies the one-time calibration in the
+problem statement and shows that position on the die matters, not only core type.
 
-**P2-1 [CORE] ★★ Dataset.** ~1,500 random floorplans, each with random power, grid 64×64 steady
-state (≈ 30 min in parallel). Plus ~20 HotFloorplan-EV6 layouts (≈ 90 s each). Saved as `.npz`.
+### Phase P2: Predictor, steady state
 
-**P2-2 [CORE] ★★ Power blurring (D1).**
-Take the heat-spread kernel from a 1 W point source in HotSpot, then predict any floorplan by
-convolution (with mirrored edges).
-*Expect:* about 1–2 K in the middle of the die, worse at edges and corners.
+**P2-1 [CORE] ★ Steady predictor (S0, S1, S2).**
+Test on 1,000 random power vectors per floorplan (within the core-type ranges) and on gcc's
+average power for EV6.
+*Expect:* S1 error ≈ 0 (≪ 0.01 K) in a few microseconds; S2 trades a little accuracy for size.
+*Output:* table with the three metrics (error, µs per prediction, bytes) against HotSpot's
+time for the same inputs.
 
-**P2-3 [CORE] ★★ Gradient boosting (D2).** Per-block features, scikit-learn, tuned on the
-validation set.
+### Phase P3: Predictor, transient
 
-**P2-4 [CORE] ★★★ Small CNN (D3a direct, D3b hybrid).**
-A small U-Net (< 1 M parameters, CPU training) trained once on temperature maps and once on the
-error of D1.
-*Expect:* D3b is the most accurate and generalises best, because the physics part carries over
-to new layouts.
-*Output:* results table for D1, D2, D3a, D3b: error, T_peak error, hottest-block accuracy,
-ms per prediction, size.
+**P3-1 [CORE] ★★ Transient simulation (T1, T2, T3).**
+Given the start temperatures and a whole test power trace, predict the whole temperature trace
+(open loop) and compare with HotSpot. Test traces have unseen seeds, plus gcc on EV6.
+*Output:* error over time for each model; the three metrics per model.
 
-### Phase P3: Robustness
+**P3-2 [CORE] ★ Forecasting: error vs horizon.**
+Restart from HotSpot's temperatures at each step and forecast 1, 10, 100 and 1,000 ms ahead,
+using the planned power for those steps. Include persistence (T0).
+*Output:* **error vs forecast horizon** plot. This is the curve DTM depends on in P6.
 
-**P3-1 [CORE] ★ Where does it break?** No new models, only new test data:
-(a) mode D models on HotFloorplan-EV6 (realistic, never seen);
-(b) all models on a different heat sink (`r_convec` changed), mode R and mode D.
-*Expect:* physics-based models (R1, D1, D3b) cope best; purely learned ones degrade most.
+**P3-3 [CORE] ★★ Accuracy vs size vs time.**
+Vary the size of each model: M for T3, the number of lags for T2, k for S2, and r for T4 if done.
+*Output:* **the Pareto plot** (error against model size, coloured by prediction time). This is
+the main figure of the report, because it shows all three required metrics at once.
 
-**P3-2 [OPT] ★★ Few-shot fine-tuning.** Retrain the mode D models with 10 and 50 samples
-from the new heat sink and measure how much accuracy comes back.
+**P3-4 [OPT] ★★★ Exact state-space and balanced truncation (T4).**
+A small C helper, built against `libhotspot.a`, exports HotSpot's internal R and C matrices.
+Turn them into a discrete-time state-space model at Δt, then shrink it with balanced truncation.
+*Output:* the exact reference point and the smallest accurate order r. Only worth it if T2 and
+T3 are clearly off in P3-1.
 
-**P3-3 [OPT] ★★ Leakage.** Turn on temperature-dependent leakage, so HotSpot is no longer
-linear. Measure how much R1 and R3 degrade. Linked to Prof. Kedia's FastCool work.
+### Phase P4: Robustness of the calibrated predictor
 
-### Phase P4: The product and demonstrations
+**P4-1 [CORE] ★ Where does it break?** No new models, only new test inputs: power above the
+calibration range, very bursty workloads, different task mappings (the same tasks moved to other
+cores), a different Δt. *Expect:* S1/T3 are unaffected because the system is linear; T2 may
+degrade on inputs unlike its calibration trace.
 
-**P4-1 [CORE] ★★ Package `ltp`.** Commands `ltp fit`, `ltp predict`, `ltp forecast`;
-models saved as `.npz`; a few tests against stored HotSpot outputs; a short README.
+**P4-2 [OPT] ★ Recalibration after a package change.** Change the heat sink (`r_convec`). Show
+the old coefficients fail and that recalibration costs only the P1-1 runs.
 
-The demos are small scripts that show the predictor reaching the same decisions as HotSpot,
-much faster. They are not full mappers or floorplanners.
+**P4-3 [OPT] ★★ Leakage.** Turn on HotSpot's temperature-dependent leakage, so the system is no
+longer linear. Measure how much S1 and T3 degrade, then add a small fixed-point correction
+(recompute leakage power from the predicted T, predict again). Links to Prof. Kedia's work
+(lit review §6.2).
 
-**P4-2 [CORE] ★ Demo 1: which cores to switch on.** On the 16-core chip, choose which 4 cores
-run a busy task. Score all 1,820 choices with `ltp` (R1) and with HotSpot.
-*Report:* is the coolest choice the same? How long does each take?
+### Phase P5: The product
 
-**P4-3 [CORE] ★ Demo 2: ranking floorplans.** Rank the HotFloorplan-EV6 layouts plus some
-random EV6 layouts by predicted T_peak (D3b) and by HotSpot.
-*Report:* do the rankings agree (Spearman correlation), and is the best layout the same?
+**P5-1 [CORE] ★★ Package `ltp`.** Commands `ltp calibrate`, `ltp steady`, `ltp transient`,
+`ltp forecast`; models saved as `.npz`; `ltp bench`, which prints accuracy, prediction time and
+model size against stored HotSpot outputs; a few tests; a short README.
 
-**P4-4 [OPT] ★★ Demo 3: closed-loop run-time management.** Every 10 ms, use `ltp.forecast`
-(R3) to decide whether to move a task to a cooler core before a temperature limit is reached.
+### Phase P6: Wishlist, proactive DTM
+
+**P6-1 [WISH] ★★ Closed-loop HotSpot.** DTM needs a "chip" whose power can change every interval
+in response to its temperature. HotSpot's transient mode reads a fixed trace, and its outputs keep
+only block temperatures (package node temperatures are lost between runs). So we build a small
+stepper on HotSpot's library interface (`sim-template.c` in the HotSpot source shows how): call
+`compute_temp` once per 1 ms interval with the power the DTM policy chose. The stepper is the
+plant; `ltp` is the predictor in the controller.
+
+**P6-2 [WISH] ★★ Reactive vs proactive DTM on HET-A.** Temperature limit e.g. 85 °C.
+- *Reactive:* throttle (lower DVFS level) a core once it is *already* above the limit.
+- *Proactive:* every 10 ms, use `ltp.forecast` to predict k steps ahead. Throttle, or move the
+  task from a big core to a cool little core, *before* the limit would be crossed.
+- Also compare proactive DTM using a perfect predictor (HotSpot itself) and a poor one
+  (persistence), to show that predictor accuracy is what matters.
+*Metrics:* peak temperature, time above the limit, number of violations, performance lost
+(sum of frequency over time, as a proxy), and predictor time per DTM decision.
+*Expect:* proactive DTM has fewer violations and less performance loss than reactive DTM.
+
+**P6-3 [WISH] ★ Demo: which cores to switch on.** On HET-A or HOM-16, choose which cores run a
+set of busy tasks. Score every choice with `ltp.steady` (S1) and with HotSpot.
+*Report:* is the coolest choice the same, and how long does each take? Easy, and it shows the
+steady predictor being used for a decision.
 
 ---
 
 ## 6. Evaluation rules
 
-- **Metrics:** mean and max absolute error (K), T_peak error, hottest-block accuracy; error vs
-  horizon for forecasts.
-- **Speed:** median over many predictions, single CPU thread. HotSpot is timed the same way.
-- **Baselines always shown:** persistence for mode R, power blurring for mode D.
-- **Test sets are used once**, at the end.
+- **Accuracy:** mean and max absolute error (K) per block, T_peak error, hottest-core accuracy.
+  For transient: error over the whole trace, and error vs forecast horizon.
+- **Prediction time:** median over ≥ 10,000 calls after warm-up, single CPU thread, Python
+  overhead included. HotSpot is timed on the same inputs, with and without process start-up.
+- **Model size:** number of coefficients and bytes in the saved model file (float64; also
+  float32 if accuracy allows).
+- **Calibration cost:** number of HotSpot runs and wall time, reported separately.
+- **Baselines always shown:** S0 (uncalibrated) for steady state, T0 (persistence) for transient.
+- **Calibration and test inputs never overlap.** Test sets are used once, at the end.
 
 ---
 
@@ -264,32 +397,36 @@ random EV6 layouts by predicted T_peak (D3b) and by HotSpot.
 ```
 Lightweight Thermal Predictor/
 ├── hotspot_for_dummies.md, lit_review.md, plan.md, README_SETUP.md
-├── configs/        HotSpot configs (base + different heat sink)
-├── floorplans/     ev6, 16-core, generated (generated ones git-ignored, regenerable by seed)
-├── src/sim/        run_hotspot.py, parse.py, flpgen.py, powergen.py, sweep.py
-├── src/ltp/        the product: models, fit/predict/forecast, command line
+├── configs/        HotSpot configs (base, different heat sink, leakage on)
+├── floorplans/     ev6, het_a, het_b, hom16 (+ given floorplan)
+├── src/sim/        run_hotspot.py, parse.py, flpgen.py, powergen.py, sweep.py, stepper/ (C, P6-1)
+├── src/ltp/        the product: calibrate/, predict/, models, command line, bench
 ├── experiments/    one script per experiment
-└── results/<exp>/  outputs, CSVs, figures
+├── data/           raw HotSpot runs (git-ignored, regenerated from seeds by sweep.py)
+├── results/<exp>/  README.md (findings), small CSVs, figures
+├── results/summary.csv   one row per (model, floorplan, test set): the three metrics
+└── PROGRESS.md     short dated log of what each of us did and found
 ```
 
-Simulations run in WSL Ubuntu for speed; results are copied back. Tools: NumPy/SciPy,
-scikit-learn, PyTorch (CPU).
+Simulations run in WSL Ubuntu for speed; results are copied back. Tools: NumPy/SciPy, matplotlib.
+No deep-learning libraries are needed.
 
 ---
 
 ## 8. Order of work
 
-| Step | Work | Deliverable |
-|---|---|---|
-| 1 | P0 | Trusted ground truth and scripts |
-| 2 | P1-1, P1-2 | Mode R results; start the P2-1 dataset in the background |
-| 3 | P2-2, P2-3, P2-4 | Mode D results table |
-| 4 | P3-1, P4-1 | Robustness table; `ltp` usable from the command line |
-| 5 | P4-2, P4-3; report and slides | Final product, demos, write-up |
+| Step | E works on | K works on | Deliverable |
+|---|---|---|---|
+| 1 | J0, P0-4a, P0-2 | J0, P0-4b, P0-5, P0-3 | Trusted ground truth, heterogeneous floorplans, scripts |
+| 2 | P1-1, P2-1 | S0 kernel, P1-3, start P1-2 | Calibrated steady predictor with all three metrics |
+| 3 | P3-1, P5-1a | P1-2, P3-2 | Calibrated transient predictor; why per-floorplan calibration is needed |
+| 4 | P4-1, P6-1 | P3-3, P5-1b | Pareto plot; robustness table; `ltp` usable from the command line |
+| 5 | P6-3, then [OPT] items | P6-2 | Proactive DTM result |
+| 6 | Report: calibration and steady chapters | Report: transient and DTM chapters | Write-up and slides (both) |
 
-**Minimum viable project** (if time is short): P0, P1-1, P1-2, P2-1, P2-2, P2-3, P3-1, P4-1,
-P4-2. That skips the CNN (the only ★★★ core item) and still gives a complete predictor for
-mode R and a physics-plus-ML baseline for mode D.
+**Minimum viable project** (if time is short): P0, P1-1, P1-3, P2-1, P3-1, P3-2, P3-3, P5-1.
+That gives both stages, steady and transient prediction, and all three metrics. Next in priority
+is P6-2 (the wishlist), then P1-2, then the [OPT] items.
 
 ---
 
@@ -297,17 +434,120 @@ mode R and a physics-plus-ML baseline for mode D.
 
 | Risk | Mitigation |
 |---|---|
-| No real workload power beyond gcc | Synthetic phase traces with realistic densities; ask the professor |
-| HotSpot is not ground truth for real silicon | Say so plainly: we predict *HotSpot*, which is itself within about 1–2 °C of detailed tools |
-| Random floorplans are unrealistic | Realistic test set (HotFloorplan-EV6) |
-| The CNN takes too long to get working | It is the last core model; the minimum viable project doesn't need it |
+| HotSpot rounds output to 0.01 K | Precision patch (P0-4a) and 10 W calibration steps |
+| No professor-given floorplan yet | HET-A/B are designed to be swapped out; calibration is floorplan-agnostic by design |
+| No real workload power beyond gcc | Phase-based synthetic traces per core type with realistic densities; ask the professor |
+| Block model hides hot spots inside big cores | P0-3 measures the size of the effect; add a calibrated per-core offset if it is large |
+| Slow heat-sink time constant makes calibration traces long | Fix the steady gain to G; use step runs (T3), which reach steady state anyway |
+| Closed-loop DTM needs C work against HotSpot | It is the wishlist, last in order; `sim-template.c` is a ready starting point |
+| HotSpot is not real silicon | Say so plainly: we predict *HotSpot*, which is itself within about 1–2 °C of detailed tools |
 
 ---
 
-## 10. Decisions needed from you
+## 10. Decisions needed
 
-1. What exactly did the professor say about the scope? If only one mode is wanted, we drop the
-   other and go deeper on the chosen one.
-2. Is synthetic power acceptable, or is McPAT/CoMeT-generated power expected?
-3. Deadline and team size, to decide which [OPT] items stay.
-4. OK to start P0 now?
+1. Will the professor provide the floorplan(s)? If yes, which ones, and how many core types?
+2. Is synthetic power per core type acceptable, or is McPAT/CoMeT-generated power expected?
+3. How far should the DTM wishlist go: DVFS throttling only, or also big→little task migration?
+4. Deadline and team size, to decide which [OPT] items stay.
+
+---
+
+## 11. Out of scope (moved from the earlier plan)
+
+The earlier plan had a second "design-time" mode: one learned predictor that works on floorplans
+it has never seen, without calibration (gradient boosting on block features, and a small CNN
+trained on ~1,500 random floorplans; lit review §5). The problem statement asks for calibration
+*per given floorplan*, so this is no longer part of the plan. What we keep from it: power blurring
+as the uncalibrated baseline S0, and the 1,500-floorplan generator, if a stretch goal is ever
+wanted.
+
+---
+
+## 12. Division of work: E and K
+
+**The idea of the split.** E owns the **step-response line** (S1, T1, T3, and T4 if time allows)
+and the **HotSpot plumbing** (runner, closed-loop stepper). K owns the **trace-fitting and
+baseline line** (T2, S0), the **forecasting and comparison** experiments, and the **DTM
+policies**. Each of us owns models end to end, from calibration to evaluation, so each of us has
+a full story to present. The work is about equal: both lines add up to roughly 13 stars of CORE
+and WISH work, and each has one or two [OPT] items.
+
+| | E | K |
+|---|---|---|
+| Ground truth | P0-2 linearity, P0-4a runner/parser/sweep | P0-3 block vs grid, P0-4b generators, P0-5 floorplans |
+| Calibration | P1-1 step-response calibration | P1-2 trace calibration (ARX), P1-3 is calibration needed (S0) |
+| Predictor | P2-1 steady, P3-1 transient | P3-2 forecast horizon, P3-3 Pareto plot |
+| Robustness | P4-1; [OPT] P4-3 leakage | [OPT] P4-2 recalibration |
+| Product | P5-1a package and commands | P5-1b `ltp bench` and tests |
+| DTM (wishlist) | P6-1 closed-loop HotSpot, P6-3 demo | P6-2 reactive vs proactive DTM |
+| [OPT] hard item | P3-4 exact state-space (C) | n/a |
+
+**Hand-offs**, and how to avoid waiting on each other:
+
+| Waiting for | From | Until it arrives |
+|---|---|---|
+| `run_hotspot.py`, `sweep.py` (P0-4a) | E → K | K writes floorplans and runs P0-3 with plain HotSpot shell commands |
+| HET-A/B floorplans (P0-5) | K → E | E develops P1-1 on EV6 |
+| T2 model (P1-2) | K → E | P3-1 evaluates whatever models exist; T2 is added when ready |
+| All models (P1, P3-1) | both → K | K builds P3-3's plotting from `results/summary.csv` with early rows |
+| HotSpot stepper (P6-1) | E → K | K writes DTM policies against T3 as a stand-in chip, then swaps in the stepper |
+
+**J0 (first meeting, both).** Fix the interfaces before anyone writes models, so parts plug
+together:
+1. Every model is a Python class with `calibrate(...)`, `steady(P)`, `transient(T0, P_trace)`
+   and `forecast(T_now, P_next, k)`. A model can raise `NotImplementedError` for what it does not
+   support (for example, S0 has no transient).
+2. Model file: `.npz` with a `kind` field, the floorplan name, the block order, Δt and the
+   coefficients.
+3. One HotSpot run on disk is `data/<floorplan>/<run_id>/` with the `.ptrace`, the `.ttrace`
+   and/or `.steady` output, and `meta.json` (config, seed, git commit, HotSpot commit).
+4. `results/summary.csv` columns: `model, floorplan, test_set, mae_K, max_K, peak_err_K,
+   hottest_acc, time_us, size_bytes, calib_runs, calib_s, git_commit, who, date`.
+
+---
+
+## 13. How we work together (two Windows + WSL laptops)
+
+**Yes, GitHub is enough.** Use it as follows.
+
+**Setup, once each:**
+- Clone the repo **inside WSL** (e.g. `~/projects/ltp`), not under `C:\`. File access is much
+  faster there, and line endings stay Linux-style. Open it from VS Code with the *WSL* extension
+  (`code .` from the Ubuntu terminal).
+- Add K as a collaborator on `ethnn-b/lightweight-thermal-predictor`.
+- The repo already forces LF line endings (`.gitattributes`), so CRLF problems with scripts
+  won't come back.
+- Use the same HotSpot: the submodule pins a commit (currently `f18831e`). Both run
+  `git submodule update --init` and `make SUPERLU=1` as in `README_SETUP.md`. Also add a
+  `requirements.txt` with pinned versions and one Python venv each.
+
+**Day to day:**
+- **One branch per experiment**, named `e/p1-1-step-calibration`, `k/p1-2-arx`. Merge into `main`
+  through a pull request that the other person at least skims. This is how each of us learns
+  what the other did, which matters at the final viva.
+- **Commit code, configs and small results; never raw runs.** `data/` is git-ignored. Every run
+  is regenerated by `sweep.py` from fixed seeds, so commit the seed, not the output. If a big
+  dataset must be shared, zip it and attach it to a GitHub Release (or put it on Drive) and note
+  the link in the experiment's README.
+- **Every result records its origin**: `meta.json` and `summary.csv` rows include the git commit,
+  so any number can be traced to the code that produced it.
+
+**Tracking progress:**
+- **GitHub Issues, one per experiment** (P0-2, P1-1, ...), labelled `E` or `K`, `CORE`/`OPT`/`WISH`,
+  and a **GitHub Projects board** with columns *To do / In progress / In review / Done*. A glance
+  at the board shows how far we have got. Milestones = the six steps of §8.
+- **Each experiment ends with `results/<exp>/README.md`**, about half a page: question, command to
+  reproduce, headline numbers, one or two figures, conclusion, open questions. Closing the issue
+  links this README. These pages become the report chapters almost directly.
+- **`results/summary.csv`** collects the three metrics for every model in one table, so neither of
+  us has to ask "what was your error again?".
+- **`PROGRESS.md`**: a dated line or two per work session (`2026-10-20 K: HET-A written, peak
+  97 °C at full load, too hot, lowering big-core max to 6 W`). Cheap, and it makes weekly
+  updates to the professor easy.
+- **Two short syncs a week** (15 min, call or chat): walk the board, unblock hand-offs, agree on
+  what goes to the professor.
+
+**One rule that matters for the results:** *prediction time* depends on the laptop. All
+**final** timing numbers (HotSpot and every model) must be measured on **one** machine, in one
+session, with `ltp bench`. Accuracy and model size can come from either laptop.
