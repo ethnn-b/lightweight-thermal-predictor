@@ -1,5 +1,7 @@
 # Experiments
 
+Beginner-friendly overview of everything below: [`docs/guide.html`](../docs/guide.html) (open in a browser).
+
 One folder per experiment (`<ID>_<name>/`): `run.py` (the experiment), `README.md` (question,
 setup, results, conclusion) and `results/` (CSVs, figures, `log.txt`). IDs follow `plan.md` §5.
 

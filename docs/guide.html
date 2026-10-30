@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thermal Predictor Guide</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: long-form guide. Sticky contents rail on wide screens, single column on phones.
+   Palette: cool die-grey neutrals, a "heat" orange for emphasis, a "coolant" blue for links. */
+:root {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --sunk: #edf1f5;
+  --ink: #15212c;
+  --muted: #566472;
+  --line: #d9e1e8;
+  --heat: #b8430f;
+  --heat-soft: #fbe9df;
+  --cool: #1b5c9e;
+  --cool-soft: #e2eef9;
+  --good: #1d7349;
+  --good-soft: #e1f2e8;
+  --bad: #b12a1f;
+  --bad-soft: #fbe5e2;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151b; --surface: #151d25; --sunk: #1a242e; --ink: #e3eaf0; --muted: #94a3b1;
+    --line: #283541; --heat: #f2894c; --heat-soft: #33221a; --cool: #74aee8; --cool-soft: #17283a;
+    --good: #57c591; --good-soft: #14291f; --bad: #f2776c; --bad-soft: #321c1a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151b; --surface: #151d25; --sunk: #1a242e; --ink: #e3eaf0; --muted: #94a3b1;
+  --line: #283541; --heat: #f2894c; --heat-soft: #33221a; --cool: #74aee8; --cool-soft: #17283a;
+  --good: #57c591; --good-soft: #14291f; --bad: #f2776c; --bad-soft: #321c1a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 16.5px; line-height: 1.62;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: var(--cool); text-underline-offset: 2px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--heat); outline-offset: 2px; border-radius: 3px; }
+code, .mono { font-family: var(--f-mono); font-size: 0.88em; }
+code { background: var(--sunk); padding: 0.08em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+pre { background: var(--sunk); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-family: var(--f-mono); font-size: 13.5px; line-height: 1.5; }
+pre code { background: none; padding: 0; font-size: inherit; }
+b, strong { font-weight: 600; }
+sub, sup { line-height: 0; }
+
+.shell {
+  max-width: 1180px; margin: 0 auto; padding-block: 40px 80px;
+  display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 56px;
+}
+@media (max-width: 900px) { .shell { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 24px 64px; } }
+
+/* contents rail */
+.rail { position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); align-self: start; max-height: calc(100vh - 32px); overflow-y: auto; font-size: 14px; }
+.rail h2 { font-family: var(--f-body); font-size: 12px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.rail ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rail a { display: block; padding: 3px 8px; border-radius: 5px; color: var(--ink); text-decoration: none; }
+.rail a:hover { background: var(--sunk); }
+.rail a.on { background: var(--heat-soft); color: var(--heat); }
+.rail .sub a { padding-left: 20px; color: var(--muted); font-size: 13px; }
+.rail .sub a.on { color: var(--heat); }
+@media (max-width: 900px) {
+  .rail { position: static; max-height: none; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 4px 12px; }
+  .rail details > summary { cursor: pointer; padding: 8px 0; font-weight: 600; }
+  .rail h2 { display: none; }
+  .rail ol { padding-bottom: 10px; }
+}
+@media (min-width: 901px) { .rail details > summary { display: none; } }
+
+main { min-width: 0; }
+.prose { max-width: 720px; }
+
+/* masthead */
+.mast { border-bottom: 1px solid var(--line); padding-bottom: 28px; margin-bottom: 8px; }
+.eyebrow { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; margin: 0 0 10px; }
+h1 { font-family: var(--f-display); font-weight: 750; font-size: clamp(34px, 5.4vw, 54px); line-height: 1.04; letter-spacing: -0.02em; margin: 0 0 16px; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--heat); }
+.lede { font-size: 19px; line-height: 1.55; color: var(--ink); max-width: 680px; margin: 0 0 14px; }
+.meta { color: var(--muted); font-size: 14px; margin: 0; }
+
+section.part { padding-top: 44px; }
+h2 { font-family: var(--f-display); font-weight: 750; font-size: clamp(26px, 3.4vw, 34px); line-height: 1.12; letter-spacing: -0.012em; margin: 0 0 8px; text-wrap: balance; }
+h2 .num { color: var(--heat); font-variant-numeric: tabular-nums; margin-right: 0.3em; }
+h3 { font-family: var(--f-display); font-weight: 600; font-size: 22px; line-height: 1.22; margin: 0; text-wrap: balance; }
+h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 6px; font-weight: 600; }
+p { margin: 0 0 14px; }
+.intro { font-size: 17.5px; color: var(--muted); max-width: 700px; margin-bottom: 22px; }
+ul, ol.plain { padding-left: 1.25em; margin: 0 0 14px; }
+li { margin-bottom: 5px; }
+
+/* two-stage pipeline */
+.pipeline { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); align-items: stretch; margin: 22px 0 26px; }
+.stage { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 14px; }
+.stage .when { font-size: 12px; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600; margin-bottom: 4px; }
+.stage.cal .when { color: var(--cool); }
+.stage.pred .when { color: var(--heat); }
+.stage h3 { font-size: 21px; margin-bottom: 10px; }
+.stage ol { margin: 0; padding-left: 1.2em; font-size: 15px; }
+.stage .cost { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 14px; color: var(--muted); }
+.arrow { display: flex; align-items: center; justify-content: center; color: var(--muted); font-family: var(--f-mono); font-size: 13px; }
+.arrow span { writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 0.06em; }
+@media (max-width: 640px) {
+  .pipeline { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 36px auto; }
+  .arrow span { writing-mode: horizontal-tb; transform: none; }
+}
+
+/* headline numbers */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 8px 0 18px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.tile .big { font-family: var(--f-display); font-weight: 750; font-size: 30px; line-height: 1.05; color: var(--heat); font-variant-numeric: tabular-nums; }
+.tile .what { font-size: 14px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+
+/* concept cards */
+.concepts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 6px 0 10px; }
+.concept { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px 6px; min-width: 0; }
+.concept h3 { font-size: 18.5px; margin-bottom: 8px; }
+.concept p, .concept li { font-size: 15.5px; }
+.analogy { background: var(--cool-soft); border-radius: 8px; padding: 9px 12px; font-size: 15px; margin: 0 0 12px; }
+.analogy b { color: var(--cool); }
+
+/* worked example */
+.worked { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--heat); border-radius: 0 10px 10px 0; padding: 16px 18px 4px; margin: 18px 0; max-width: 720px; }
+.worked h3 { font-size: 18px; margin-bottom: 8px; }
+.eq { font-family: var(--f-mono); font-size: 14.5px; background: var(--sunk); padding: 10px 12px; border-radius: 6px; overflow-x: auto; white-space: pre; margin: 0 0 12px; line-height: 1.6; }
+
+/* tables */
+.tw { overflow-x: auto; margin: 10px 0 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; background: var(--sunk); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.n { text-align: right; white-space: nowrap; font-family: var(--f-mono); font-size: 13.5px; }
+th.n { text-align: right; }
+tr.hl td { background: var(--heat-soft); }
+tr.hl td:first-child { font-weight: 600; }
+.cap { font-size: 13.5px; color: var(--muted); margin: -8px 0 16px; }
+
+/* status chips */
+.chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; white-space: nowrap; letter-spacing: 0.02em; }
+.chip.ok { background: var(--good-soft); color: var(--good); }
+.chip.no { background: var(--bad-soft); color: var(--bad); }
+.chip.mid { background: var(--heat-soft); color: var(--heat); }
+.chip.tag { background: var(--sunk); color: var(--muted); }
+
+/* experiment articles */
+.phase-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.exp { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px 8px; margin: 18px 0 22px; min-width: 0; }
+@media (max-width: 520px) { .exp { padding: 16px 14px 6px; } }
+.exp > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin-bottom: 14px; }
+.exp .id { font-family: var(--f-mono); font-weight: 500; font-size: 14px; color: var(--heat); background: var(--heat-soft); padding: 2px 8px; border-radius: 6px; }
+.qa { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 8px 16px; margin: 0 0 14px; }
+.qa dt { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; padding-top: 3px; }
+.qa dd { margin: 0; }
+@media (max-width: 560px) { .qa { grid-template-columns: minmax(0, 1fr); gap: 2px; } .qa dd { margin-bottom: 10px; } }
+.found ul { margin-bottom: 12px; }
+.takeaway { background: var(--sunk); border-radius: 8px; padding: 10px 14px; font-size: 15.5px; }
+.takeaway b { color: var(--heat); }
+.src { font-size: 13px; color: var(--muted); }
+figure { margin: 14px 0 18px; }
+figure .plate { background: #ffffff; border: 1px solid var(--line); border-radius: 8px; padding: 8px; overflow-x: auto; }
+figure img { display: block; width: 100%; height: auto; max-width: 100%; }
+figcaption { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+
+details.more { margin: 4px 0 14px; }
+details.more > summary { cursor: pointer; color: var(--cool); font-weight: 500; font-size: 15px; }
+
+/* glossary */
+.gloss { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; }
+.gloss dt, .gloss dd { padding: 9px 14px; border-bottom: 1px solid var(--line); margin: 0; }
+.gloss dt { font-weight: 600; background: var(--sunk); }
+.gloss dd { font-size: 15px; }
+.gloss dt:last-of-type, .gloss dd:last-of-type { border-bottom: 0; }
+@media (max-width: 560px) { .gloss { grid-template-columns: minmax(0, 1fr); } .gloss dt { border-bottom: 0; } }
+
+.lessons { counter-reset: l; list-style: none; padding: 0; display: grid; gap: 10px; max-width: 760px; }
+.lessons li { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px 12px 52px; position: relative; margin: 0; }
+.lessons li::before { counter-increment: l; content: counter(l); position: absolute; left: 16px; top: 11px; font-family: var(--f-display); font-weight: 750; font-size: 20px; color: var(--heat); }
+
+footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+
+<div class="shell">
+
+<nav class="rail" aria-label="Contents">
+  <details id="toc" open>
+    <summary>Contents</summary>
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#overview">The project in one page</a></li>
+      <li><a href="#basics">Background for beginners</a></li>
+      <li><a href="#data">The data</a></li>
+      <li><a href="#models">The models</a></li>
+      <li><a href="#tools">Tools we built</a></li>
+      <li><a href="#p0">P0 · Trustworthy reference</a></li>
+      <li class="sub"><a href="#p0-2">P0-2 Linearity</a></li>
+      <li class="sub"><a href="#p0-3">P0-3 Block vs grid</a></li>
+      <li class="sub"><a href="#p0-4">P0-4 Infrastructure</a></li>
+      <li class="sub"><a href="#p0-5">P0-5 TA floorplans</a></li>
+      <li class="sub"><a href="#p0-5d">P0-5d More floorplans</a></li>
+      <li><a href="#p1">P1 · Calibration</a></li>
+      <li class="sub"><a href="#p1-1">P1-1 Step calibration</a></li>
+      <li class="sub"><a href="#p1-2">P1-2 One-trace calibration</a></li>
+      <li class="sub"><a href="#p1-3">P1-3 Is it needed?</a></li>
+      <li><a href="#p2">P2 · Steady predictor</a></li>
+      <li class="sub"><a href="#p2-1">P2-1 S0, S1, S2</a></li>
+      <li class="sub"><a href="#p2-2">P2-2 Layout effects</a></li>
+      <li class="sub"><a href="#p2-3">P2-3 Hot spots</a></li>
+      <li><a href="#p3">P3 · Transient predictor</a></li>
+      <li class="sub"><a href="#p3-1">P3-1 Open loop</a></li>
+      <li class="sub"><a href="#p3-2">P3-2 Forecasting</a></li>
+      <li class="sub"><a href="#p3-3">P3-3 Trade-offs</a></li>
+      <li class="sub"><a href="#p3-4">P3-4 Exact model (T4)</a></li>
+      <li><a href="#p4">P4 · Robustness</a></li>
+      <li class="sub"><a href="#p4-1">P4-1 Unusual inputs</a></li>
+      <li class="sub"><a href="#p4-2">P4-2 Package change</a></li>
+      <li class="sub"><a href="#p4-3">P4-3 Leakage</a></li>
+      <li><a href="#p5">P5 · The product</a></li>
+      <li><a href="#p6">P6 · Proactive DTM</a></li>
+      <li class="sub"><a href="#p6-1">P6-1 Closed loop</a></li>
+      <li class="sub"><a href="#p6-2">P6-2 DTM</a></li>
+      <li class="sub"><a href="#p6-3">P6-3 Core placement</a></li>
+      <li><a href="#scorecard">Scorecard vs targets</a></li>
+      <li><a href="#lessons">Ten lessons</a></li>
+      <li><a href="#open">Open items</a></li>
+      <li><a href="#glossary">Glossary</a></li>
+      <li><a href="#repo">Where things are</a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+
+<header class="mast" id="top">
+  <p class="eyebrow">Course project · Thermal management · Master guide</p>
+  <h1>A lightweight temperature predictor: <em>calibrate once, predict fast</em></h1>
+  <p class="lede">This guide explains the whole project in plain language. It covers the problem, the background ideas, the data, the models, and every experiment from P0 to P6, with what each one found. You don't need to know thermal simulation to follow it.</p>
+  <p class="meta">Branch <code>e/p0-p1</code> · results as of 30–31 Oct 2026 · built from every <code>experiments/*/README.md</code>, <code>plan.md</code> and <code>dataset.md</code></p>
+</header>
+
+<!-- ============================================================ OVERVIEW -->
+<section class="part" id="overview">
+  <h2>The project in one page</h2>
+  <div class="prose">
+    <p><b>The problem.</b> A modern chip has several processor cores. When they work hard, they get hot, and if they get too hot they slow down, wear out or fail. The chip's management software (called <b>DTM</b>, dynamic thermal management) needs to know how hot each core is, and ideally how hot it <i>will be</i> a few milliseconds from now, so it can slow a core down before it overheats.</p>
+    <p>A detailed simulator called <b>HotSpot</b> can compute temperatures very accurately, but it is far too slow to run inside the chip's management software. A single steady-state answer takes about a quarter of a second, and the software needs an answer every millisecond.</p>
+    <p><b>The assignment</b> (the problem statement we were given):</p>
+  </div>
+  <div class="worked" style="border-left-color: var(--cool);">
+    <p style="margin-bottom:8px">“Develop a lightweight temperature predictor. Two stages. <b>Calibration</b> (one-time per floorplan): tune predictor coefficients as per given floorplan for heterogeneous cores. <b>Predictor</b>: predict the temperature (steady state or transient) for a given power input. <b>Metrics:</b> predictor accuracy, prediction time, model size. <b>Wishlist:</b> show the effectiveness of the predictor for proactive DTM.”</p>
+  </div>
+
+  <div class="pipeline" role="group" aria-label="The two stages">
+    <div class="stage cal">
+      <div class="when">Once per floorplan · slow is fine</div>
+      <h3>1 · Calibration</h3>
+      <ol>
+        <li>Take a chip layout (the <i>floorplan</i>).</li>
+        <li>Run HotSpot 24 times with simple, planned power patterns (1 W in one core at a time).</li>
+        <li>Fit a few numbers per pair of cores.</li>
+        <li>Save them in a small file, <code>model.npz</code>.</li>
+      </ol>
+      <div class="cost">Cost: 8 runs (4 s) for steady state; 24 runs (about 5 CPU-minutes) for everything.</div>
+    </div>
+    <div class="arrow" aria-hidden="true"><span>coefficients →</span></div>
+    <div class="stage pred">
+      <div class="when">Many times · must be tiny and fast</div>
+      <h3>2 · Prediction</h3>
+      <ol>
+        <li>Load the model file (8 kB).</li>
+        <li>Give it the power of each core (watts).</li>
+        <li>Get every core's temperature, now (steady) or over time (transient).</li>
+        <li>No HotSpot needed, only a few multiplications.</li>
+      </ol>
+      <div class="cost">Cost: about 3 µs per answer, 1,800× to 90,000× faster than HotSpot.</div>
+    </div>
+  </div>
+
+  <h3 style="margin-bottom:10px">The answer, in five numbers</h3>
+  <div class="tiles">
+    <div class="tile"><div class="big">0.00003 K</div><div class="what">worst error of the steady predictor (S1) against HotSpot. It is exact up to HotSpot's printed digits.</div></div>
+    <div class="tile"><div class="big">0.06–0.09 K</div><div class="what">average error of the transient predictor (T3, M = 4) over whole power traces; 0.3 K at worst.</div></div>
+    <div class="tile"><div class="big">3 µs</div><div class="what">time per prediction, against 0.24 s (steady) or 5.5 ms per step (transient) for HotSpot.</div></div>
+    <div class="tile"><div class="big">8 kB</div><div class="what">the complete model file for one floorplan, steady + transient + hot spots.</div></div>
+    <div class="tile"><div class="big">60–130×</div><div class="what">less time over the temperature limit with proactive DTM using the predictor, compared with reactive DTM.</div></div>
+  </div>
+  <div class="prose">
+    <p>And one finding that justifies the whole “calibrate per floorplan” idea: <b>every method that skips calibration is 0.5–2.7 K off on average and up to 12 K in the worst case</b>, even when the cores and power are identical and only the layout changes (P1-3).</p>
+  </div>
+</section>
+
+<!-- ============================================================ BASICS -->
+<section class="part" id="basics">
+  <h2>Background for beginners</h2>
+  <p class="intro">These are the ideas every experiment builds on. Each card gives the idea, an everyday comparison, and why it matters here.</p>
+
+  <div class="concepts">
+    <div class="concept">
+      <h3>Floorplan</h3>
+      <p>A map of where each part sits on the silicon die: rectangles with names, sizes and positions, in millimetres. Ours have 2 <b>big</b> cores (4×4 mm), 6 <b>little</b> cores (2×2 mm), and “FILL” blocks: empty silicon with no power (white space).</p>
+      <p class="analogy"><b>Like</b> the floor plan of a house: which room is where, and how big.</p>
+    </div>
+    <div class="concept">
+      <h3>Heterogeneous cores</h3>
+      <p>Cores that are not all the same. Big cores are large and draw 10–20 W. Little cores are small and draw 5–10 W. A little core packs more watts into each square millimetre, so it often runs <i>hotter</i> even though it uses less power.</p>
+      <p class="analogy"><b>Like</b> a large radiator versus a small but very hot hair-dryer.</p>
+    </div>
+    <div class="concept">
+      <h3>Power and temperature units</h3>
+      <p>Power is in watts (W). Temperatures are in °C or kelvin (K). A <i>difference</i> of 1 K is the same as 1 °C, so an error of “0.3 K” just means 0.3 degrees. The chip sits in surroundings at 45 °C (the <b>ambient</b>); a core's <b>rise</b> is how far above 45 °C it is.</p>
+    </div>
+    <div class="concept">
+      <h3>HotSpot</h3>
+      <p>A widely used research simulator. It turns the chip and its cooling (heat spreader, heat sink, fan) into a huge network of thermal resistances and capacitances, and solves it. It is our <b>reference</b>, the “truth” we calibrate from and compare against.</p>
+      <p class="analogy"><b>Like</b> a detailed weather model: accurate but slow.</p>
+    </div>
+    <div class="concept">
+      <h3>Block model vs grid model</h3>
+      <p>HotSpot can treat each block as one lump (<b>block model</b>, fast but rough) or cut the die into a 64×64 grid of small cells (<b>grid model</b>, slower but detailed). The TA uses the grid model, so we do too. A core's temperature is the average of its grid cells.</p>
+    </div>
+    <div class="concept">
+      <h3>Steady state vs transient</h3>
+      <p><b>Steady state</b>: the temperature after the power has been constant for a very long time, with nothing changing any more. <b>Transient</b>: the temperature as it changes over time, millisecond by millisecond, while power changes.</p>
+      <p class="analogy"><b>Like</b> the final temperature of a pan on a fixed flame (steady) versus watching it heat up (transient).</p>
+    </div>
+    <div class="concept">
+      <h3>Linearity and superposition</h3>
+      <p>HotSpot (without leakage) is <b>linear</b>: double all the power and every rise doubles; run two cores' power separately and add the rises, and you get the same as running them together. We checked this to 0.000001 K (P0-2). It is the reason a simple predictor can be exact.</p>
+      <p class="analogy"><b>Like</b> two heaters in a room: each adds its own warmth, and the warmth adds up.</p>
+    </div>
+    <div class="concept">
+      <h3>The influence matrix G</h3>
+      <p>Because of linearity, steady temperature is <code>T = T_amb + G·P</code>. G is a table: entry G<sub>ij</sub> says how many kelvin core <i>i</i> warms up per watt in core <i>j</i>. G<sub>ii</sub> is <b>self-heating</b>, G<sub>ij</sub> is <b>coupling</b>. For 8 cores, G is 8×8 = 64 numbers. See the worked example below.</p>
+    </div>
+    <div class="concept">
+      <h3>Time constants</h3>
+      <p>Heat moves at different speeds through different parts. The silicon under a core reacts in about 1 ms; the heat sink takes about 8 seconds. A <b>time constant</b> τ is how long one of these parts takes to get about two-thirds of the way to its final temperature.</p>
+      <p class="analogy"><b>Like</b> a cup of tea: the cup's surface warms almost instantly, the saucer slowly, the table very slowly.</p>
+    </div>
+    <div class="concept">
+      <h3>Calibration</h3>
+      <p>Finding the predictor's numbers for one specific floorplan by running HotSpot a few times with simple inputs (1 W in one core at a time) and reading off how every core responds. It is done once per floorplan; afterwards HotSpot is not needed.</p>
+    </div>
+    <div class="concept">
+      <h3>DTM, reactive and proactive</h3>
+      <p>Dynamic thermal management slows cores down (DVFS: lower frequency and voltage) when they get too hot. <b>Reactive</b> DTM acts after a sensor reads too hot. <b>Proactive</b> DTM uses a forecast to act <i>before</i> the limit is crossed.</p>
+      <p class="analogy"><b>Like</b> braking when you hit the car in front (reactive) versus easing off when you see the brake lights (proactive).</p>
+    </div>
+    <div class="concept">
+      <h3>The three metrics</h3>
+      <ul>
+        <li><b>Accuracy</b>: how far the predictor is from HotSpot, in K (mean error, worst error, error in the peak, and whether it picks the right hottest core).</li>
+        <li><b>Prediction time</b>: microseconds per answer (µs; 1 µs = one millionth of a second).</li>
+        <li><b>Model size</b>: bytes of numbers stored (1 kB = 1,000 bytes).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="worked">
+    <h3>Worked example: what G does</h3>
+    <p>Two cores, a little one (core 1) and a big one (core 2). Illustrative values in the range we measured: the little core self-heats 1.5 K/W, the big one 0.6 K/W, and each warms the other by 0.3 K/W.</p>
+<div class="eq">G = | 1.5  0.3 |      P = | 8  W |  (little)
+    | 0.3  0.6 |          | 20 W |  (big)
+
+rise of core 1 = 1.5·8 + 0.3·20 = 12 + 6   = 18.0 K  →  45 + 18.0 = 63.0 °C
+rise of core 2 = 0.3·8 + 0.6·20 = 2.4 + 12 = 14.4 K  →  45 + 14.4 = 59.4 °C</div>
+    <p>Notice that the little core ends up hotter with less than half the power. That is the heterogeneity effect we see on every TA floorplan. Calibration simply measures these numbers: put 1 W in core 1 only, read the rise of every core, and you have the first column of G. Repeat for each core.</p>
+  </div>
+
+  <div class="worked" style="border-left-color: var(--cool);">
+    <h3>Worked example: what the transient model T3 does</h3>
+    <p>When you switch on 1 W in a core, its temperature does not jump; it climbs in several stages: a fast part (silicon, about 1 ms), middle parts (tens of milliseconds, then the spreader at about 0.5 s) and a slow part (the heat sink, about 8 s). T3 writes this climb as a sum of M rising curves:</p>
+<div class="eq">rise_ij(t) = a_ij1·(1 − e^(−t/τ1)) + a_ij2·(1 − e^(−t/τ2)) + … + a_ijM·(1 − e^(−t/τM))
+
+where  a_ij1 + a_ij2 + … + a_ijM = G_ij   (so the final value is exactly right)</div>
+    <p>The time constants τ are shared by all cores (they belong to the chip and its package), and only the weights a differ per pair of cores. For M = 4 that is 4 numbers per pair, about 4 kB in total. The predictor keeps M running sums and updates them every step, which takes about 3 µs.</p>
+  </div>
+</section>
+
+<!-- ============================================================ DATA -->
+<section class="part" id="data">
+  <h2>The data</h2>
+  <p class="intro">The TAs gave us a sample dataset of heterogeneous floorplans. We use it as the main set, add a few of our own for special tests, and generated 40 more in the same styles.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Set</th><th>What it is</th><th class="n">Floorplans</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>TA 2D floorplans</td><td>2 big (4×4 mm) + 6 little (2×2 mm) cores each, FILL blocks for white space, TA layer stack (silicon 150 µm, thermal paste 20 µm), in 4 styles</td><td class="n">23</td><td>Everything: the main set</td></tr>
+      <tr><td>Style_1</td><td>Big cores together, little cores in a cluster; dies 9×10 to 16×8 mm</td><td class="n">3</td><td></td></tr>
+      <tr><td>Style_2</td><td>Tightly packed, small dies (62–93 % covered by cores)</td><td class="n">5</td><td></td></tr>
+      <tr><td>Style_3</td><td>At least 1 mm between cores, long or larger dies</td><td class="n">5</td><td></td></tr>
+      <tr><td>Style_4</td><td>Same 14×14 mm die, cores scattered (29 % covered)</td><td class="n">10</td><td>Clean “only the positions differ” test (P1-3)</td></tr>
+      <tr><td>Main subset</td><td>One per style: <code>s1_fp001</code>, <code>s2_fp004</code>, <code>s3_fp002</code>, <code>s4_fp001</code></td><td class="n">4</td><td>Expensive experiments (long traces, DTM)</td></tr>
+      <tr><td>HET-A</td><td>Our own heterogeneous layout from <code>flpgen.py</code> (with L2 and NoC blocks)</td><td class="n">1</td><td>A 24th, differently built floorplan</td></tr>
+      <tr><td>HOM-16, HOM-64</td><td>Grids of 16 and 64 identical cores</td><td class="n">2</td><td>Model compression for many cores (P2-1)</td></tr>
+      <tr><td>EV6</td><td>HotSpot's classic Alpha processor example (30 blocks) with a real <code>gcc</code> power trace</td><td class="n">1</td><td>A real workload (P3-1)</td></tr>
+      <tr><td>Generated</td><td>Our generator <code>src/sim/tagen.py</code>, 10 per TA style</td><td class="n">40</td><td>Extra training data (P0-5d, P1-3)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="prose">
+    <h4>Power we apply</h4>
+    <ul>
+      <li><b>Nominal</b> (the TA's values): big 20 W, little 8 W, 88 W per chip. <b>Max</b>: big 20 W, little 10 W.</li>
+      <li><b>Random steady vectors</b>: each core uniform in its range (big 10–20 W, little 5–10 W).</li>
+      <li><b>Phase traces</b> for transients: every core switches between 4 levels in its range, with phases lasting 1 ms to 2 s, all cores independently.</li>
+      <li>Power is always assigned <b>by core size</b>, never copied from the TA's power files (see the problem below).</li>
+    </ul>
+    <h4>Reference settings</h4>
+    <p>HotSpot grid model 64×64, the TA layer stack, HotSpot's “example1” package (heat spreader 30 mm, heat sink 60 mm, convection resistance 0.1 K/W), ambient 45 °C, time step Δt = 1 ms.</p>
+    <h4>Three problems found in the TA data</h4>
+    <ul>
+      <li><b>Style_2 power files put big-core power on little cores</b> (fp_001, 002, 003, 005): 20 W on a 2×2 mm core. Used as given, the chip reaches about 100 °C, 23 °C hotter than with power assigned by size. To be reported to the TA.</li>
+      <li><b><code>s3_fp004</code> is <code>s3_fp005</code> rotated by 90°</b>, so they give identical temperatures and are not independent samples.</li>
+      <li>The TA's transient power files are constant, so they do not exercise the transient model. We generate our own traces.</li>
+    </ul>
+    <p class="src">More detail, plus the two papers the TAs pointed to (IC-ThermBench and ATPlace2.5D), is in <code>dataset.md</code>.</p>
+  </div>
+</section>
+
+<!-- ============================================================ MODELS -->
+<section class="part" id="models">
+  <h2>The models</h2>
+  <p class="intro">Names start with S (steady state) or T (transient). Lower numbers are simpler. The bold rows are what we ship.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Model</th><th>In plain words</th><th>Calibrated?</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td><b>S0</b> power blurring</td><td>One generic “heat spreads out like this” kernel, applied to any floorplan</td><td>No</td><td>Baseline only: 0.8 K mean, 5 K worst</td></tr>
+      <tr class="hl"><td>S1 influence matrix</td><td><code>T = T_amb + G·P</code>, with G measured on this floorplan</td><td>Yes, 8 runs</td><td>Exact; the steady model to ship</td></tr>
+      <tr><td><b>S1-hot-max</b></td><td>Same idea for a few candidate grid cells per core, take the hottest</td><td>Same runs</td><td>Predicts the hot spot inside each core; ship it too</td></tr>
+      <tr><td><b>S2</b> compressed G</td><td>Each core keeps its k nearest neighbours; the rest share one “package” term</td><td>Yes</td><td>Only useful for many cores (64 cores: 5.8× smaller)</td></tr>
+      <tr><td><b>S2-lr</b> low rank</td><td>Squeezes G into a few patterns</td><td>Yes</td><td>Does not suit heat flow; poor</td></tr>
+      <tr><td><b>T0</b> persistence</td><td>“The temperature stays as it is.” No model at all</td><td>No</td><td>Up to 8 K wrong 10 ms ahead</td></tr>
+      <tr><td><b>T1</b> first-order lag</td><td>Each core approaches its steady value with one speed</td><td>Yes</td><td>Too simple: 14 K wrong</td></tr>
+      <tr><td><b>T2</b> ARX</td><td>Next temperature = mix of the last few temperatures and powers, fitted to one long trace</td><td>Yes, 1 trace</td><td>Works (0.2 K mean); best for 1-step forecasts from sensors</td></tr>
+      <tr class="hl"><td>T3 sum of exponentials</td><td>M shared time constants, weights per core pair (see the worked example)</td><td>Yes, 24 runs</td><td>The transient model to ship (M = 4)</td></tr>
+      <tr><td><b>T4</b> reduced state space</td><td>HotSpot's own 16,396-node network shrunk to r states</td><td>Needs patched HotSpot</td><td>Exact reference; 32 states → 0.047 K</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ TOOLS -->
+<section class="part" id="tools">
+  <h2>Tools we built</h2>
+  <div class="prose">
+    <p>Before any experiment, we had to make HotSpot precise, fast and reliable enough. Three changes to HotSpot's C code, all applied by one script (<code>setup/build_hotspot_ltp.sh</code>) to a copy of HotSpot, so the original stays untouched:</p>
+    <ol class="plain">
+      <li><b>Precision.</b> HotSpot prints 2 decimals (0.01 K). Our errors are far smaller, so we print 6 decimals.</li>
+      <li><b>Speed.</b> In each time step HotSpot solved the same big equation from scratch (“factorising” the matrix). We factorise once and reuse it. Same output, byte for byte, but <b>29× faster</b>: a 60 s trace now takes about 5 minutes instead of 4 hours.</li>
+      <li><b>A memory leak.</b> HotSpot's grid transient never freed one vector per step. A 60 s trace needed about 8 GB and was killed. Fixed with one line; memory is now flat at 115 MB and the output is unchanged.</li>
+    </ol>
+    <p>On top of that, a small Python toolkit: <code>src/sim/</code> runs HotSpot, reads its files, generates power, runs jobs in parallel and caches every run; <code>src/ltp/</code> is the predictor itself. Every experiment has its own folder with <code>run.py</code>, a README and a <code>results/</code> folder.</p>
+  </div>
+</section>
+
+<!-- ============================================================ P0 -->
+<section class="part" id="p0">
+  <div class="phase-head"><h2><span class="num">P0</span>A reference we can trust</h2></div>
+  <p class="intro">Before building a predictor, check the reference: does HotSpot behave as the theory says, which settings matter, and how fast is it?</p>
+
+  <article class="exp" id="p0-2">
+    <header><span class="id">P0-2</span><h3>Is HotSpot linear?</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>If we double the power, does every temperature rise exactly double? If two groups of cores are run separately, do their rises add up?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>On the 4 main floorplans: power scaled ×0.5, ×2, ×3; zero power; big cores and little cores run separately and added; a 1 W and a 10 W step. Same checks on a 0.5 s transient trace.</dd></div>
+    </dl>
+    <div class="found"><h4>What we found</h4><ul>
+      <li>Linear and additive <b>to the last printed digit</b>: differences of 0.0000005–0.000003 K, which is just rounding.</li>
+      <li>Zero power gives exactly 45 °C, so the formula <code>T = T_amb + G·P</code> needs no extra offset.</li>
+      <li>A 1 W calibration step is as good as a 10 W one.</li>
+      <li>The transient is linear too, so transient models can also be exact in principle.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P0-2_linearity/results/transient_linearity.png" alt="One core's temperature over a 0.5 s trace, and the tiny deviation from perfect linearity." loading="lazy"></div><figcaption>One core's trace and the deviation from perfect linearity (around 10⁻⁶ K).</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> HotSpot is a linear system, so a matrix-based predictor can match it exactly; any error later is a modelling choice, not physics.</p>
+    <p class="src">Folder: <code>experiments/P0-2_linearity/</code></p>
+  </article>
+
+  <article class="exp" id="p0-3">
+    <header><span class="id">P0-3</span><h3>Block vs grid model, grid size, hot spots</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>How different is the fast block model from the grid model? Is 64×64 fine enough? How much hotter is the hottest point inside a core than the core's average?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Ran the 4 main floorplans at nominal power with the block model and the grid model at 32, 64 and 128 cells per side.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Floorplan</th><th class="n">Block vs grid</th><th class="n">Grid 64 vs 128 (true average)</th><th class="n">Hottest cell − core average</th></tr></thead>
+      <tbody>
+        <tr><td>s1_fp001</td><td class="n">1.89 K</td><td class="n">0.03 K</td><td class="n">3.33 K</td></tr>
+        <tr><td>s2_fp004</td><td class="n">1.14 K</td><td class="n">0.01 K</td><td class="n">3.99 K</td></tr>
+        <tr><td>s3_fp002</td><td class="n">3.72 K</td><td class="n">0.13 K</td><td class="n">3.95 K</td></tr>
+        <tr><td>s4_fp001</td><td class="n">5.36 K</td><td class="n">0.15 K</td><td class="n">3.79 K</td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li>The <b>block model is 1–5 K off</b>, worst on large sparse dies. We use the grid model, as the TA does.</li>
+      <li><b>64×64 is fine enough</b>: going to 128×128 changes true averages by at most 0.15 K.</li>
+      <li><b>Hot spots are real</b>: the hottest cell is 3.3–4 K above the core average. A DTM limit on core averages lets the real peak run about 4 K hotter. (P2-3 fixes this.)</li>
+      <li><b>Little cores run hotter</b> than big ones (74–76 °C against 68–70 °C) because their power density is higher.</li>
+      <li>HotSpot's own block average counts partly covered edge cells fully, which can shift its number by up to about 1 K. This does not affect our predictor, which predicts HotSpot's numbers exactly as HotSpot reports them.</li>
+      <li>One grid steady run takes 0.27 s; block model 1.4 ms; 128×128 takes 2.6 s.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P0-3_block_vs_grid/results/maps_128.png" alt="Temperature maps at 128 by 128 cells for the four main floorplans; heat concentrates in the middle of each core." loading="lazy"></div><figcaption>128×128 temperature maps: heat concentrates in the middle of each core.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> use the 64×64 grid model as the reference, and remember that a core's average hides a peak about 4 K higher.</p>
+    <p class="src">Folder: <code>experiments/P0-3_block_vs_grid/</code></p>
+  </article>
+
+  <article class="exp" id="p0-4">
+    <header><span class="id">P0-4</span><h3>Infrastructure and HotSpot's speed</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Can we run HotSpot reliably, precisely and fast enough? How long does HotSpot itself take? That is what the predictor is compared against.</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Built the patched HotSpot (see <a href="#tools">Tools</a>), checked that its output is identical, timed it on all 23 floorplans, and measured how many runs can go in parallel.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Measurement</th><th class="n">Result</th></tr></thead>
+      <tbody>
+        <tr><td>Patched vs original output (300 steps)</td><td class="n">identical, byte for byte</td></tr>
+        <tr><td>Transient speed-up from the patch</td><td class="n">29× (70.1 s → 2.4 s)</td></tr>
+        <tr class="hl"><td>One steady run, grid 64×64</td><td class="n">0.24 s</td></tr>
+        <tr class="hl"><td>One transient step of 1 ms</td><td class="n">≈ 5.5 ms</td></tr>
+        <tr><td>Original HotSpot, per transient step</td><td class="n">≈ 230 ms</td></tr>
+        <tr><td>Best number of parallel runs</td><td class="n">8 (10.5 runs/s)</td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li>The pipeline is reproducible: every run saves its command, config and git commit.</li>
+      <li>More than 8 parallel runs does not help, because HotSpot is limited by memory speed, not by CPU cores.</li>
+    </ul></div>
+    <p class="takeaway"><b>In one line:</b> HotSpot needs 0.24 s per steady answer and 5.5 ms per transient step; these are the numbers to beat.</p>
+    <p class="src">Folder: <code>experiments/P0-4_infrastructure/</code></p>
+  </article>
+
+  <article class="exp" id="p0-5">
+    <header><span class="id">P0-5</span><h3>The TA floorplans</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Can we load and run all 23 TA floorplans? Are the temperatures plausible? Which cores get hottest?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Loaded every TA folder unchanged and ran each floorplan at nominal and maximum power.</dd></div>
+    </dl>
+    <div class="found"><h4>What we found</h4><ul>
+      <li>All 23 load and run. Hottest core: <b>69–77 °C at nominal</b>, 73–83 °C at maximum power. Plausible, so no package change is needed.</li>
+      <li><b>A little core is the hottest core on every single floorplan</b> (1.6× the power density of a big core). So “move the task to a little core” is not automatically cooler.</li>
+      <li><b>Packing matters more than die size alone</b>: sparse Style_4 is coolest, but Style_1 fp_003, with lots of white space and clustered little cores, is as hot as the dense Style_2 chips.</li>
+      <li>Confirmed the Style_2 power-file problem (about 100 °C) and the s3_fp004/005 rotation (see <a href="#data">The data</a>).</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P0-5_ta_floorplans/results/peak_vs_density.png" alt="Peak temperature against how densely the die is covered by cores, and big vs little core temperatures." loading="lazy"></div><figcaption>Denser floorplans run hotter; little cores run hotter than big cores.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> the TA data works with our setup, and little cores are the thermal bottleneck.</p>
+    <p class="src">Folder: <code>experiments/P0-5_ta_floorplans/</code></p>
+  </article>
+
+  <article class="exp" id="p0-5d">
+    <header><span class="id">P0-5d</span><h3>Generating more floorplans in the TA styles</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>The TA asked us to expand the dataset. Can we generate floorplans that behave like the TA's?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Wrote <code>src/sim/tagen.py</code>: same cores and files, rules that imitate each style. 10 per style, 40 in total, all checked to cover the die exactly.</dd></div>
+    </dl>
+    <div class="found"><h4>What we found</h4><ul>
+      <li>They run unchanged and fall in the same temperature range as the TA's floorplans of the same style, slightly cooler on average (random placement clusters little cores less often).</li>
+      <li>Used as extra training data in P1-3. They did <i>not</i> close the gap to calibration.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P0-5d_generated_floorplans/results/examples.png" alt="Examples of generated floorplans in each of the four TA styles." loading="lazy"></div><figcaption>Examples of generated floorplans, one row per style.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> more floorplans are easy to make, but (as P1-3 shows) more data does not replace calibration.</p>
+    <p class="src">Folder: <code>experiments/P0-5d_generated_floorplans/</code> · floorplans in <code>data/generated/</code></p>
+  </article>
+</section>
+
+<!-- ============================================================ P1 -->
+<section class="part" id="p1">
+  <div class="phase-head"><h2><span class="num">P1</span>Calibration</h2></div>
+  <p class="intro">Stage one of the assignment: get the predictor's numbers for one floorplan from a few HotSpot runs. How few? And is it needed at all?</p>
+
+  <article class="exp" id="p1-1">
+    <header><span class="id">P1-1</span><h3>Calibration with planned step runs</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Can a few planned HotSpot runs give all the predictor's coefficients? What does it cost?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>For each of 24 floorplans (23 TA + HET-A), with N = 8 cores: <b>8 steady runs</b> (1 W in one core) → G; <b>8 short step runs</b> (1 ms steps for 2 s) → the fast part; <b>8 long step runs</b> (20 ms steps for 100 s) → the slow heat-sink part. Then fitted T1 and T3 with M = 1 to 6 time constants.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Model</th><th class="n">Worst fit error</th><th class="n">Size</th></tr></thead>
+      <tbody>
+        <tr><td>T1 (one time constant)</td><td class="n">14.1 K</td><td class="n">1.0 kB</td></tr>
+        <tr><td>T3, M = 2</td><td class="n">2.82 K</td><td class="n">1.9 kB</td></tr>
+        <tr><td>T3, M = 3</td><td class="n">1.04 K</td><td class="n">2.8 kB</td></tr>
+        <tr class="hl"><td>T3, M = 4</td><td class="n">0.46 K</td><td class="n">3.7 kB</td></tr>
+        <tr><td>T3, M = 6</td><td class="n">0.12 K</td><td class="n">5.6 kB</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Fit error = worst error along a step from a cold chip to 88 W, over 1 ms to 100 s, worst of 24 floorplans.</p>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>Steady calibration needs only 8 runs (4 s of HotSpot)</b> and is exact. All 24 runs take about 5 CPU-minutes per floorplan.</li>
+      <li>The response spans <b>very different speeds</b>: time constants of about 1 ms, 3 ms, 26 ms, 89 ms, 0.56 s and 8.1 s. About 70 % of a core's self-heating appears within 10 ms.</li>
+      <li><b>T1 cannot follow this</b>: one speed is either too slow early or too fast later. <b>T3 converges quickly</b>: 0.46 K worst at M = 4.</li>
+      <li>G shows the heterogeneity clearly: a <b>little core heats itself 2.4× as much per watt</b> as a big core (1.5 vs 0.62 K/W). Cores on the die edge heat themselves more (up to 1.85 K/W), because heat cannot spread outwards.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P1-1_step_calibration/results/step_response_fits.png" alt="Step responses on a log time axis, with T1 and T3 fits." loading="lazy"></div><figcaption>Step responses from HotSpot with the T1 and T3 fits, on a log time axis from 1 ms to 100 s.</figcaption></figure>
+    <figure><div class="plate"><img src="../experiments/P1-1_step_calibration/results/G_heatmaps.png" alt="Heat maps of the influence matrix G for several floorplans." loading="lazy"></div><figcaption>G for several floorplans: the bright diagonal of little cores is self-heating.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> 24 planned runs per floorplan give an exact steady model and an accurate transient model; position on the die matters, not only core type.</p>
+    <p class="src">Folder: <code>experiments/P1-1_step_calibration/</code> · 192 calibrated model files in <code>results/models/</code></p>
+  </article>
+
+  <article class="exp" id="p1-2">
+    <header><span class="id">P1-2</span><h3>Calibration from one long trace (ARX)</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Instead of planned steps, can one long HotSpot recording with lots of power changes calibrate the transient model? How long must it be?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Recorded a 60 s trace per main floorplan, fitted ARX models (T2) on the first 1, 5, 20 and 60 s, and tested them on unseen 10 s traces, open loop (the model only sees power).</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Model</th><th class="n">1 s trace</th><th class="n">5 s</th><th class="n">20 s</th><th class="n">60 s</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>ARX (2,2), all blocks</td><td class="n">9.5 / 79 K</td><td class="n">0.31 / 1.2 K</td><td class="n">0.21 / 1.03 K</td><td class="n">0.32 / 1.3 K</td></tr>
+        <tr><td>ARX (3,3), all blocks</td><td class="n">5.2 / 67 K</td><td class="n">unstable</td><td class="n">unstable</td><td class="n">unstable</td></tr>
+        <tr><td>ARX (3,3), cores only</td><td class="n">4.6 / 51 K</td><td class="n">0.40 / 1.5 K</td><td class="n">0.32 / 0.95 K</td><td class="n">0.39 / 0.96 K</td></tr>
+        <tr><td><i>T3 M = 4 from step runs</i></td><td class="n"></td><td class="n"></td><td class="n"><i>0.062 / 0.31 K</i></td><td class="n"></td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Mean error / worst error over 8 test traces. “Unstable” = the prediction blows up.</p>
+    <div class="found"><h4>What we found</h4><ul>
+      <li>One trace works, but it must be <b>at least about 5 s long</b>: with 1 s, the slow heat sink is never seen.</li>
+      <li>Longer is not better beyond about 20 s.</li>
+      <li>Too many lags can make the model <b>unstable</b>: a stability check is needed if ARX is ever used.</li>
+      <li><b>T3 from planned steps is 3–5× more accurate</b> and stable by construction. ARX stays useful for short forecasts from sensors (P3-2).</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P1-2_trace_calibration/results/error_vs_trace_length.png" alt="Error of ARX models against the length of the calibration trace." loading="lazy"></div><figcaption>Error vs calibration trace length.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> planned step runs (T3) beat “record one trace and fit” (ARX).</p>
+    <p class="src">Folder: <code>experiments/P1-2_trace_calibration/</code></p>
+  </article>
+
+  <article class="exp" id="p1-3">
+    <header><span class="id">P1-3</span><h3>Is per-floorplan calibration really needed?</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Could a predictor that never runs HotSpot on the target floorplan do as well? The TA data is perfect for this: same cores and power everywhere, only the layout differs.</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Tested every calibration-free method we could think of on 6,946 unseen HotSpot runs (TA nominal, max, and 300 random power vectors per floorplan). Learned methods were trained only on <i>other</i> floorplans.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Method</th><th class="n">HotSpot runs on target</th><th class="n">Mean error</th><th class="n">Worst error</th><th class="n">Hottest core right</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>S1 calibrated</td><td class="n">8</td><td class="n">0.000007 K</td><td class="n">0.00003 K</td><td class="n">100 %</td></tr>
+        <tr><td>S0 + learned correction</td><td class="n">0</td><td class="n">0.55 K</td><td class="n">3.4 K</td><td class="n">80 %</td></tr>
+        <tr><td>S0 power blurring</td><td class="n">0</td><td class="n">0.76 K</td><td class="n">5.2 K</td><td class="n">71 %</td></tr>
+        <tr><td>Borrow another Style_4 floorplan's G</td><td class="n">0</td><td class="n">1.11 K</td><td class="n">5.2 K</td><td class="n">60 %</td></tr>
+        <tr><td>One model per core type</td><td class="n">0</td><td class="n">1.34 K</td><td class="n">8.3 K</td><td class="n">61 %</td></tr>
+        <tr><td>Geometry regression</td><td class="n">0</td><td class="n">1.94 K</td><td class="n">7.4 K</td><td class="n">42 %</td></tr>
+        <tr><td>… + 40 generated floorplans</td><td class="n">0</td><td class="n">2.13 K</td><td class="n">7.6 K</td><td class="n">40 %</td></tr>
+        <tr><td>Borrow s1_fp001's G everywhere</td><td class="n">0</td><td class="n">2.66 K</td><td class="n">12.1 K</td><td class="n">45 %</td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>Calibration is needed.</b> Without it: 0.5–2.7 K mean error, 3–12 K worst, wrong hottest core in 20–60 % of cases. With it: exact, at a cost of 8 runs (4 s).</li>
+      <li><b>Position matters, not only core type.</b> The cleanest test: Style_4 floorplans with the same die, cores and power, only the positions differ. Borrowing a neighbour's G is still 1.1 K off on average and up to 5.2 K.</li>
+      <li><b>More data does not help</b>: 40 extra floorplans made the regression slightly worse. The best calibration-free model (physics + learned correction) is still four orders of magnitude worse than calibration. This matches IC-ThermBench, where learned models are 0.35–1.3 K off even with thousands of training layouts.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P1-3_is_calibration_needed/results/error_by_method.png" alt="Bar chart of error by method; the calibrated S1 is near zero, all others are between 0.5 and 2.7 K." loading="lazy"></div><figcaption>Error by method. The calibrated model is the near-zero bar.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> this is the experiment that justifies the project: 4 seconds of calibration beats every shortcut by a factor of more than 10,000.</p>
+    <p class="src">Folder: <code>experiments/P1-3_is_calibration_needed/</code></p>
+  </article>
+</section>
+
+<!-- ============================================================ P2 -->
+<section class="part" id="p2">
+  <div class="phase-head"><h2><span class="num">P2</span>The steady-state predictor</h2></div>
+  <p class="intro">Stage two, steady case: given the power of each core, predict every core's final temperature. How accurate, fast and small can it be?</p>
+
+  <article class="exp" id="p2-1">
+    <header><span class="id">P2-1</span><h3>S0, S1 and S2 against HotSpot</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>On power inputs never seen during calibration, how good is the steady predictor? And how far can it be shrunk for chips with many cores?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>7,248 unseen HotSpot runs on 24 floorplans. Timed 10,000 predictions each. Also tested compression on chips with 16 and 64 cores.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Model</th><th class="n">Mean error</th><th class="n">Worst error</th><th class="n">Time</th><th class="n">Size</th><th class="n">vs HotSpot</th></tr></thead>
+      <tbody>
+        <tr><td>S0 (uncalibrated)</td><td class="n">0.77 K</td><td class="n">5.2 K</td><td class="n">2.5 µs</td><td class="n">928 B</td><td class="n">94,000×</td></tr>
+        <tr class="hl"><td>S1</td><td class="n">0.000006 K</td><td class="n">0.00003 K</td><td class="n">2.6 µs</td><td class="n">928 B</td><td class="n">91,000×</td></tr>
+        <tr><td>S1, 32-bit numbers</td><td class="n">0.000006 K</td><td class="n">0.00003 K</td><td class="n">3.1 µs</td><td class="n">464 B</td><td class="n">77,000×</td></tr>
+        <tr><td>S1, 302 inputs per call</td><td class="n">same</td><td class="n">same</td><td class="n">0.06 µs each</td><td class="n">928 B</td><td class="n">4,000,000×</td></tr>
+        <tr><td>S2, k = 2</td><td class="n">0.20 K</td><td class="n">2.3 K</td><td class="n">8.0 µs</td><td class="n">507 B</td><td class="n">30,000×</td></tr>
+        <tr><td>S2-lr, rank 2</td><td class="n">3.1 K</td><td class="n">12.1 K</td><td class="n">3.4 µs</td><td class="n">360 B</td><td class="n">71,000×</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tw"><table>
+      <thead><tr><th>Chip with 64 cores</th><th class="n">Size</th><th class="n">Worst error</th></tr></thead>
+      <tbody>
+        <tr><td>Full S1</td><td class="n">32.8 kB</td><td class="n">exact</td></tr>
+        <tr class="hl"><td>S2, 8 neighbours</td><td class="n">5.7 kB</td><td class="n">0.59 K</td></tr>
+        <tr><td>S2, 32 neighbours</td><td class="n">19.5 kB</td><td class="n">0.18 K</td></tr>
+        <tr><td>Best low rank</td><td class="n">32.8 kB</td><td class="n">3.3 K</td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>S1 beats every target by a wide margin</b>: exact (0.00003 K vs a 0.1 K target), 2.6 µs (target 20 µs), under 1 kB (target 5 kB), always the right hottest core.</li>
+      <li>32-bit numbers are enough: half the size, no loss.</li>
+      <li>For 8 cores, compression is pointless (G is already under 1 kB). For 64 cores, S2 shrinks the model 5.8× for 0.6 K.</li>
+      <li><b>Low rank does not suit heat flow</b>: heat spreads locally, so G looks like “strong diagonal + a constant”, which is exactly what S2 stores.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P2-1_steady_predictor/results/steady_accuracy.png" alt="Steady-state accuracy of S0, S1 and S2 models." loading="lazy"></div><figcaption>Steady-state accuracy of the models.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> the steady predictor is solved: exact, 2.6 µs, under 1 kB.</p>
+    <p class="src">Folder: <code>experiments/P2-1_steady_predictor/</code></p>
+  </article>
+
+  <article class="exp" id="p2-2">
+    <header><span class="id">P2-2</span><h3>Why does the layout change the numbers?</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>All 23 floorplans have the same cores and power, yet their G cannot be swapped. Why? And does white space really keep the chip cooler, as the TA's README says?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Analysed the calibrated G of all 23 floorplans against geometry: distance between cores, distance to the die edge, die size. No new HotSpot runs.</dd></div>
+    </dl>
+    <div class="found"><h4>What we found: three effects</h4><ul>
+      <li><b>Edges.</b> A core on the die edge cannot spread heat outwards: little cores heat themselves 8 % more on average, up to 27 % more. Most TA cores (117 of 182) sit on an edge.</li>
+      <li><b>Distance.</b> Coupling between two cores falls steeply over the first 4 mm (0.63 → 0.15 K/W), then levels off. Which cores are neighbours decides most of G.</li>
+      <li><b>Die size.</b> Every core also warms the shared spreader and heat sink, a “package term” of 0.10–0.14 K/W. It is smaller on bigger dies.</li>
+      <li><b>White space keeps the chip cooler</b>: peak temperature rises with core coverage (correlation +0.83). Style_4 runs at 69–72 °C, the dense Style_1/2 chips at 76–77 °C.</li>
+      <li>Even with the same die (Style_4), the hottest core ranges from 68.9 to 72.2 °C, purely from placement.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P2-2_layout_effects/results/layout_effects.png" alt="Panels showing self-heating vs distance to edge, coupling vs distance, and peak temperature vs core coverage." loading="lazy"></div><figcaption>Self-heating vs edge distance, coupling vs distance, and peak temperature vs coverage.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> edges, neighbours and die size make every floorplan's G unique, which is why each floorplan needs its own calibration.</p>
+    <p class="src">Folder: <code>experiments/P2-2_layout_effects/</code></p>
+  </article>
+
+  <article class="exp" id="p2-3">
+    <header><span class="id">P2-3</span><h3>Predicting the hot spot inside each core</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>S1 predicts a core's average, but the hottest point is 3–4 K above it (P0-3). Can we predict each core's hottest point directly?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>The calibration runs already produced full 64×64 maps, so we know how every cell responds to every core's watt. Tested several ways to estimate each core's peak on 1,380 unseen HotSpot runs.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Model</th><th class="n">Size</th><th class="n">Mean error</th><th class="n">Worst error</th><th class="n">Hottest core right</th></tr></thead>
+      <tbody>
+        <tr><td>Core average (plain S1)</td><td class="n">512 B</td><td class="n">2.73 K</td><td class="n">8.96 K</td><td class="n">50 %</td></tr>
+        <tr><td>Average + fixed offset</td><td class="n">576 B</td><td class="n">0.59 K</td><td class="n">4.11 K</td><td class="n">82 %</td></tr>
+        <tr><td>One fixed hottest cell</td><td class="n">512 B</td><td class="n">0.29 K</td><td class="n">3.97 K</td><td class="n">68 %</td></tr>
+        <tr class="hl"><td>S1-hot-max (a few candidate cells)</td><td class="n">3.1 kB</td><td class="n">0.078 K</td><td class="n">1.6 K</td><td class="n">90 %</td></tr>
+        <tr><td>All cells (exact)</td><td class="n">115 kB</td><td class="n">0.000007 K</td><td class="n">0.00003 K</td><td class="n">100 %</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">“Hottest core right” is for the worst floorplan.</p>
+    <div class="found"><h4>What we found</h4><ul>
+      <li>The core average <b>underestimates the true peak by up to 9 K</b>.</li>
+      <li><b>The hot spot moves</b>: in 61 % of cases the hottest cell is a different cell than at nominal power, because a hot neighbour pulls it towards the shared edge. So a fixed offset or a fixed cell is not enough.</li>
+      <li><b>S1-hot-max</b> takes the maximum over about 7 candidate cells per core. Each cell is still linear, so it stays cheap: 0.08 K mean error for 3 kB, with no extra HotSpot runs.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P2-3_hot_spots/results/hot_spot_error.png" alt="Error of the hot-spot predictors." loading="lazy"></div><figcaption>Error of each hot-spot predictor.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> ship S1-hot-max alongside S1 so DTM can protect the real hot spot, not the average.</p>
+    <p class="src">Folder: <code>experiments/P2-3_hot_spots/</code></p>
+  </article>
+</section>
+
+<!-- ============================================================ P3 -->
+<section class="part" id="p3">
+  <div class="phase-head"><h2><span class="num">P3</span>The transient predictor</h2></div>
+  <p class="intro">Stage two, transient case: given power that changes every millisecond, follow the temperature over time, and forecast it ahead for DTM.</p>
+
+  <article class="exp" id="p3-1">
+    <header><span class="id">P3-1</span><h3>Following HotSpot over time</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Given only the power trace, starting from a cold chip, how closely do the transient models reproduce HotSpot's temperatures? How fast and small are they?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Tested on 2 s traces on all 24 floorplans, 10 s traces on the main 4, and a real workload: the EV6 processor with a <code>gcc</code> power trace.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Model (24 floorplans)</th><th class="n">Mean error</th><th class="n">Worst error</th><th class="n">Time / step</th><th class="n">Size</th></tr></thead>
+      <tbody>
+        <tr><td>T1</td><td class="n">7.25 K</td><td class="n">14.6 K</td><td class="n">1.5 µs</td><td class="n">1.0 kB</td></tr>
+        <tr><td>T3, M = 2</td><td class="n">0.92 K</td><td class="n">2.9 K</td><td class="n">3.0 µs</td><td class="n">1.9 kB</td></tr>
+        <tr><td>T3, M = 3</td><td class="n">0.19 K</td><td class="n">1.1 K</td><td class="n">3.0 µs</td><td class="n">2.8 kB</td></tr>
+        <tr class="hl"><td>T3, M = 4</td><td class="n">0.090 K</td><td class="n">0.30 K</td><td class="n">3.1 µs</td><td class="n">3.7 kB</td></tr>
+        <tr><td>T3, M = 6</td><td class="n">0.0093 K</td><td class="n">0.13 K</td><td class="n">3.2 µs</td><td class="n">5.6 kB</td></tr>
+        <tr><td>T2 ARX (main 4)</td><td class="n">0.19 K</td><td class="n">0.57 K</td><td class="n">5.4 µs</td><td class="n">6.2 kB</td></tr>
+        <tr><td>T3 M = 4 on EV6 + gcc</td><td class="n">0.073 K</td><td class="n">0.21 K*</td><td class="n">4.4 µs</td><td class="n">28.8 kB</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">* After the first 20 ms. In the very first 1 ms from a cold chip, tiny EV6 blocks reach 1.3 K error.</p>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>T3 with M = 4 is the transient model to ship</b>: 0.06–0.09 K average, 0.3 K worst, 3 µs per step (1,800× faster than HotSpot), about 4 kB.</li>
+      <li>Accuracy improves smoothly with M; speed barely changes. M is the accuracy-vs-size knob.</li>
+      <li>T1 is not usable (overshoots early, lags later). ARX works but is about 2× worse than T3.</li>
+      <li>It carries over to a real workload on a different chip (EV6 + gcc): 0.07 K average.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P3-1_transient_predictor/results/trace_example.png" alt="Example temperature trace: HotSpot, T1 and T3 overlaid." loading="lazy"></div><figcaption>HotSpot and the models on one test trace. T3 sits on top of HotSpot.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> T3 (M = 4) follows HotSpot within a tenth of a degree, 1,800× faster.</p>
+    <p class="src">Folder: <code>experiments/P3-1_transient_predictor/</code></p>
+  </article>
+
+  <article class="exp" id="p3-2">
+    <header><span class="id">P3-2</span><h3>Forecasting ahead from sensor readings</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>A DTM controller reads the on-chip sensors and wants the temperature some steps ahead for the power it plans to use. How does the error grow with the horizon?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>At 352 points in each test trace, gave each model the sensor readings so far plus the planned power, and forecast 1 ms, 10 ms, 100 ms and 1 s ahead. “Anchored” T3 shifts its prediction so it matches the sensors right now.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Model</th><th class="n">1 ms ahead</th><th class="n">10 ms</th><th class="n">100 ms</th><th class="n">1 s</th></tr></thead>
+      <tbody>
+        <tr><td>No model (persistence)</td><td class="n">0.013 K</td><td class="n">0.11 K</td><td class="n">0.69 K</td><td class="n">2.7 K</td></tr>
+        <tr><td>T1 from sensors</td><td class="n">0.88 K</td><td class="n">3.6 K</td><td class="n">4.7 K</td><td class="n">4.2 K</td></tr>
+        <tr><td>T3 open loop</td><td class="n">0.06 K</td><td class="n">0.06 K</td><td class="n">0.06 K</td><td class="n">0.06 K</td></tr>
+        <tr class="hl"><td>T3 anchored on sensors</td><td class="n">0.0009 K</td><td class="n">0.0044 K</td><td class="n">0.017 K</td><td class="n">0.055 K</td></tr>
+        <tr><td>T2 ARX from sensors</td><td class="n">0.0013 K</td><td class="n">0.015 K</td><td class="n">0.10 K</td><td class="n">0.42 K</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Mean errors. Worst cases: persistence 4.3 K at 1 ms and 8 K at 10 ms; T3 anchored 0.15 K at 10 ms and 0.5 K at 1 s.</p>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>“No model” is not an option</b>: persistence is fine on average, but up to 8 K wrong 10 ms ahead, right when a power step hits and DTM needs to act.</li>
+      <li><b>T3 anchored is the best forecaster from 10 ms to 1 s</b>: under 0.005 K on average 10 ms ahead.</li>
+      <li>ARX is best for a single 1 ms step but degrades fastest. T1 is worse than doing nothing.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P3-2_forecast_horizon/results/error_vs_horizon.png" alt="Forecast error against horizon for each model." loading="lazy"></div><figcaption>Forecast error vs how far ahead.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> for DTM decisions 10–20 ms ahead, use T3 anchored on the sensors.</p>
+    <p class="src">Folder: <code>experiments/P3-2_forecast_horizon/</code></p>
+  </article>
+
+  <article class="exp" id="p3-3">
+    <header><span class="id">P3-3</span><h3>Accuracy vs size vs time: the trade-off</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Across all models, which ones are on the <b>Pareto front</b>, meaning no other model is both smaller and more accurate?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Collected every model's size, worst error and speed from P1-2, P2-1, P3-1 and P3-4 into one plot.</dd></div>
+    </dl>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>Steady state has no real trade-off</b>: S1 is exact at 464 B.</li>
+      <li><b>Transient: T3 is the front from 2 to 6 kB.</b> Each extra time constant costs 1 kB and divides the worst error by 2–4. <b>Default: T3 M = 4</b> (4 kB, 0.31 K worst); M = 6 when 0.06 K is wanted.</li>
+      <li>T4 only wins below 0.05 K, from about 16 kB.</li>
+      <li>All models are 1,000–100,000× faster than HotSpot, so the choice is about accuracy and size, not speed.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P3-3_pareto/results/pareto.png" alt="Pareto plot of model size against worst error, steady and transient." loading="lazy"></div><figcaption>Size vs worst error for every model; the Pareto front is bold.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> T3 gives the best accuracy per kilobyte; M picks your point on the curve.</p>
+    <p class="src">Folder: <code>experiments/P3-3_pareto/</code></p>
+  </article>
+
+  <article class="exp" id="p3-4">
+    <header><span class="id">P3-4</span><h3>The exact model, shrunk (T4) <span class="chip tag">optional</span></h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Instead of fitting HotSpot's outputs, take HotSpot's own internal network (exact by definition) and shrink it. How small can a near-exact model get?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>A debug patch makes HotSpot write out its matrices: 16,396 nodes per floorplan. We checked that this reproduces HotSpot, then reduced it in three steps: keep the 200 slowest modes, balanced truncation to r states, plus a small filter for the fast parts that were dropped.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>States r</th><th class="n">Size</th><th class="n">Mean error</th><th class="n">Worst error</th></tr></thead>
+      <tbody>
+        <tr><td>Full (16,396)</td><td class="n">huge</td><td class="n" colspan="2">0.000001 K vs HotSpot</td></tr>
+        <tr><td>16</td><td class="n">7.0 kB</td><td class="n">0.29 K</td><td class="n">1.1 K</td></tr>
+        <tr><td>24</td><td class="n">11.1 kB</td><td class="n">0.044 K</td><td class="n">0.23 K</td></tr>
+        <tr class="hl"><td>32</td><td class="n">16.2 kB</td><td class="n">0.0074 K</td><td class="n">0.047 K</td></tr>
+        <tr><td>64</td><td class="n">46.8 kB</td><td class="n">0.00005 K</td><td class="n">0.034 K</td></tr>
+        <tr><td><i>T3 M = 4, for comparison</i></td><td class="n"><i>4.0 kB</i></td><td class="n"><i>0.062 K</i></td><td class="n"><i>0.31 K</i></td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li>The exported network reproduces HotSpot to 0.000001 K and its steady gain equals our calibrated G. This <b>independently confirms</b> that S1 is exact.</li>
+      <li><b>About 30 states are enough</b> for under 0.05 K.</li>
+      <li>Without the fast-part filter, the error got stuck at 3.3 K for every size: at 1 ms steps, the fastest silicon modes are not instantaneous. Matching the first step matters as much as matching the final value.</li>
+      <li><b>T3 is the better product</b> (more accurate at the same size, needs no patched HotSpot); T4 is the better reference.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P3-4_state_space_T4/results/t4_reduction.png" alt="Error of the reduced model against the number of states." loading="lazy"></div><figcaption>Error vs number of states r.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> HotSpot really is a 16,000-node linear system that a 32-state model captures almost perfectly, but T3 is still the smarter product.</p>
+    <p class="src">Folder: <code>experiments/P3-4_state_space_T4/</code></p>
+  </article>
+</section>
+
+<!-- ============================================================ P4 -->
+<section class="part" id="p4">
+  <div class="phase-head"><h2><span class="num">P4</span>Robustness: where does it break?</h2></div>
+  <p class="intro">The models were calibrated with simple inputs. Do they still hold for unusual power, a different time step, a changed cooler, or temperature-dependent power?</p>
+
+  <article class="exp" id="p4-1">
+    <header><span class="id">P4-1</span><h3>Unusual inputs</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Does the predictor still work for power far above its range, very bursty power, tasks hopping between cores, another time step, or a warm start?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Each case on the 4 main floorplans, compared with HotSpot, using the existing S1, T3 (M = 4) and T2 models.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Case</th><th class="n">T3 mean</th><th class="n">T3 worst</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Normal trace (reference)</td><td class="n">0.10 K</td><td class="n">0.32 K</td><td><span class="chip ok">fine</span></td></tr>
+        <tr><td>Steady power at 3× the maximum (S1)</td><td class="n">0.00002 K</td><td class="n">0.00005 K</td><td><span class="chip ok">fine</span></td></tr>
+        <tr><td>Transient at 2× power</td><td class="n">0.21 K</td><td class="n">0.64 K</td><td><span class="chip ok">fine (≈1 % of rise)</span></td></tr>
+        <tr><td>Bursty: switches every 1–5 ms</td><td class="n">0.11 K</td><td class="n">0.44 K</td><td><span class="chip ok">fine</span></td></tr>
+        <tr><td>Task migration between cores</td><td class="n">0.076 K</td><td class="n">0.31 K</td><td><span class="chip ok">fine</span></td></tr>
+        <tr><td>Time step 0.1 ms instead of 1 ms</td><td class="n">0.14 K</td><td class="n">2.16 K</td><td><span class="chip mid">weak spot</span></td></tr>
+        <tr><td>Time step 10 ms</td><td class="n">0.079 K</td><td class="n">1.88 K</td><td><span class="chip mid">weak spot</span></td></tr>
+        <tr><td>Warm start (after the first 50 ms)</td><td class="n">0.029 K</td><td class="n">0.27 K</td><td><span class="chip ok">fine</span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>Power level, burstiness and task placement do not matter</b>: the coefficients describe the chip, not the workload (a result of linearity).</li>
+      <li><b>The weak spot is a different time step</b> (about 1–2 K worst). Recommendation: calibrate at the same time step the DTM controller uses; calibration is cheap.</li>
+      <li>The early 2 K error on a warm start comes from HotSpot itself (its warm start is not a perfect steady state).</li>
+    </ul></div>
+    <p class="takeaway"><b>In one line:</b> robust to anything about the workload; just calibrate at the time step you will use.</p>
+    <p class="src">Folder: <code>experiments/P4-1_robustness/</code></p>
+  </article>
+
+  <article class="exp" id="p4-2">
+    <header><span class="id">P4-2</span><h3>What if the package changes? <span class="chip tag">optional</span></h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>The coefficients belong to one floorplan <i>and</i> one cooling setup. What happens if the ambient temperature or the heat sink changes?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Three changes: ambient 35 °C instead of 45 °C; heat-sink resistance doubled (worse cooler); halved (better cooler). Compared the old model with a recalibrated one.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Change</th><th>Old model</th><th class="n">Steady worst error</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Ambient 35 °C</td><td>forgot to update T<sub>amb</sub></td><td class="n">10.0 K</td><td>just update T<sub>amb</sub>: 0.00002 K</td></tr>
+        <tr><td>Ambient 35 °C</td><td>with new T<sub>amb</sub></td><td class="n">0.00002 K</td><td><span class="chip ok">no recalibration</span></td></tr>
+        <tr><td>Worse heat sink (×2)</td><td>old coefficients</td><td class="n">8.5 K</td><td><span class="chip no">recalibrate</span> → 0.00001 K</td></tr>
+        <tr><td>Better heat sink (×0.5)</td><td>old coefficients</td><td class="n">4.4 K</td><td><span class="chip no">recalibrate</span> → 0.00002 K</td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>Ambient change: no recalibration.</b> The model predicts the rise above ambient, so only T<sub>amb</sub> needs updating.</li>
+      <li><b>Heat-sink change: recalibrate</b> (24 runs). Otherwise 4–8.5 K off in steady state; on short traces the error appears slowly, because the sink takes tens of seconds to warm up.</li>
+      <li>The error is almost exactly “change in sink resistance × total power”, so a sink change might be correctable without any HotSpot runs. Not tested yet.</li>
+    </ul></div>
+    <p class="takeaway"><b>In one line:</b> a model is tied to its cooler; new ambient is free, new heat sink means recalibrating.</p>
+    <p class="src">Folder: <code>experiments/P4-2_recalibration/</code></p>
+  </article>
+
+  <article class="exp" id="p4-3">
+    <header><span class="id">P4-3</span><h3>Leakage: power that depends on temperature <span class="chip tag">optional</span></h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Real chips leak more power when hot, which breaks linearity. How much does that hurt, and can a small fix repair it?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Turned on HotSpot's leakage model at its default strength and at 10× (a separate build), and compared S1 alone with S1 plus a short loop: predict, compute leakage at that temperature, predict again, until it settles.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Leakage</th><th class="n">Leakage power</th><th class="n">S1 alone (worst)</th><th class="n">S1 + loop (worst)</th><th class="n">Loop time</th></tr></thead>
+      <tbody>
+        <tr><td>Default</td><td class="n">0.2–0.5 W</td><td class="n">0.08–0.10 K</td><td class="n">0.00002 K</td><td class="n">22–25 µs</td></tr>
+        <tr><td>10× stronger</td><td class="n">2–5 W</td><td class="n">0.77–1.07 K</td><td class="n">0.00006 K</td><td class="n">29–33 µs</td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li>Ignoring leakage costs about 0.1 K (default) or 1 K (10×).</li>
+      <li><b>A 3–4 iteration loop removes the error completely</b> in about 30 µs, still about 10,000× faster than HotSpot.</li>
+      <li>Limit: HotSpot only supports leakage in steady state, so the transient side could not be tested.</li>
+    </ul></div>
+    <p class="takeaway"><b>In one line:</b> leakage is a small, fully fixable effect at these temperatures.</p>
+    <p class="src">Folder: <code>experiments/P4-3_leakage/</code></p>
+  </article>
+</section>
+
+<!-- ============================================================ P5 -->
+<section class="part" id="p5">
+  <div class="phase-head"><h2><span class="num">P5</span>The product: the <code>ltp</code> package</h2></div>
+  <p class="intro">Both stages as plain commands, usable by someone who did not write the code. The predictor needs only NumPy and an 8 kB model file.</p>
+
+  <article class="exp" id="p5-1">
+    <header><span class="id">P5-1</span><h3>Commands and Python use</h3></header>
+<pre><code># Stage 1: calibrate (24 HotSpot runs, about 5 CPU-minutes; cached afterwards)
+python3 -m src.ltp calibrate s4_fp001 -o model_s4_fp001.npz
+
+# Stage 2: steady temperatures for a power vector (W per core)
+python3 -m src.ltp steady model_s4_fp001.npz --power 20,20,8,8,8,8,8,8
+
+# The TA's own .ptrace files are read directly
+python3 -m src.ltp steady model_s4_fp001.npz --ptrace data/sample_dataset/2D_floorplans/Style_4/fp_001/fp_001_steady.ptrace
+
+# Transient: writes a HotSpot-style .ttrace
+python3 -m src.ltp transient model_s4_fp001.npz --ptrace trace.ptrace --dt 0.001 -o out.ttrace
+
+# Forecast, anchored on measured temperatures
+python3 -m src.ltp forecast model_s4_fp001.npz --history past.ptrace --temps T_now.txt --next plan.ptrace
+
+# The three metrics against HotSpot
+python3 -m src.ltp bench model_s4_fp001.npz s4_fp001</code></pre>
+    <p>Actual <code>bench</code> output on s4_fp001:</p>
+<pre><code>model model_s4_fp001.npz: 8032 B of coefficients (G 1600 B, T3 6432 B, M = 4)
+steady    vs HotSpot on 302 vectors: MAE 5.19e-06 K, max 1.40e-05 K, 2.6 us per call
+transient vs HotSpot on 2000 steps (1 ms): MAE 0.051 K, max 0.189 K, 3.5 us per step</code></pre>
+<pre><code>from src.ltp.predictor import Predictor
+p = Predictor.load("model_s4_fp001.npz")
+T = p.steady([20, 20, 8, 8, 8, 8, 8, 8])            # temperatures of every block (K)
+z = p.run_state(P_history, dt=1e-3)                  # internal state after the power so far
+T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)   # next steps, anchored on the sensors</code></pre>
+    <p>7 unit tests (<code>python3 tests/test_models.py</code>) all pass. Not done: a pip-installable package and a <code>--model T2</code> option.</p>
+    <p class="src">Folder: <code>experiments/P5-1_ltp_package/</code> · code in <code>src/ltp/</code></p>
+  </article>
+</section>
+
+<!-- ============================================================ P6 -->
+<section class="part" id="p6">
+  <div class="phase-head"><h2><span class="num">P6</span>Wishlist: proactive DTM</h2></div>
+  <p class="intro">The assignment's wishlist: show that the predictor makes thermal management better. We built a closed loop where a controller manages a HotSpot “chip” in real time.</p>
+
+  <article class="exp" id="p6-1">
+    <header><span class="id">P6-1</span><h3>Driving HotSpot step by step</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>DTM needs a chip whose power can change every step <i>in response to its own temperature</i>. HotSpot normally reads a fixed power file. Can we drive it one step at a time?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd><code>src/sim/stepper.py</code> feeds HotSpot one power row at a time through a pipe and reads back each temperature row. One small patch makes HotSpot flush its output after every row.</dd></div>
+    </dl>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>Exactly identical</b> (0 K difference) to a normal HotSpot run, from a cold or warm chip, with no extra cost per step.</li>
+      <li>Simpler than the plan's C program: same binary, same config as every other experiment.</li>
+    </ul></div>
+    <p class="src">Folder: <code>experiments/P6-1_closed_loop_hotspot/</code></p>
+  </article>
+
+  <article class="exp" id="p6-2">
+    <header><span class="id">P6-2</span><h3>Reactive vs proactive DTM <span class="chip tag">wishlist</span></h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Does a forecast from the predictor let DTM act <i>before</i> the limit is crossed? Is that better than reactive DTM? Does the predictor's accuracy matter?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>HotSpot as the chip (4 s runs). Every core requests power from a random workload; the controller sets each core's speed level (100 % down to 50 %) every 10 ms. <b>Reactive</b>: slow down a core that is over the limit. <b>Proactive</b>: forecast 20 ms ahead and pick the fastest speeds whose forecast stays under the limit. Forecasters: T3, T1, or none (persistence). Two floorplans, a normal and a tight limit.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Tight limit</th><th>Policy</th><th class="n">Core-ms over limit</th><th class="n">Throughput</th></tr></thead>
+      <tbody>
+        <tr><td>s1_fp001 (76.7 °C)</td><td>none</td><td class="n">10,400</td><td class="n">1.000</td></tr>
+        <tr><td></td><td>reactive</td><td class="n">2,900</td><td class="n">0.985</td></tr>
+        <tr class="hl"><td></td><td>proactive, T3</td><td class="n">22</td><td class="n">0.975</td></tr>
+        <tr><td></td><td>proactive, T1</td><td class="n">61</td><td class="n">0.977</td></tr>
+        <tr><td></td><td>proactive, no model</td><td class="n">665</td><td class="n">0.937</td></tr>
+        <tr><td>s4_fp001 (68.6 °C)</td><td>none</td><td class="n">14,300</td><td class="n">1.000</td></tr>
+        <tr><td></td><td>reactive</td><td class="n">3,890</td><td class="n">0.976</td></tr>
+        <tr class="hl"><td></td><td>proactive, T3</td><td class="n">63</td><td class="n">0.960</td></tr>
+        <tr><td></td><td>proactive, T1</td><td class="n">100</td><td class="n">0.963</td></tr>
+        <tr><td></td><td>proactive, no model</td><td class="n">1,500</td><td class="n">0.908</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Throughput = average speed (1.000 = never slowed). At the normal limit, proactive T3 reduces violations from 88–173 core-ms (reactive) to 0–2.</p>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>Proactive DTM with T3 almost eliminates overheating</b>: 60–130× less time over the limit than reactive DTM.</li>
+      <li><b>The price is small</b>: 1–1.6 % less throughput at the tight limit, 0.1–0.2 % at the normal one. It slows down a little early instead of a lot late.</li>
+      <li><b>Accuracy matters</b>: with no model, violations are 20–30× higher <i>and</i> throughput is lowest (it reacts late, then over-corrects).</li>
+      <li>Each decision takes 0.4–0.7 ms in Python, 4–7 % of the 10 ms interval.</li>
+      <li>Not done: moving tasks between big and little cores as a DTM action.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P6-2_dtm/results/dtm_s1_fp001_tight.png" alt="Temperature and speed over 4 seconds for each DTM policy on s1_fp001 with the tight limit; reactive oscillates around the limit, proactive stays just below." loading="lazy"></div><figcaption>s1_fp001, tight limit. Reactive DTM saw-tooths around the limit; proactive stays just below it.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> the wishlist is met: the predictor turns DTM from “fix it after” into “avoid it before”, almost for free.</p>
+    <p class="src">Folder: <code>experiments/P6-2_dtm/</code></p>
+  </article>
+
+  <article class="exp" id="p6-3">
+    <header><span class="id">P6-3</span><h3>Which cores should run the busy tasks? <span class="chip tag">wishlist</span></h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>A scheduler must place 4 busy tasks on 4 of the 8 cores. Which placement keeps the chip coolest, and does the predictor choose the same as HotSpot?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Scored all 70 possible placements on each main floorplan with S1 and with HotSpot.</dd></div>
+    </dl>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>S1 picks the same best placement as HotSpot on all 4 floorplans</b> and ranks all 70 identically, in about 12 µs for all 70 together, against about 100 CPU-seconds for HotSpot: <b>about 8,000,000× faster</b>.</li>
+      <li>The choice matters: the worst placement is 2.6–4.9 K hotter than the best.</li>
+      <li>The best placement differs per floorplan (both big cores on one, four spread-out little cores on another). Only a floorplan-specific model can know this.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/P6-3_core_selection_demo/results/scores.png" alt="Scatter of S1 scores against HotSpot scores for all 70 placements, lying on a straight line." loading="lazy"></div><figcaption>S1 vs HotSpot score for every placement: a perfect line.</figcaption></figure>
+    <p class="src">Folder: <code>experiments/P6-3_core_selection_demo/</code></p>
+  </article>
+</section>
+
+<!-- ============================================================ SCORECARD -->
+<section class="part" id="scorecard">
+  <h2>Scorecard against our targets</h2>
+  <p class="intro">The targets from <code>plan.md</code> §1.4, taken from the literature before we started.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Metric</th><th>Target</th><th>Achieved</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td colspan="4"><b>Steady predictor (S1)</b></td></tr>
+      <tr><td>Mean error per block</td><td>≤ 0.1 K</td><td class="mono">0.000006 K</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Error in the peak</td><td>≤ 0.2 K</td><td class="mono">0.00003 K</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Hottest core right</td><td>≥ 99 %</td><td class="mono">100 %</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Time per prediction</td><td>≤ 20 µs</td><td class="mono">2.6 µs</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Model size</td><td>≤ 5 kB</td><td class="mono">464–928 B</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Calibration runs</td><td>≤ N + 1 = 9</td><td class="mono">8 runs, 4 s</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td colspan="4"><b>Transient predictor (T3, M = 4)</b></td></tr>
+      <tr><td>Mean error over a trace</td><td>≤ 0.5 K</td><td class="mono">0.06–0.09 K</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Error in the peak</td><td>≤ 1 K</td><td class="mono">0.27–0.30 K</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Hottest core right</td><td>≥ 95 %</td><td class="mono">96 % (worst floorplan)</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Time per step</td><td>≤ 50 µs</td><td class="mono">3.1 µs</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Model size</td><td>≤ 50 kB</td><td class="mono">3.7–4 kB</td><td><span class="chip ok">met</span></td></tr>
+      <tr><td>Calibration time</td><td>≤ 2 min wall</td><td class="mono">≈ 2.75 min per floorplan (8 runs in parallel)</td><td><span class="chip mid">slightly over</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">Timing was measured on one laptop (WSL, 20 threads); some runs shared the machine with other HotSpot jobs. Final numbers should be re-measured on an idle machine.</p>
+</section>
+
+<!-- ============================================================ LESSONS -->
+<section class="part" id="lessons">
+  <h2>Ten lessons</h2>
+  <ol class="lessons">
+    <li><b>HotSpot is linear</b> (without leakage), so a simple matrix predictor can be exact, not just approximate.</li>
+    <li><b>Calibration is cheap and essential.</b> 8 runs (4 s) make the steady model exact; skipping it costs 0.5–2.7 K on average, up to 12 K.</li>
+    <li><b>Position matters, not just core type.</b> Edges, neighbours and die size make each floorplan's numbers unique.</li>
+    <li><b>Little cores are the hot ones</b>: higher power density means about 2.4× the self-heating per watt.</li>
+    <li><b>Core averages hide hot spots</b> 3–9 K hotter, and the hot spot moves; S1-hot-max tracks it for 3 kB.</li>
+    <li><b>Heat moves on time scales from 1 ms to 8 s</b>; one time constant (T1) cannot capture it, four (T3) can.</li>
+    <li><b>Planned step runs beat fitting a recorded trace</b>, by 3–5× and with guaranteed stability.</li>
+    <li><b>Forecasting needs a model</b>: “temperature stays the same” is up to 8 K wrong 10 ms ahead.</li>
+    <li><b>The model belongs to the cooler too</b>: a new ambient is free, a new heat sink needs recalibration.</li>
+    <li><b>Proactive DTM with the predictor nearly eliminates overheating</b> for about 1 % throughput.</li>
+  </ol>
+</section>
+
+<!-- ============================================================ OPEN -->
+<section class="part" id="open">
+  <h2>Open items</h2>
+  <div class="prose">
+    <ul>
+      <li><b>Ask the TA</b> which <code>hotspot.config</code> they used, and whether the Style_2 power files are meant to put big-core power on little cores.</li>
+      <li><b>Re-measure timing on an idle machine</b> for the final report.</li>
+      <li>Untested ideas: correcting a heat-sink change without HotSpot runs (P4-2); leakage in transients (P4-3); task migration as a DTM action (P6-2); a vectorised DTM controller (under 0.1 ms per decision).</li>
+      <li>Packaging: <code>pyproject.toml</code> for pip install (P5-1).</li>
+      <li>Do not commit the local <code>Dataset/</code> folder; it duplicates <code>data/sample_dataset/</code>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ GLOSSARY -->
+<section class="part" id="glossary">
+  <h2>Glossary</h2>
+  <dl class="gloss">
+    <dt>Ambient (T<sub>amb</sub>)</dt><dd>The temperature of the surroundings, 45 °C here. Rises are measured from it.</dd>
+    <dt>ARX</dt><dd>“Auto-regressive with exogenous input”: next temperature = weighted mix of recent temperatures and powers. Our T2.</dd>
+    <dt>Balanced truncation</dt><dd>A standard way to shrink a large linear system by keeping the states that matter most for input → output. Used in T4.</dd>
+    <dt>Backward Euler</dt><dd>The step-by-step method HotSpot uses to advance time. One step per sampling interval.</dd>
+    <dt>Big / little core</dt><dd>4×4 mm cores at 10–20 W, and 2×2 mm cores at 5–10 W.</dd>
+    <dt>Calibration</dt><dd>Running HotSpot a few times on one floorplan to measure the predictor's numbers.</dd>
+    <dt>Coupling (G<sub>ij</sub>)</dt><dd>How much core j's watt warms core i, in K/W.</dd>
+    <dt>DTM</dt><dd>Dynamic thermal management: slowing cores to keep them under a temperature limit.</dd>
+    <dt>DVFS</dt><dd>Dynamic voltage and frequency scaling: running a core slower to use less power.</dd>
+    <dt>FILL block</dt><dd>White space on the die: silicon with no power.</dd>
+    <dt>Floorplan (.flp)</dt><dd>File listing every block's name, size and position.</dd>
+    <dt>G (influence matrix)</dt><dd>Table of K/W numbers: <code>T = T_amb + G·P</code>.</dd>
+    <dt>Grid model</dt><dd>HotSpot mode that splits the die into 64×64 cells.</dd>
+    <dt>Hot spot</dt><dd>The hottest grid cell inside a core.</dd>
+    <dt>K (kelvin)</dt><dd>Temperature unit; a 1 K difference equals 1 °C.</dd>
+    <dt>Layer stack (.lcf)</dt><dd>The file describing the layers (silicon, thermal paste) and their properties.</dd>
+    <dt>Leakage</dt><dd>Power a chip loses that grows with temperature.</dd>
+    <dt>Linear / superposition</dt><dd>Effects scale with power and add up across cores.</dd>
+    <dt>M</dt><dd>Number of time constants in T3. More M = more accurate and slightly bigger.</dd>
+    <dt>MAE</dt><dd>Mean absolute error: average size of the error.</dd>
+    <dt>Open loop</dt><dd>The model sees only power, never the true temperatures.</dd>
+    <dt>Pareto front</dt><dd>The models for which no other model is both smaller and more accurate.</dd>
+    <dt>Persistence</dt><dd>“No model” forecast: assume temperature stays as it is now.</dd>
+    <dt>Phase trace</dt><dd>Test power where each core switches between levels in phases of 1 ms to 2 s.</dd>
+    <dt>Proactive / reactive</dt><dd>Acting on a forecast before the limit / acting after the sensor reads over the limit.</dd>
+    <dt>.ptrace / .ttrace</dt><dd>HotSpot's power-trace input file and temperature-trace output file.</dd>
+    <dt>Self-heating (G<sub>ii</sub>)</dt><dd>How much a core warms itself per watt.</dd>
+    <dt>Steady state</dt><dd>The final temperature when power stays constant forever.</dd>
+    <dt>Time constant (τ)</dt><dd>How long a part of the chip takes to get about 63 % of the way to its final temperature.</dd>
+    <dt>Transient</dt><dd>Temperature changing over time.</dd>
+    <dt>Δt</dt><dd>Time step: 1 ms here.</dd>
+  </dl>
+</section>
+
+<!-- ============================================================ REPO -->
+<section class="part" id="repo">
+  <h2>Where things are</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Path</th><th>What it holds</th></tr></thead>
+    <tbody>
+      <tr><td><code>plan.md</code></td><td>The project plan, targets (§1.4), experiments (§5) and status (§15)</td></tr>
+      <tr><td><code>dataset.md</code></td><td>The TA dataset and the two papers</td></tr>
+      <tr><td><code>PROGRESS.md</code></td><td>Dated log of results</td></tr>
+      <tr><td><code>experiments/README.md</code></td><td>Index of all experiments with one-line results</td></tr>
+      <tr><td><code>experiments/&lt;ID&gt;_&lt;name&gt;/</code></td><td><code>run.py</code>, <code>README.md</code>, <code>results/</code> for each experiment</td></tr>
+      <tr><td><code>setup/</code></td><td>Script and patches that build the improved HotSpot</td></tr>
+      <tr><td><code>configs/</code></td><td>HotSpot configs (grid 64×64 and block)</td></tr>
+      <tr><td><code>src/sim/</code></td><td>HotSpot runner, floorplans, power generators, parallel runs, stepper, floorplan generator</td></tr>
+      <tr><td><code>src/ltp/</code></td><td>The predictor: models, calibration, <code>Predictor</code>, command line</td></tr>
+      <tr><td><code>tests/test_models.py</code></td><td>7 unit tests</td></tr>
+      <tr><td><code>data/sample_dataset/</code>, <code>data/generated/</code></td><td>TA floorplans and our 40 generated ones</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <h4>How to rerun anything</h4>
+<pre><code># one-time, inside WSL
+bash setup/build_hotspot_ltp.sh
+
+# any experiment (HotSpot runs are cached in ~/ltp_runs/)
+bash experiments/run.sh P2-1_steady_predictor
+
+# order matters only through the caches: P1-1 first, then P1-2, then the rest</code></pre>
+  </div>
+</section>
+
+<footer class="end">
+  Compiled from the experiment READMEs, <code>plan.md</code> and <code>dataset.md</code> on branch <code>e/p0-p1</code>. Every number here comes from those files; see each experiment's folder for full tables and raw results.
+</footer>
+
+</main>
+</div>
+
+<script>
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('.rail a'));
+  var map = {};
+  links.forEach(function (a) { map[a.getAttribute('href').slice(1)] = a; });
+  var targets = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
+  function update() {
+    var y = window.scrollY + 120, cur = null;
+    targets.forEach(function (t) { if (t.getBoundingClientRect().top + window.scrollY <= y) cur = t; });
+    links.forEach(function (a) { a.classList.remove('on'); });
+    if (cur && map[cur.id]) map[cur.id].classList.add('on');
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+  var toc = document.getElementById('toc');
+  function fit() { if (window.innerWidth <= 900) toc.removeAttribute('open'); else toc.setAttribute('open', ''); }
+  fit();
+  window.addEventListener('resize', fit);
+  links.forEach(function (a) { a.addEventListener('click', function () { if (window.innerWidth <= 900) toc.removeAttribute('open'); }); });
+})();
+</script>
+
+</body>
+</html>
