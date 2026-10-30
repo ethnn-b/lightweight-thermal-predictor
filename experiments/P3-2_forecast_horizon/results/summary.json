@@ -1,0 +1,148 @@
+{
+ "summary": [
+  {
+   "model": "T0 persistence",
+   "horizon_ms": 1.0,
+   "mae_K": 0.01278522656250019,
+   "p99_K_worst": 0.32319630999998156,
+   "max_K_worst": 4.277946000000043
+  },
+  {
+   "model": "T0 persistence",
+   "horizon_ms": 10.0,
+   "mae_K": 0.10911664075667107,
+   "p99_K_worst": 4.182564069999994,
+   "max_K_worst": 8.037982999999997
+  },
+  {
+   "model": "T0 persistence",
+   "horizon_ms": 100.0,
+   "mae_K": 0.6858845757988064,
+   "p99_K_worst": 7.943518749999998,
+   "max_K_worst": 9.44740999999999
+  },
+  {
+   "model": "T0 persistence",
+   "horizon_ms": 1000.0,
+   "mae_K": 2.6628350146155197,
+   "p99_K_worst": 10.383615020000017,
+   "max_K_worst": 11.078625999999986
+  },
+  {
+   "model": "T1 from sensors",
+   "horizon_ms": 1.0,
+   "mae_K": 0.8828466609741892,
+   "p99_K_worst": 2.643765512980284,
+   "max_K_worst": 4.274511192235138
+  },
+  {
+   "model": "T1 from sensors",
+   "horizon_ms": 10.0,
+   "mae_K": 3.6068524205907067,
+   "p99_K_worst": 9.010022675855081,
+   "max_K_worst": 10.636823829142656
+  },
+  {
+   "model": "T1 from sensors",
+   "horizon_ms": 100.0,
+   "mae_K": 4.6530172023808944,
+   "p99_K_worst": 9.457181102062416,
+   "max_K_worst": 11.432727601627278
+  },
+  {
+   "model": "T1 from sensors",
+   "horizon_ms": 1000.0,
+   "mae_K": 4.209035662191379,
+   "p99_K_worst": 8.498299224196233,
+   "max_K_worst": 11.08864360690626
+  },
+  {
+   "model": "T3 open loop",
+   "horizon_ms": 1.0,
+   "mae_K": 0.06304502286321648,
+   "p99_K_worst": 0.2513125519587362,
+   "max_K_worst": 0.27589177923431407
+  },
+  {
+   "model": "T3 open loop",
+   "horizon_ms": 10.0,
+   "mae_K": 0.06299567729711572,
+   "p99_K_worst": 0.25247409302920176,
+   "max_K_worst": 0.2782788027180345
+  },
+  {
+   "model": "T3 open loop",
+   "horizon_ms": 100.0,
+   "mae_K": 0.06263309943963462,
+   "p99_K_worst": 0.2516858733740026,
+   "max_K_worst": 0.2756132681705026
+  },
+  {
+   "model": "T3 open loop",
+   "horizon_ms": 1000.0,
+   "mae_K": 0.05931541607553337,
+   "p99_K_worst": 0.2389008274444274,
+   "max_K_worst": 0.27384244132696267
+  },
+  {
+   "model": "T3 anchored",
+   "horizon_ms": 1.0,
+   "mae_K": 0.0009347863968785003,
+   "p99_K_worst": 0.021150813596262943,
+   "max_K_worst": 0.14551916702424705
+  },
+  {
+   "model": "T3 anchored",
+   "horizon_ms": 10.0,
+   "mae_K": 0.004361052878765695,
+   "p99_K_worst": 0.04267950161577578,
+   "max_K_worst": 0.15146123826730218
+  },
+  {
+   "model": "T3 anchored",
+   "horizon_ms": 100.0,
+   "mae_K": 0.017184978007230536,
+   "p99_K_worst": 0.18587603577945902,
+   "max_K_worst": 0.2606139146847113
+  },
+  {
+   "model": "T3 anchored",
+   "horizon_ms": 1000.0,
+   "mae_K": 0.05446444359904338,
+   "p99_K_worst": 0.42615628844735687,
+   "max_K_worst": 0.49465569114823893
+  },
+  {
+   "model": "T2 ARX from sensors",
+   "horizon_ms": 1.0,
+   "mae_K": 0.0012501182218817056,
+   "p99_K_worst": 0.016950802896582334,
+   "max_K_worst": 0.08324599456489068
+  },
+  {
+   "model": "T2 ARX from sensors",
+   "horizon_ms": 10.0,
+   "mae_K": 0.014480033612223395,
+   "p99_K_worst": 0.1398598705256655,
+   "max_K_worst": 0.38206592865788025
+  },
+  {
+   "model": "T2 ARX from sensors",
+   "horizon_ms": 100.0,
+   "mae_K": 0.10241525819035041,
+   "p99_K_worst": 0.658697322823988,
+   "max_K_worst": 0.9866199000857705
+  },
+  {
+   "model": "T2 ARX from sensors",
+   "horizon_ms": 1000.0,
+   "mae_K": 0.4181122981607105,
+   "p99_K_worst": 1.3117729729297223,
+   "max_K_worst": 1.4530801814395886
+  }
+ ],
+ "forecast_call_us": {
+  "10": 34.76450001471676,
+  "100": 317.54599967825925
+ }
+}

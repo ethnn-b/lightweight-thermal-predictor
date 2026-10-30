@@ -1,0 +1,8 @@
+| model | size_bytes_median | mae_K_mean | max_K_worst | die_peak_err_K_worst | hottest_core_acc_min |
+|---|---|---|---|---|---|
+| S1 core average | 512 | 2.73 | 8.96 | 4.95 | 0.5 |
+| S1 + offset (nominal) | 576 | 0.586 | 4.11 | 1.32 | 0.817 |
+| S1-hot (hottest cell) | 512 | 0.291 | 3.97 | 3.56 | 0.683 |
+| S1-hot-max (candidate cells) | 3136 | 0.0775 | 1.6 | 0.715 | 0.9 |
+| all cells of each core | 114688 | 6.94e-06 | 2.87e-05 | 2.61e-05 | 1 |
+hottest cell moved away from the calibrated cell in 61.1% of (core, test vector) cases (worst floorplan 87.1%)

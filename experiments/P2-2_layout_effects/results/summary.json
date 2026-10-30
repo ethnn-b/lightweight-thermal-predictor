@@ -1,0 +1,41 @@
+{
+ "spread": [
+  {
+   "quantity": "self-heating G_ii, big cores (K/W)",
+   "min": 0.5650640000000067,
+   "max": 0.6586790000000065,
+   "max_over_min": 1.1656714991576151
+  },
+  {
+   "quantity": "self-heating G_ii, little cores (K/W)",
+   "min": 1.3223250000000348,
+   "max": 1.83340000000004,
+   "max_over_min": 1.3864972680694927
+  },
+  {
+   "quantity": "coupling G_ij, all pairs (K/W)",
+   "min": 0.10361000000000331,
+   "max": 0.6346640000000434,
+   "max_over_min": 6.125509120741465
+  },
+  {
+   "quantity": "package term min G per floorplan (K/W)",
+   "min": 0.10361000000000331,
+   "max": 0.13725600000003624,
+   "max_over_min": 1.324736994498908
+  },
+  {
+   "quantity": "peak core temperature at nominal power (C)",
+   "min": 68.92690400000129,
+   "max": 76.63945200000217,
+   "max_over_min": NaN
+  }
+ ],
+ "correlations": {
+  "peak_vs_core_area_pct": 0.8262361258033308,
+  "peak_vs_die_area": -0.8559689716168374,
+  "package_term_vs_die_area": -0.4910060483203583,
+  "self_heating_big_vs_edge_distance": -0.2904392784362152,
+  "self_heating_little_vs_edge_distance": -0.42165197552336026
+ }
+}

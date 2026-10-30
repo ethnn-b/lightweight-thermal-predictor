@@ -1,0 +1,13 @@
+| floorplan | peak_C | scale_0p5_maxerr_K | scale_2_maxerr_K | scale_3_maxerr_K | zero_maxdev_from_ambient_K | superposition_maxerr_K | unit_1W_vs_10W_maxerr_K |
+|---|---|---|---|---|---|---|---|
+| s1_fp001 | 76.4 | 5e-07 | 1e-06 | 1e-06 | 0 | 1e-06 | 3e-07 |
+| s2_fp004 | 76.2 | 5e-07 | 1e-06 | 1e-06 | 0 | 5.68e-14 | 4e-07 |
+| s3_fp002 | 70.5 | 5e-07 | 1e-06 | 1e-06 | 0 | 1e-06 | 5e-07 |
+| s4_fp001 | 69.3 | 5e-07 | 1e-06 | 1e-06 | 0 | 1e-06 | 5e-07 |
+
+| floorplan | scale_2_maxerr_K | superposition_maxerr_K | max_rise_K |
+|---|---|---|---|
+| s1_fp001 | 3e-06 | 1e-06 | 24.1 |
+| s2_fp004 | 3e-06 | 1e-06 | 23.4 |
+| s3_fp002 | 3e-06 | 1e-06 | 18.7 |
+| s4_fp001 | 2e-06 | 1e-06 | 16 |

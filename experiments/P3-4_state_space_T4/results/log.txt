@@ -1,0 +1,24 @@
+s1_fp001 {'floorplan': 's1_fp001', 'states': 16396, 'steady_gain_vs_S1_maxdiff': 4.975193096945496e-07, 'full_order_vs_hotspot_maxdiff': 1.1625522802205523e-06, 'full_order_ms_per_step': 6.421003235700118, 'reduction_s': 14.728204037999603, 'modal200_vs_hotspot_maxdiff': 0.01356621585779294}
+s2_fp004 {'floorplan': 's2_fp004', 'states': 16396, 'steady_gain_vs_S1_maxdiff': 4.771742696529913e-07, 'full_order_vs_hotspot_maxdiff': 1.2024341913274839e-06, 'full_order_ms_per_step': 6.7054874846999155, 'reduction_s': 11.90266655800042, 'modal200_vs_hotspot_maxdiff': 0.006057341989389897}
+s3_fp002 {'floorplan': 's3_fp002', 'states': 16396, 'steady_gain_vs_S1_maxdiff': 4.971455663804747e-07, 'full_order_vs_hotspot_maxdiff': 1.1141201525788347e-06, 'full_order_ms_per_step': 6.768317003300035, 'reduction_s': 11.129389800000354, 'modal200_vs_hotspot_maxdiff': 0.02618536095468471}
+s4_fp001 {'floorplan': 's4_fp001', 'states': 16396, 'steady_gain_vs_S1_maxdiff': 4.988695292557077e-07, 'full_order_vs_hotspot_maxdiff': 1.0221099842055992e-06, 'full_order_ms_per_step': 8.16070985890001, 'reduction_s': 11.168597758000033, 'modal200_vs_hotspot_maxdiff': 0.034382336034070704}
+| floorplan | states | steady_gain_vs_S1_maxdiff | full_order_vs_hotspot_maxdiff | full_order_ms_per_step | reduction_s | modal200_vs_hotspot_maxdiff |
+|---|---|---|---|---|---|---|
+| s1_fp001 | 16396 | 4.98e-07 | 1.16e-06 | 6.42 | 14.7 | 0.0136 |
+| s2_fp004 | 16396 | 4.77e-07 | 1.2e-06 | 6.71 | 11.9 | 0.00606 |
+| s3_fp002 | 16396 | 4.97e-07 | 1.11e-06 | 6.77 | 11.1 | 0.0262 |
+| s4_fp001 | 16396 | 4.99e-07 | 1.02e-06 | 8.16 | 11.2 | 0.0344 |
+| model | mae_K_mean | max_K_worst | size_bytes | time_us_per_step |
+|---|---|---|---|---|
+| T4 r=1 | 4 | 9.96 | 2180 | 5.65 |
+| T4 r=2 | 3.91 | 9.88 | 2392 | 5.64 |
+| T4 r=3 | 3.75 | 9.62 | 2620 | 5.7 |
+| T4 r=4 | 3.67 | 8.39 | 2864 | 5.75 |
+| T4 r=6 | 3.49 | 7.96 | 3400 | 5.66 |
+| T4 r=8 | 2.76 | 7.55 | 4000 | 5.74 |
+| T4 r=12 | 0.837 | 3.18 | 5392 | 5.78 |
+| T4 r=16 | 0.293 | 1.1 | 7040 | 5.98 |
+| T4 r=24 | 0.0441 | 0.231 | 11104 | 6.02 |
+| T4 r=32 | 0.00745 | 0.0465 | 16192 | 6.33 |
+| T4 r=48 | 0.000322 | 0.0343 | 29440 | 6.95 |
+| T4 r=64 | 4.9e-05 | 0.0344 | 46784 | 7.45 |

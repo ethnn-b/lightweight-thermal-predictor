@@ -1,0 +1,16 @@
+| case | model | mae_K_mean | max_K_worst | max_K_after_50 | max_rise_K |
+|---|---|---|---|---|---|
+| (a) steady at 1.5x max | S1 | 9.44e-06 | 2.84e-05 | nan | 51.2 |
+| (a) steady at 3.0x max | S1 | 1.89e-05 | 5.47e-05 | nan | 102 |
+| (a) transient at 2x | T3 M=4 | 0.21 | 0.641 | 0.641 | 54.6 |
+| (a) transient at 2x | T2 ARX(2,2) | 0.453 | 1.94 | 1.94 | 54.6 |
+| (b) bursty 1-5 ms | T3 M=4 | 0.106 | 0.442 | 0.442 | 27 |
+| (b) bursty 1-5 ms | T2 ARX(2,2) | 0.219 | 0.722 | 0.722 | 27 |
+| (c) task migration | T3 M=4 | 0.0764 | 0.307 | 0.307 | 23 |
+| (c) task migration | T2 ARX(2,2) | 0.174 | 0.84 | 0.84 | 23 |
+| (d) dt = 0.1 ms | T3 M=4 | 0.143 | 2.16 | 1.21 | 22.9 |
+| (d) dt = 10 ms | T3 M=4 | 0.079 | 1.88 | 0.885 | 30.9 |
+| (e) warm start | T3 M=4 | 0.0291 | 2.01 | 0.268 | 34 |
+| (e) warm start | T2 ARX(2,2) | 0.0742 | 2.01 | 0.488 | 34 |
+| (ref) normal phase trace | T3 M=4 | 0.104 | 0.324 | 0.324 | 27.7 |
+| (ref) normal phase trace | T2 ARX(2,2) | 0.196 | 0.771 | 0.771 | 27.7 |

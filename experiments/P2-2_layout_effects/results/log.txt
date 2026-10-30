@@ -1,0 +1,8 @@
+| quantity | min | max | max_over_min |
+|---|---|---|---|
+| self-heating G_ii, big cores (K/W) | 0.565 | 0.659 | 1.17 |
+| self-heating G_ii, little cores (K/W) | 1.32 | 1.83 | 1.39 |
+| coupling G_ij, all pairs (K/W) | 0.104 | 0.635 | 6.13 |
+| package term min G per floorplan (K/W) | 0.104 | 0.137 | 1.32 |
+| peak core temperature at nominal power (C) | 68.9 | 76.6 | nan |
+{'peak_vs_core_area_pct': 0.8262361258033308, 'peak_vs_die_area': -0.8559689716168374, 'package_term_vs_die_area': -0.4910060483203583, 'self_heating_big_vs_edge_distance': -0.2904392784362152, 'self_heating_little_vs_edge_distance': -0.42165197552336026}

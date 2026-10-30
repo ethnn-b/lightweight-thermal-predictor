@@ -1,0 +1,47 @@
+{
+ "summary": [
+  {
+   "model": "S1 core average",
+   "size_bytes_median": 512,
+   "mae_K_mean": 2.7279482750190973,
+   "max_K_worst": 8.961529430782548,
+   "die_peak_err_K_worst": 4.953528858569314,
+   "hottest_core_acc_min": 0.5
+  },
+  {
+   "model": "S1 + offset (nominal)",
+   "size_bytes_median": 576,
+   "mae_K_mean": 0.5858658504253215,
+   "max_K_worst": 4.105690900061859,
+   "die_peak_err_K_worst": 1.3164075522514622,
+   "hottest_core_acc_min": 0.8166666666666667
+  },
+  {
+   "model": "S1-hot (hottest cell)",
+   "size_bytes_median": 512,
+   "mae_K_mean": 0.29078125239732744,
+   "max_K_worst": 3.9656700211210136,
+   "die_peak_err_K_worst": 3.5599856871619977,
+   "hottest_core_acc_min": 0.6833333333333333
+  },
+  {
+   "model": "S1-hot-max (candidate cells)",
+   "size_bytes_median": 3136,
+   "mae_K_mean": 0.07748842630989522,
+   "max_K_worst": 1.5994377765966874,
+   "die_peak_err_K_worst": 0.714768774955246,
+   "hottest_core_acc_min": 0.9
+  },
+  {
+   "model": "all cells of each core",
+   "size_bytes_median": 114688,
+   "mae_K_mean": 6.9430496677484935e-06,
+   "max_K_worst": 2.8703177690658777e-05,
+   "die_peak_err_K_worst": 2.614451710769572e-05,
+   "hottest_core_acc_min": 1.0
+  }
+ ],
+ "hot_cell_moved_mean": 0.6107789855072464,
+ "hot_cell_moved_max": 0.8708333333333333,
+ "extra_bytes_S1_hot": 512
+}

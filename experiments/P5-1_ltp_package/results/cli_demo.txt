@@ -1,0 +1,19 @@
+$ python3 -m src.ltp calibrate s4_fp001 -o model_s4_fp001.npz
+calibrated s4_fp001: 24 HotSpot runs, 0.4 s; model 8032 B of coefficients -> experiments/P5-1_ltp_package/results/model_s4_fp001.npz
+
+$ python3 -m src.ltp steady model_s4_fp001.npz --power 20,20,8,8,8,8,8,8
+Core_0_L0	Core_1_L0	Core_2_L0	Core_3_L0	Core_4_L0	Core_5_L0	Core_6_L0	Core_7_L0	FILL_0_L0	FILL_1_L0	FILL_2_L0	FILL_3_L0	FILL_4_L0	FILL_5_L0	FILL_6_L0	FILL_7_L0	FILL_8_L0	FILL_9_L0	FILL_10_L0	FILL_11_L0	FILL_12_L0	FILL_13_L0	FILL_14_L0	FILL_15_L0	FILL_16_L0
+66.313	67.214	68.344	67.488	69.297	68.614	68.760	67.769	59.501	59.817	59.603	59.580	58.596	63.412	59.051	59.453	62.317	59.543	57.808	59.141	62.682	57.699	60.554	57.960	59.876
+
+$ python3 -m src.ltp steady model_s4_fp001.npz --ptrace <TA fp_001_steady.ptrace>
+Core_0_L0	Core_1_L0	Core_2_L0	Core_3_L0	Core_4_L0	Core_5_L0	Core_6_L0	Core_7_L0
+66.313	67.214	68.344	67.488	69.297	68.614	68.760	67.769
+
+$ python3 -m src.ltp transient model_s4_fp001.npz --ptrace <TA fp_001_transient.ptrace> --warm -o out.ttrace
+Core_0_L0	Core_1_L0	Core_2_L0	Core_3_L0
+339.463092	340.364348	341.494292	340.637876
+
+$ python3 -m src.ltp bench model_s4_fp001.npz s4_fp001
+model experiments/P5-1_ltp_package/results/model_s4_fp001.npz: 8032 B of coefficients (G 1600 B, T3 6432 B, M = 4)
+steady    vs HotSpot on 302 vectors: MAE 5.19e-06 K, max 1.40e-05 K, 2.6 us per call
+transient vs HotSpot on 2000 steps (1 ms): MAE 0.051 K, max 0.189 K, 3.5 us per step

@@ -1,0 +1,74 @@
+{
+ "rows": [
+  {
+   "floorplan": "s1_fp001",
+   "block_vs_grid64_maxdiff_K": 1.8931860000000142,
+   "grid32_vs_128_maxdiff_K": 0.4853430000000003,
+   "grid64_vs_128_maxdiff_K": 0.1300520000000347,
+   "areaavg32_vs_128_maxdiff_K": 0.12866871237167743,
+   "areaavg64_vs_128_maxdiff_K": 0.026372306823986946,
+   "hotspot_avg_vs_area_avg64_max_K": 0.09743030517597617,
+   "hotcell_minus_avg64_max_K": 3.3293669999999906,
+   "hotcell_minus_avg128_max_K": 3.5297110000000202,
+   "peak_grid64_C": 76.41524700000002,
+   "peak_cell128_C": 76.875315
+  },
+  {
+   "floorplan": "s2_fp004",
+   "block_vs_grid64_maxdiff_K": 1.1350459999999885,
+   "grid32_vs_128_maxdiff_K": 0.2568949999999859,
+   "grid64_vs_128_maxdiff_K": 0.1542779999999766,
+   "areaavg32_vs_128_maxdiff_K": 0.0680198327639232,
+   "areaavg64_vs_128_maxdiff_K": 0.010117517578407842,
+   "hotspot_avg_vs_area_avg64_max_K": 0.1848698405760274,
+   "hotcell_minus_avg64_max_K": 3.9878309999999715,
+   "hotcell_minus_avg128_max_K": 3.7047129999999697,
+   "peak_grid64_C": 76.20774500000005,
+   "peak_cell128_C": 76.981402
+  },
+  {
+   "floorplan": "s3_fp002",
+   "block_vs_grid64_maxdiff_K": 3.7198440000000232,
+   "grid32_vs_128_maxdiff_K": 1.5032959999999775,
+   "grid64_vs_128_maxdiff_K": 0.8861610000000155,
+   "areaavg32_vs_128_maxdiff_K": 0.4657651795653237,
+   "areaavg64_vs_128_maxdiff_K": 0.12833812969938663,
+   "hotspot_avg_vs_area_avg64_max_K": 0.9647793037111114,
+   "hotcell_minus_avg64_max_K": 3.9458140000000412,
+   "hotcell_minus_avg128_max_K": 3.3168999999999755,
+   "peak_grid64_C": 70.49662000000001,
+   "peak_cell128_C": 73.29758900000002
+  },
+  {
+   "floorplan": "s4_fp001",
+   "block_vs_grid64_maxdiff_K": 5.360268000000019,
+   "grid32_vs_128_maxdiff_K": 1.6545080000000212,
+   "grid64_vs_128_maxdiff_K": 0.6190029999999638,
+   "areaavg32_vs_128_maxdiff_K": 0.4650960784301219,
+   "areaavg64_vs_128_maxdiff_K": 0.14837863183566924,
+   "hotspot_avg_vs_area_avg64_max_K": 0.9033733264160446,
+   "hotcell_minus_avg64_max_K": 3.791950999999983,
+   "hotcell_minus_avg128_max_K": 3.306241,
+   "peak_grid64_C": 69.29704100000004,
+   "peak_cell128_C": 72.52375600000005
+  }
+ ],
+ "timing": [
+  {
+   "model": "block",
+   "median_wall_s": 0.0013756559999933415
+  },
+  {
+   "model": "grid 32x32",
+   "median_wall_s": 0.032815648000024566
+  },
+  {
+   "model": "grid 64x64",
+   "median_wall_s": 0.2707348490000072
+  },
+  {
+   "model": "grid 128x128",
+   "median_wall_s": 2.6059976330000154
+  }
+ ]
+}

@@ -1,0 +1,222 @@
+[
+ {
+  "variant": "ambient 35 \u00b0C",
+  "floorplan": "s1_fp001",
+  "model": "old model, old ambient",
+  "steady_max_K": 10.000004516225658,
+  "transient_max_K": 10.23112462408858,
+  "transient_mae_K": 9.933441037351173,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "ambient 35 \u00b0C",
+  "floorplan": "s1_fp001",
+  "model": "old model, new T_amb only",
+  "steady_max_K": 1.680945723592231e-05,
+  "transient_max_K": 0.2743232616850264,
+  "transient_mae_K": 0.1193499577801177,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "ambient 35 \u00b0C",
+  "floorplan": "s1_fp001",
+  "model": "recalibrated",
+  "steady_max_K": 1.680945723592231e-05,
+  "transient_max_K": 0.2743232616850264,
+  "transient_mae_K": 0.1193499577801177,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "ambient 35 \u00b0C",
+  "floorplan": "s1_fp001",
+  "model": "(recalibration cost)",
+  "steady_max_K": NaN,
+  "transient_max_K": NaN,
+  "transient_mae_K": NaN,
+  "hotspot_runs": 24,
+  "hotspot_cpu_s": 2584.215430475002,
+  "pool_wall_s": 470.0868954919997
+ },
+ {
+  "variant": "ambient 35 \u00b0C",
+  "floorplan": "s4_fp001",
+  "model": "old model, old ambient",
+  "steady_max_K": 10.00001137607586,
+  "transient_max_K": 10.164337227598423,
+  "transient_mae_K": 9.975756343691701,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "ambient 35 \u00b0C",
+  "floorplan": "s4_fp001",
+  "model": "old model, new T_amb only",
+  "steady_max_K": 1.3205996594933822e-05,
+  "transient_max_K": 0.23307012306634078,
+  "transient_mae_K": 0.05116646301043824,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "ambient 35 \u00b0C",
+  "floorplan": "s4_fp001",
+  "model": "recalibrated",
+  "steady_max_K": 1.3205996594933822e-05,
+  "transient_max_K": 0.23307011611638018,
+  "transient_mae_K": 0.05116646574219283,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "ambient 35 \u00b0C",
+  "floorplan": "s4_fp001",
+  "model": "(recalibration cost)",
+  "steady_max_K": NaN,
+  "transient_max_K": NaN,
+  "transient_mae_K": NaN,
+  "hotspot_runs": 24,
+  "hotspot_cpu_s": 2978.4577643130033,
+  "pool_wall_s": 470.0868954919997
+ },
+ {
+  "variant": "r_convec \u00d72 (0.2 K/W)",
+  "floorplan": "s1_fp001",
+  "model": "old model, new T_amb only",
+  "steady_max_K": 8.500387839574046,
+  "transient_max_K": 0.48309020516461487,
+  "transient_mae_K": 0.22819867882536934,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "r_convec \u00d72 (0.2 K/W)",
+  "floorplan": "s1_fp001",
+  "model": "recalibrated",
+  "steady_max_K": 1.471557681043123e-05,
+  "transient_max_K": 0.29210641788597513,
+  "transient_mae_K": 0.11393253530279666,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "r_convec \u00d72 (0.2 K/W)",
+  "floorplan": "s1_fp001",
+  "model": "(recalibration cost)",
+  "steady_max_K": NaN,
+  "transient_max_K": NaN,
+  "transient_mae_K": NaN,
+  "hotspot_runs": 24,
+  "hotspot_cpu_s": 2429.3320483389925,
+  "pool_wall_s": 373.8299464345
+ },
+ {
+  "variant": "r_convec \u00d72 (0.2 K/W)",
+  "floorplan": "s4_fp001",
+  "model": "old model, new T_amb only",
+  "steady_max_K": 8.498284996684504,
+  "transient_max_K": 0.42468624048842685,
+  "transient_mae_K": 0.15150960827654328,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "r_convec \u00d72 (0.2 K/W)",
+  "floorplan": "s4_fp001",
+  "model": "recalibrated",
+  "steady_max_K": 2.2323663642964675e-05,
+  "transient_max_K": 0.2564997250776173,
+  "transient_mae_K": 0.042278360654338834,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "r_convec \u00d72 (0.2 K/W)",
+  "floorplan": "s4_fp001",
+  "model": "(recalibration cost)",
+  "steady_max_K": NaN,
+  "transient_max_K": NaN,
+  "transient_mae_K": NaN,
+  "hotspot_runs": 24,
+  "hotspot_cpu_s": 2035.1081442079958,
+  "pool_wall_s": 373.8299464345
+ },
+ {
+  "variant": "r_convec \u00d70.5 (0.05 K/W)",
+  "floorplan": "s1_fp001",
+  "model": "old model, new T_amb only",
+  "steady_max_K": 4.364192160425944,
+  "transient_max_K": 0.4189043493823874,
+  "transient_mae_K": 0.14611852850111248,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "r_convec \u00d70.5 (0.05 K/W)",
+  "floorplan": "s1_fp001",
+  "model": "recalibrated",
+  "steady_max_K": 1.9441580661805347e-05,
+  "transient_max_K": 0.21975605443691393,
+  "transient_mae_K": 0.09599163443994742,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "r_convec \u00d70.5 (0.05 K/W)",
+  "floorplan": "s1_fp001",
+  "model": "(recalibration cost)",
+  "steady_max_K": NaN,
+  "transient_max_K": NaN,
+  "transient_mae_K": NaN,
+  "hotspot_runs": 24,
+  "hotspot_cpu_s": 1187.2113712020018,
+  "pool_wall_s": 197.0465755260002
+ },
+ {
+  "variant": "r_convec \u00d70.5 (0.05 K/W)",
+  "floorplan": "s4_fp001",
+  "model": "old model, new T_amb only",
+  "steady_max_K": 4.361401003315507,
+  "transient_max_K": 0.4830448498105966,
+  "transient_mae_K": 0.17353568488996568,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "r_convec \u00d70.5 (0.05 K/W)",
+  "floorplan": "s4_fp001",
+  "model": "recalibrated",
+  "steady_max_K": 1.7775428489130718e-05,
+  "transient_max_K": 0.1977372178782275,
+  "transient_mae_K": 0.056016279454039884,
+  "hotspot_runs": "",
+  "hotspot_cpu_s": "",
+  "pool_wall_s": ""
+ },
+ {
+  "variant": "r_convec \u00d70.5 (0.05 K/W)",
+  "floorplan": "s4_fp001",
+  "model": "(recalibration cost)",
+  "steady_max_K": NaN,
+  "transient_max_K": NaN,
+  "transient_mae_K": NaN,
+  "hotspot_runs": 24,
+  "hotspot_cpu_s": 1160.4193255959945,
+  "pool_wall_s": 197.0465755260002
+ }
+]

@@ -1,0 +1,6 @@
+| floorplan | start | steps | max_diff_vs_batch_K | stepper_ms_per_step | batch_ms_per_step |
+|---|---|---|---|---|---|
+| s1_fp001 | cold | 1000 | 0 | 21.8 | 21.3 |
+| s1_fp001 | warm | 1000 | 0 | 22 | 20.6 |
+| s4_fp001 | cold | 1000 | 0 | 33.6 | 22.5 |
+| s4_fp001 | warm | 1000 | 0 | 21.6 | 24.4 |

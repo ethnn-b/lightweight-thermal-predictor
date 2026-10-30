@@ -1,0 +1,12 @@
+{
+ "n_floorplans": 24,
+ "nominal_peak_range_C": [
+  68.92692700000003,
+  76.63945900000004
+ ],
+ "max_peak_range_C": [
+  73.354894,
+  82.90674800000005
+ ],
+ "random_steady_within_bounds": true
+}

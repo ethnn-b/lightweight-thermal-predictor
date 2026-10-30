@@ -1,0 +1,22 @@
+s1_fp001 done
+s2_fp004 done
+s3_fp002 done
+s4_fp001 done
+| floorplan | leakage | model | mae_K | max_K | leak_W_mean | leak_rise_K_mean | iterations_mean | time_us |
+|---|---|---|---|---|---|---|---|---|
+| s1_fp001 | default (alpha 1.5e4) | S1 (no leakage) | 0.072 | 0.0862 | 0.265 | 0.072 |  |  |
+| s1_fp001 | default (alpha 1.5e4) | S1 + leakage loop | 5.08e-06 | 1.55e-05 | 0.265 | 0.072 | 3 | 23.6 |
+| s1_fp001 | 10x (alpha 1.5e5) | S1 (no leakage) | 0.737 | 0.885 | 2.71 | 0.737 |  |  |
+| s1_fp001 | 10x (alpha 1.5e5) | S1 + leakage loop | 7.98e-06 | 2.07e-05 | 2.71 | 0.737 | 4 | 28.9 |
+| s2_fp004 | default (alpha 1.5e4) | S1 (no leakage) | 0.0628 | 0.0756 | 0.2 | 0.0628 |  |  |
+| s2_fp004 | default (alpha 1.5e4) | S1 + leakage loop | 6.14e-06 | 1.44e-05 | 0.2 | 0.0628 | 3 | 21.6 |
+| s2_fp004 | 10x (alpha 1.5e5) | S1 (no leakage) | 0.641 | 0.774 | 2.04 | 0.641 |  |  |
+| s2_fp004 | 10x (alpha 1.5e5) | S1 + leakage loop | 9.16e-06 | 2.35e-05 | 2.04 | 0.641 | 4 | 33.1 |
+| s3_fp002 | default (alpha 1.5e4) | S1 (no leakage) | 0.0838 | 0.0968 | 0.395 | 0.0838 |  |  |
+| s3_fp002 | default (alpha 1.5e4) | S1 + leakage loop | 6.94e-06 | 1.86e-05 | 0.395 | 0.0838 | 3 | 24.3 |
+| s3_fp002 | 10x (alpha 1.5e5) | S1 (no leakage) | 0.861 | 0.998 | 4.06 | 0.861 |  |  |
+| s3_fp002 | 10x (alpha 1.5e5) | S1 + leakage loop | 2.03e-05 | 4.7e-05 | 4.06 | 0.861 | 4 | 29.8 |
+| s4_fp001 | default (alpha 1.5e4) | S1 (no leakage) | 0.0927 | 0.104 | 0.476 | 0.0927 |  |  |
+| s4_fp001 | default (alpha 1.5e4) | S1 + leakage loop | 5.53e-06 | 1.13e-05 | 0.476 | 0.0927 | 3 | 25.4 |
+| s4_fp001 | 10x (alpha 1.5e5) | S1 (no leakage) | 0.956 | 1.07 | 4.91 | 0.956 |  |  |
+| s4_fp001 | 10x (alpha 1.5e5) | S1 + leakage loop | 3.56e-05 | 5.75e-05 | 4.91 | 0.956 | 4 | 31.8 |

@@ -1,0 +1,178 @@
+[
+ {
+  "floorplan": "s1_fp001",
+  "leakage": "default (alpha 1.5e4)",
+  "model": "S1 (no leakage)",
+  "mae_K": 0.07196547014528633,
+  "max_K": 0.08615784077869648,
+  "leak_W_mean": 0.2647639478401968,
+  "leak_rise_K_mean": 0.07196547014528633,
+  "iterations_mean": "",
+  "time_us": ""
+ },
+ {
+  "floorplan": "s1_fp001",
+  "leakage": "default (alpha 1.5e4)",
+  "model": "S1 + leakage loop",
+  "mae_K": 5.078528904221002e-06,
+  "max_K": 1.5546316262771143e-05,
+  "leak_W_mean": 0.2647639478401968,
+  "leak_rise_K_mean": 0.07196547014528633,
+  "iterations_mean": 3.0,
+  "time_us": 23.63500016144826
+ },
+ {
+  "floorplan": "s1_fp001",
+  "leakage": "10x (alpha 1.5e5)",
+  "model": "S1 (no leakage)",
+  "mae_K": 0.7365385901452846,
+  "max_K": 0.8848998407787008,
+  "leak_W_mean": 2.708450103377784,
+  "leak_rise_K_mean": 0.7365385901452846,
+  "iterations_mean": "",
+  "time_us": ""
+ },
+ {
+  "floorplan": "s1_fp001",
+  "leakage": "10x (alpha 1.5e5)",
+  "model": "S1 + leakage loop",
+  "mae_K": 7.982626003411042e-06,
+  "max_K": 2.0656880337810435e-05,
+  "leak_W_mean": 2.708450103377784,
+  "leak_rise_K_mean": 0.7365385901452846,
+  "iterations_mean": 4.0,
+  "time_us": 28.944500172656262
+ },
+ {
+  "floorplan": "s2_fp004",
+  "leakage": "default (alpha 1.5e4)",
+  "model": "S1 (no leakage)",
+  "mae_K": 0.06276314567032855,
+  "max_K": 0.0756049476891576,
+  "leak_W_mean": 0.19954472000935575,
+  "leak_rise_K_mean": 0.06276314567032855,
+  "iterations_mean": "",
+  "time_us": ""
+ },
+ {
+  "floorplan": "s2_fp004",
+  "leakage": "default (alpha 1.5e4)",
+  "model": "S1 + leakage loop",
+  "mae_K": 6.137445905523009e-06,
+  "max_K": 1.4403821296582464e-05,
+  "leak_W_mean": 0.19954472000935575,
+  "leak_rise_K_mean": 0.06276314567032855,
+  "iterations_mean": 3.0,
+  "time_us": 21.567999738181243
+ },
+ {
+  "floorplan": "s2_fp004",
+  "leakage": "10x (alpha 1.5e5)",
+  "model": "S1 (no leakage)",
+  "mae_K": 0.6407473106703299,
+  "max_K": 0.7744379476891368,
+  "leak_W_mean": 2.036641868356422,
+  "leak_rise_K_mean": 0.6407473106703299,
+  "iterations_mean": "",
+  "time_us": ""
+ },
+ {
+  "floorplan": "s2_fp004",
+  "leakage": "10x (alpha 1.5e5)",
+  "model": "S1 + leakage loop",
+  "mae_K": 9.16258722497787e-06,
+  "max_K": 2.354862380116174e-05,
+  "leak_W_mean": 2.036641868356422,
+  "leak_rise_K_mean": 0.6407473106703299,
+  "iterations_mean": 4.0,
+  "time_us": 33.14749937999295
+ },
+ {
+  "floorplan": "s3_fp002",
+  "leakage": "default (alpha 1.5e4)",
+  "model": "S1 (no leakage)",
+  "mae_K": 0.08378414515371731,
+  "max_K": 0.09679144518560179,
+  "leak_W_mean": 0.3947354096734576,
+  "leak_rise_K_mean": 0.08378414515371731,
+  "iterations_mean": "",
+  "time_us": ""
+ },
+ {
+  "floorplan": "s3_fp002",
+  "leakage": "default (alpha 1.5e4)",
+  "model": "S1 + leakage loop",
+  "mae_K": 6.936795519720817e-06,
+  "max_K": 1.85583741085793e-05,
+  "leak_W_mean": 0.3947354096734576,
+  "leak_rise_K_mean": 0.08378414515371731,
+  "iterations_mean": 3.0,
+  "time_us": 24.326000584551366
+ },
+ {
+  "floorplan": "s3_fp002",
+  "leakage": "10x (alpha 1.5e5)",
+  "model": "S1 (no leakage)",
+  "mae_K": 0.8610677676537186,
+  "max_K": 0.9975604451855702,
+  "leak_W_mean": 4.0561987349964275,
+  "leak_rise_K_mean": 0.8610677676537186,
+  "iterations_mean": "",
+  "time_us": ""
+ },
+ {
+  "floorplan": "s3_fp002",
+  "leakage": "10x (alpha 1.5e5)",
+  "model": "S1 + leakage loop",
+  "mae_K": 2.034639169323782e-05,
+  "max_K": 4.70149566353939e-05,
+  "leak_W_mean": 4.0561987349964275,
+  "leak_rise_K_mean": 0.8610677676537186,
+  "iterations_mean": 4.0,
+  "time_us": 29.76199994009221
+ },
+ {
+  "floorplan": "s4_fp001",
+  "leakage": "default (alpha 1.5e4)",
+  "model": "S1 (no leakage)",
+  "mae_K": 0.09274388660385555,
+  "max_K": 0.1036482845726141,
+  "leak_W_mean": 0.4764820753240905,
+  "leak_rise_K_mean": 0.09274388660385555,
+  "iterations_mean": "",
+  "time_us": ""
+ },
+ {
+  "floorplan": "s4_fp001",
+  "leakage": "default (alpha 1.5e4)",
+  "model": "S1 + leakage loop",
+  "mae_K": 5.530228263666004e-06,
+  "max_K": 1.1329934977766243e-05,
+  "leak_W_mean": 0.4764820753240905,
+  "leak_rise_K_mean": 0.09274388660385555,
+  "iterations_mean": 3.0,
+  "time_us": 25.425999865547055
+ },
+ {
+  "floorplan": "s4_fp001",
+  "leakage": "10x (alpha 1.5e5)",
+  "model": "S1 (no leakage)",
+  "mae_K": 0.9562155141038562,
+  "max_K": 1.0717142845726357,
+  "leak_W_mean": 4.912189516483566,
+  "leak_rise_K_mean": 0.9562155141038562,
+  "iterations_mean": "",
+  "time_us": ""
+ },
+ {
+  "floorplan": "s4_fp001",
+  "leakage": "10x (alpha 1.5e5)",
+  "model": "S1 + leakage loop",
+  "mae_K": 3.5561513671780174e-05,
+  "max_K": 5.7457161915408506e-05,
+  "leak_W_mean": 4.912189516483566,
+  "leak_rise_K_mean": 0.9562155141038562,
+  "iterations_mean": 4.0,
+  "time_us": 31.79949999321252
+ }
+]

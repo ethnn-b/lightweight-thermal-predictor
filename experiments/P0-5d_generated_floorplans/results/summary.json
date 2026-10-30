@@ -1,0 +1,74 @@
+[
+ {
+  "style": "Style_1",
+  "set": "TA",
+  "n": 3,
+  "peak_min_C": 76.32430800000003,
+  "peak_max_C": 76.41524700000002,
+  "core_area_pct_min": 43.75,
+  "core_area_pct_max": 62.22222222222222
+ },
+ {
+  "style": "Style_1",
+  "set": "generated",
+  "n": 10,
+  "peak_min_C": 75.00763,
+  "peak_max_C": 77.01302800000002,
+  "core_area_pct_min": 43.75,
+  "core_area_pct_max": 56.56565656565656
+ },
+ {
+  "style": "Style_2",
+  "set": "TA",
+  "n": 5,
+  "peak_min_C": 74.62314900000001,
+  "peak_max_C": 76.63945900000004,
+  "core_area_pct_min": 62.22222222222222,
+  "core_area_pct_max": 93.33333333333333
+ },
+ {
+  "style": "Style_2",
+  "set": "generated",
+  "n": 10,
+  "peak_min_C": 73.15438800000004,
+  "peak_max_C": 75.44768100000005,
+  "core_area_pct_min": 62.22222222222222,
+  "core_area_pct_max": 93.33333333333333
+ },
+ {
+  "style": "Style_3",
+  "set": "TA",
+  "n": 5,
+  "peak_min_C": 70.49662000000001,
+  "peak_max_C": 74.49887100000001,
+  "core_area_pct_min": 35.89743589743589,
+  "core_area_pct_max": 66.66666666666666
+ },
+ {
+  "style": "Style_3",
+  "set": "generated",
+  "n": 10,
+  "peak_min_C": 70.05514300000004,
+  "peak_max_C": 71.551672,
+  "core_area_pct_min": 35.89743589743589,
+  "core_area_pct_max": 57.14285714285713
+ },
+ {
+  "style": "Style_4",
+  "set": "TA",
+  "n": 10,
+  "peak_min_C": 68.92692700000003,
+  "peak_max_C": 72.21610300000003,
+  "core_area_pct_min": 28.571428571428566,
+  "core_area_pct_max": 28.571428571428573
+ },
+ {
+  "style": "Style_4",
+  "set": "generated",
+  "n": 10,
+  "peak_min_C": 68.70295900000002,
+  "peak_max_C": 69.88027800000003,
+  "core_area_pct_min": 28.571428571428566,
+  "core_area_pct_max": 28.571428571428573
+ }
+]

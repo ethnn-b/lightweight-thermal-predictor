@@ -1,0 +1,27 @@
+s1_fp001 done
+s2_fp004 done
+s3_fp002 done
+s4_fp001 done
+| model | horizon_ms | mae_K | p99_K_worst | max_K_worst |
+|---|---|---|---|---|
+| T0 persistence | 1 | 0.0128 | 0.323 | 4.28 |
+| T0 persistence | 10 | 0.109 | 4.18 | 8.04 |
+| T0 persistence | 100 | 0.686 | 7.94 | 9.45 |
+| T0 persistence | 1e+03 | 2.66 | 10.4 | 11.1 |
+| T1 from sensors | 1 | 0.883 | 2.64 | 4.27 |
+| T1 from sensors | 10 | 3.61 | 9.01 | 10.6 |
+| T1 from sensors | 100 | 4.65 | 9.46 | 11.4 |
+| T1 from sensors | 1e+03 | 4.21 | 8.5 | 11.1 |
+| T3 open loop | 1 | 0.063 | 0.251 | 0.276 |
+| T3 open loop | 10 | 0.063 | 0.252 | 0.278 |
+| T3 open loop | 100 | 0.0626 | 0.252 | 0.276 |
+| T3 open loop | 1e+03 | 0.0593 | 0.239 | 0.274 |
+| T3 anchored | 1 | 0.000935 | 0.0212 | 0.146 |
+| T3 anchored | 10 | 0.00436 | 0.0427 | 0.151 |
+| T3 anchored | 100 | 0.0172 | 0.186 | 0.261 |
+| T3 anchored | 1e+03 | 0.0545 | 0.426 | 0.495 |
+| T2 ARX from sensors | 1 | 0.00125 | 0.017 | 0.0832 |
+| T2 ARX from sensors | 10 | 0.0145 | 0.14 | 0.382 |
+| T2 ARX from sensors | 100 | 0.102 | 0.659 | 0.987 |
+| T2 ARX from sensors | 1e+03 | 0.418 | 1.31 | 1.45 |
+{10: '35 us', 100: '318 us'}

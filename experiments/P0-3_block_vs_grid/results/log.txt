@@ -1,0 +1,13 @@
+| floorplan | block_vs_grid64_maxdiff_K | grid32_vs_128_maxdiff_K | grid64_vs_128_maxdiff_K | areaavg32_vs_128_maxdiff_K | areaavg64_vs_128_maxdiff_K | hotspot_avg_vs_area_avg64_max_K | hotcell_minus_avg64_max_K | hotcell_minus_avg128_max_K | peak_grid64_C | peak_cell128_C |
+|---|---|---|---|---|---|---|---|---|---|---|
+| s1_fp001 | 1.89 | 0.485 | 0.13 | 0.129 | 0.0264 | 0.0974 | 3.33 | 3.53 | 76.4 | 76.9 |
+| s2_fp004 | 1.14 | 0.257 | 0.154 | 0.068 | 0.0101 | 0.185 | 3.99 | 3.7 | 76.2 | 77 |
+| s3_fp002 | 3.72 | 1.5 | 0.886 | 0.466 | 0.128 | 0.965 | 3.95 | 3.32 | 70.5 | 73.3 |
+| s4_fp001 | 5.36 | 1.65 | 0.619 | 0.465 | 0.148 | 0.903 | 3.79 | 3.31 | 69.3 | 72.5 |
+
+| model | median_wall_s |
+|---|---|
+| block | 0.00138 |
+| grid 32x32 | 0.0328 |
+| grid 64x64 | 0.271 |
+| grid 128x128 | 2.61 |

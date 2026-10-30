@@ -1,0 +1,22 @@
+| floorplan | scenario | policy | limit_C | peak_C | core_ms_over_limit | ms_any_core_over | episodes | throughput | decision_us |
+|---|---|---|---|---|---|---|---|---|---|
+| s1_fp001 | normal | none | 79.7 | 80.5 | 194 | 194 | 4 | 1 | 0 |
+| s1_fp001 | normal | reactive | 79.7 | 80.4 | 88 | 88 | 12 | 1 | 0 |
+| s1_fp001 | normal | proactive (T3) | 79.7 | 79.9 | 2 | 2 | 1 | 0.998 | 405 |
+| s1_fp001 | normal | proactive (T1) | 79.7 | 79.9 | 2 | 2 | 1 | 0.998 | 441 |
+| s1_fp001 | normal | proactive (persistence) | 79.7 | 80.2 | 32 | 32 | 5 | 0.995 | 463 |
+| s4_fp001 | normal | none | 71.6 | 72.1 | 990 | 990 | 1 | 1 | 0 |
+| s4_fp001 | normal | reactive | 71.6 | 72 | 173 | 173 | 31 | 0.999 | 0 |
+| s4_fp001 | normal | proactive (T3) | 71.6 | 71.3 | 0 | 0 | 0 | 0.997 | 413 |
+| s4_fp001 | normal | proactive (T1) | 71.6 | 71.3 | 0 | 0 | 0 | 0.997 | 454 |
+| s4_fp001 | normal | proactive (persistence) | 71.6 | 71.7 | 9 | 9 | 2 | 0.993 | 467 |
+| s1_fp001 | tight | none | 76.7 | 80.5 | 1.04e+04 | 4e+03 | 1 | 1 | 0 |
+| s1_fp001 | tight | reactive | 76.7 | 79.2 | 2.9e+03 | 2.06e+03 | 236 | 0.985 | 0 |
+| s1_fp001 | tight | proactive (T3) | 76.7 | 78.6 | 22 | 22 | 5 | 0.975 | 601 |
+| s1_fp001 | tight | proactive (T1) | 76.7 | 78.6 | 61 | 61 | 13 | 0.977 | 595 |
+| s1_fp001 | tight | proactive (persistence) | 76.7 | 78.7 | 665 | 470 | 60 | 0.937 | 472 |
+| s4_fp001 | tight | none | 68.6 | 72.1 | 1.43e+04 | 4e+03 | 1 | 1 | 0 |
+| s4_fp001 | tight | reactive | 68.6 | 70.8 | 3.89e+03 | 3.01e+03 | 162 | 0.976 | 0 |
+| s4_fp001 | tight | proactive (T3) | 68.6 | 70.4 | 63 | 63 | 14 | 0.96 | 672 |
+| s4_fp001 | tight | proactive (T1) | 68.6 | 70.5 | 100 | 95 | 21 | 0.963 | 479 |
+| s4_fp001 | tight | proactive (persistence) | 68.6 | 71.3 | 1.5e+03 | 1.18e+03 | 119 | 0.908 | 416 |

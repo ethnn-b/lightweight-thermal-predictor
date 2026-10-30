@@ -1,0 +1,64 @@
+s1_fp001 S1=0.000 (a)=0.605 (b)=2.826 (d)=1.683 (d2)=2.134 (d3)=0.398
+s1_fp002 S1=0.000 (a)=0.626 (b)=2.773 (c2)=1.128 (d)=1.642 (d2)=2.035 (d3)=0.430
+s1_fp003 S1=0.000 (a)=1.203 (b)=2.872 (c2)=1.466 (d)=1.416 (d2)=1.371 (d3)=1.184
+s2_fp001 S1=0.000 (a)=0.751 (b)=1.018 (c2)=1.198 (d)=2.603 (d2)=2.675 (d3)=0.758
+s2_fp002 S1=0.000 (a)=0.799 (b)=1.597 (c2)=2.114 (d)=2.112 (d2)=2.286 (d3)=0.652
+s2_fp003 S1=0.000 (a)=1.912 (b)=2.141 (c2)=1.425 (d)=3.391 (d2)=3.424 (d3)=1.342
+s2_fp004 S1=0.000 (a)=1.310 (b)=1.340 (c2)=1.193 (d)=2.354 (d2)=2.614 (d3)=0.691
+s2_fp005 S1=0.000 (a)=1.306 (b)=1.003 (c2)=1.589 (d)=2.470 (d2)=2.673 (d3)=0.776
+s3_fp001 S1=0.000 (a)=0.904 (b)=0.854 (c2)=3.089 (d)=2.386 (d2)=2.174 (d3)=0.702
+s3_fp002 S1=0.000 (a)=0.595 (b)=0.746 (c2)=3.611 (d)=2.185 (d2)=2.226 (d3)=0.596
+s3_fp003 S1=0.000 (a)=1.050 (b)=1.439 (c2)=1.467 (d)=2.224 (d2)=2.281 (d3)=0.822
+s3_fp004 S1=0.000 (a)=1.174 (b)=1.374 (c2)=1.566 (d)=2.382 (d2)=2.453 (d3)=1.000
+s3_fp005 S1=0.000 (a)=1.182 (b)=1.372 (c2)=1.605 (d)=2.362 (d2)=2.433 (d3)=0.998
+s4_fp001 S1=0.000 (a)=0.346 (b)=0.612 (c2)=4.627 (d)=1.571 (d2)=1.786 (d3)=0.295
+s4_fp002 S1=0.000 (a)=0.395 (b)=0.898 (c2)=4.092 (d)=1.717 (d2)=1.862 (d3)=0.261
+s4_fp003 S1=0.000 (a)=0.493 (b)=0.754 (c2)=3.489 (d)=1.959 (d2)=1.890 (d3)=0.198
+s4_fp004 S1=0.000 (a)=0.408 (b)=0.605 (c2)=4.044 (d)=2.051 (d2)=1.847 (d3)=0.298
+s4_fp005 S1=0.000 (a)=0.616 (b)=0.595 (c2)=4.455 (d)=2.385 (d2)=2.177 (d3)=0.206
+s4_fp006 S1=0.000 (a)=0.322 (b)=0.979 (c2)=3.618 (d)=1.135 (d2)=1.737 (d3)=0.186
+s4_fp007 S1=0.000 (a)=0.342 (b)=1.137 (c2)=3.332 (d)=1.200 (d2)=1.761 (d3)=0.193
+s4_fp008 S1=0.000 (a)=0.302 (b)=1.016 (c2)=3.349 (d)=1.156 (d2)=1.741 (d3)=0.171
+s4_fp009 S1=0.000 (a)=0.347 (b)=1.334 (c2)=3.296 (d)=1.098 (d2)=1.699 (d3)=0.215
+s4_fp010 S1=0.000 (a)=0.371 (b)=1.611 (c2)=2.719 (d)=1.109 (d2)=1.742 (d3)=0.191
+| method | cases | mae_K_mean | mae_K_worst | max_K_worst | peak_err_K_worst | hottest_acc_mean | hottest_acc_worst |
+|---|---|---|---|---|---|---|---|
+| S1 calibrated | 23 | 6.59e-06 | 9.19e-06 | 3.2e-05 | 2.54e-05 | 1 | 1 |
+| (a) S0 power blurring | 23 | 0.755 | 1.91 | 5.2 | 4.33 | 0.713 | 0.401 |
+| (b) per core type | 23 | 1.34 | 2.87 | 8.27 | 7.23 | 0.611 | 0.285 |
+| (c1) transfer within Style_4 | 90 | 1.11 | 1.89 | 5.22 | 4.17 | 0.599 | 0.371 |
+| (c2) transfer from s1_fp001 | 22 | 2.66 | 4.63 | 12.1 | 9.55 | 0.451 | 0.222 |
+| (d) geometry regression | 23 | 1.94 | 3.39 | 7.36 | 5.7 | 0.422 | 0.129 |
+| (d2) geometry regression + 40 generated | 23 | 2.13 | 3.42 | 7.59 | 5.18 | 0.397 | 0.139 |
+| (d3) S0 + learned correction | 23 | 0.546 | 1.34 | 3.35 | 3.13 | 0.798 | 0.523 |
+| method | style | mae_K_mean | max_K_worst |
+|---|---|---|---|
+| S1 calibrated | Style_1 | 5.93e-06 | 1.8e-05 |
+| S1 calibrated | Style_2 | 6.45e-06 | 1.9e-05 |
+| S1 calibrated | Style_3 | 7.42e-06 | 3.2e-05 |
+| S1 calibrated | Style_4 | 6.44e-06 | 2.7e-05 |
+| (a) S0 power blurring | Style_1 | 0.812 | 3 |
+| (a) S0 power blurring | Style_2 | 1.22 | 5.2 |
+| (a) S0 power blurring | Style_3 | 0.981 | 4.93 |
+| (a) S0 power blurring | Style_4 | 0.394 | 2.29 |
+| (b) per core type | Style_1 | 2.82 | 8.27 |
+| (b) per core type | Style_2 | 1.42 | 5.61 |
+| (b) per core type | Style_3 | 1.16 | 4.26 |
+| (b) per core type | Style_4 | 0.954 | 3.63 |
+| (c1) transfer within Style_4 | Style_4 | 1.11 | 5.22 |
+| (c2) transfer from s1_fp001 | Style_1 | 1.3 | 4.62 |
+| (c2) transfer from s1_fp001 | Style_2 | 1.5 | 6.28 |
+| (c2) transfer from s1_fp001 | Style_3 | 2.27 | 9.25 |
+| (c2) transfer from s1_fp001 | Style_4 | 3.7 | 12.1 |
+| (d) geometry regression | Style_1 | 1.58 | 5.51 |
+| (d) geometry regression | Style_2 | 2.59 | 6.51 |
+| (d) geometry regression | Style_3 | 2.31 | 6.38 |
+| (d) geometry regression | Style_4 | 1.54 | 7.36 |
+| (d2) geometry regression + 40 generated | Style_1 | 1.85 | 4.85 |
+| (d2) geometry regression + 40 generated | Style_2 | 2.73 | 7.59 |
+| (d2) geometry regression + 40 generated | Style_3 | 2.31 | 7.39 |
+| (d2) geometry regression + 40 generated | Style_4 | 1.82 | 6.24 |
+| (d3) S0 + learned correction | Style_1 | 0.671 | 3.35 |
+| (d3) S0 + learned correction | Style_2 | 0.844 | 3.25 |
+| (d3) S0 + learned correction | Style_3 | 0.824 | 2.99 |
+| (d3) S0 + learned correction | Style_4 | 0.221 | 1.04 |

@@ -1,0 +1,114 @@
+[
+ {
+  "case": "(a) steady at 1.5x max",
+  "model": "S1",
+  "mae_K_mean": 9.435599223846699e-06,
+  "max_K_worst": 2.8369759775159764e-05,
+  "max_K_after_50": NaN,
+  "max_rise_K": 51.22984300000002
+ },
+ {
+  "case": "(a) steady at 3.0x max",
+  "model": "S1",
+  "mae_K_mean": 1.8878276154588036e-05,
+  "max_K_worst": 5.4739519498525624e-05,
+  "max_K_after_50": NaN,
+  "max_rise_K": 102.45968600000003
+ },
+ {
+  "case": "(a) transient at 2x",
+  "model": "T3 M=4",
+  "mae_K_mean": 0.20978591540502137,
+  "max_K_worst": 0.6411408230800362,
+  "max_K_after_50": 0.6411408230800362,
+  "max_rise_K": 54.64424700000001
+ },
+ {
+  "case": "(a) transient at 2x",
+  "model": "T2 ARX(2,2)",
+  "mae_K_mean": 0.4529905214920355,
+  "max_K_worst": 1.9421158573620119,
+  "max_K_after_50": 1.9421158573620119,
+  "max_rise_K": 54.64424700000001
+ },
+ {
+  "case": "(b) bursty 1-5 ms",
+  "model": "T3 M=4",
+  "mae_K_mean": 0.1063074775156334,
+  "max_K_worst": 0.4423520830769121,
+  "max_K_after_50": 0.4423520830769121,
+  "max_rise_K": 27.01962000000003
+ },
+ {
+  "case": "(b) bursty 1-5 ms",
+  "model": "T2 ARX(2,2)",
+  "mae_K_mean": 0.21860828966105283,
+  "max_K_worst": 0.722303526359326,
+  "max_K_after_50": 0.722303526359326,
+  "max_rise_K": 27.01962000000003
+ },
+ {
+  "case": "(c) task migration",
+  "model": "T3 M=4",
+  "mae_K_mean": 0.076395273084547,
+  "max_K_worst": 0.3073796005944587,
+  "max_K_after_50": 0.3073796005944587,
+  "max_rise_K": 23.04704300000003
+ },
+ {
+  "case": "(c) task migration",
+  "model": "T2 ARX(2,2)",
+  "mae_K_mean": 0.1741545208967691,
+  "max_K_worst": 0.8398284912277063,
+  "max_K_after_50": 0.8398284912277063,
+  "max_rise_K": 23.04704300000003
+ },
+ {
+  "case": "(d) dt = 0.1 ms",
+  "model": "T3 M=4",
+  "mae_K_mean": 0.1432166121057472,
+  "max_K_worst": 2.1563281261382485,
+  "max_K_after_50": 1.206352457079788,
+  "max_rise_K": 22.932907
+ },
+ {
+  "case": "(d) dt = 10 ms",
+  "model": "T3 M=4",
+  "mae_K_mean": 0.07899955792984192,
+  "max_K_worst": 1.8772326815069391,
+  "max_K_after_50": 0.885279832629692,
+  "max_rise_K": 30.941715000000045
+ },
+ {
+  "case": "(e) warm start",
+  "model": "T3 M=4",
+  "mae_K_mean": 0.02910411348268259,
+  "max_K_worst": 2.0062140000016484,
+  "max_K_after_50": 0.26795924511498015,
+  "max_rise_K": 34.033409000000006
+ },
+ {
+  "case": "(e) warm start",
+  "model": "T2 ARX(2,2)",
+  "mae_K_mean": 0.07423467044200566,
+  "max_K_worst": 2.0062140000016484,
+  "max_K_after_50": 0.48769119463025845,
+  "max_rise_K": 34.033409000000006
+ },
+ {
+  "case": "(ref) normal phase trace",
+  "model": "T3 M=4",
+  "mae_K_mean": 0.1041639292429937,
+  "max_K_worst": 0.3236666964385222,
+  "max_K_after_50": 0.3236666964385222,
+  "max_rise_K": 27.671519000000046
+ },
+ {
+  "case": "(ref) normal phase trace",
+  "model": "T2 ARX(2,2)",
+  "mae_K_mean": 0.1955926211941602,
+  "max_K_worst": 0.7710497951911748,
+  "max_K_after_50": 0.7710497951911748,
+  "max_rise_K": 27.671519000000046
+ }
+]
