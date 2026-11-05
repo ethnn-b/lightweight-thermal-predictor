@@ -19,7 +19,7 @@ which is all S1 predicts. Can the calibrated model predict each core's *hottest 
 | S1 core average | the core average (no correction) | 512 B |
 | S1 + offset | average plus a constant per core (hot spot − average at nominal power) | 576 B |
 | S1-hot | one fixed cell per core: the hottest at nominal power | 512 B |
-| S1-hot-max | the max over a few candidate cells per core (the hottest cell when each single core is heated, and at nominal power; 7 per core on average) | 3.1 kB |
+| S1-hot-max | the max over a few candidate cells per core (the hottest cell when each single core is heated, and at nominal power; 3–9 per core, 6.1 on average over the 23 TA floorplans) | 3.1 kB |
 | all cells | the max over every cell of the core (exact, as a reference) | 115 kB |
 
 ## Results
