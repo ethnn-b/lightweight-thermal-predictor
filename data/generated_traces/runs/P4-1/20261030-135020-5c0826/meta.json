@@ -1,0 +1,10 @@
+{
+ "kind": "steady",
+ "floorplan": "s4_fp001",
+ "model": "grid",
+ "rows": 64,
+ "config": "base_grid64.config",
+ "git": "163688f",
+ "wall_s": 0.627409415999864,
+ "cmd": "/home/ethan/projects/HotSpot-ltp/hotspot -c hs.config -f fp_001_layer_0.flp -p power.ptrace -model_type grid -grid_layer_file fp_001.lcf -grid_rows 64 -grid_cols 64 -steady_file out.steady"
+}
