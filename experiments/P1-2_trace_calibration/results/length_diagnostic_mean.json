@@ -1,0 +1,122 @@
+{
+ "1": {
+  "open_loop_mae_K": 9.541074830625385,
+  "open_loop_max_K": 21.42347823075326,
+  "open_loop_mae_0_1s": 3.7583605515396616,
+  "open_loop_mae_5_10s": 11.251908230856817,
+  "one_step_mae_calibration_K": 0.00013840187759140343,
+  "one_step_mae_test_K": 0.002840784680348209,
+  "spectral_radius": 0.99982972851323,
+  "slowest_tau_s": 7.578448031178913
+ },
+ "2": {
+  "open_loop_mae_K": 0.6769679785892848,
+  "open_loop_max_K": 1.6585290695012276,
+  "open_loop_mae_0_1s": 0.1846973106108617,
+  "open_loop_mae_5_10s": 0.87092785223389,
+  "one_step_mae_calibration_K": 0.00023039852916638046,
+  "one_step_mae_test_K": 0.0007475257807102763,
+  "spectral_radius": 0.9998143913921935,
+  "slowest_tau_s": 5.810212098592517
+ },
+ "3": {
+  "open_loop_mae_K": 0.5518175799543189,
+  "open_loop_max_K": 1.409995138201694,
+  "open_loop_mae_0_1s": 0.24278387992037573,
+  "open_loop_mae_5_10s": 0.6526472074072578,
+  "one_step_mae_calibration_K": 0.00022124378889537563,
+  "one_step_mae_test_K": 0.0006233832467213246,
+  "spectral_radius": 0.9998250530158189,
+  "slowest_tau_s": 6.268380927158173
+ },
+ "5": {
+  "open_loop_mae_K": 0.31141970127054736,
+  "open_loop_max_K": 0.8857685772284185,
+  "open_loop_mae_0_1s": 0.22540074225504106,
+  "open_loop_mae_5_10s": 0.3532637053939728,
+  "one_step_mae_calibration_K": 0.00021350700135201476,
+  "one_step_mae_test_K": 0.0005399094054316239,
+  "spectral_radius": 0.9998634546063884,
+  "slowest_tau_s": 7.6892882140460355
+ },
+ "10": {
+  "open_loop_mae_K": 0.22211237771297673,
+  "open_loop_max_K": 0.6118088934647261,
+  "open_loop_mae_0_1s": 0.18066008585661342,
+  "open_loop_mae_5_10s": 0.2370480866180708,
+  "one_step_mae_calibration_K": 0.00020668941827057158,
+  "one_step_mae_test_K": 0.000529417691978666,
+  "spectral_radius": 0.9998575769270802,
+  "slowest_tau_s": 7.097992659201342
+ },
+ "15": {
+  "open_loop_mae_K": 0.20491074799864104,
+  "open_loop_max_K": 0.5912726431260467,
+  "open_loop_mae_0_1s": 0.18303869520556915,
+  "open_loop_mae_5_10s": 0.215452116889705,
+  "one_step_mae_calibration_K": 0.00020444429089666187,
+  "one_step_mae_test_K": 0.0005024314185764977,
+  "spectral_radius": 0.9998579519509071,
+  "slowest_tau_s": 7.122359865343412
+ },
+ "20": {
+  "open_loop_mae_K": 0.21340433410928528,
+  "open_loop_max_K": 0.5886297630357262,
+  "open_loop_mae_0_1s": 0.20816107660540803,
+  "open_loop_mae_5_10s": 0.22865525180029148,
+  "one_step_mae_calibration_K": 0.00020041314652148901,
+  "one_step_mae_test_K": 0.0004957282651883039,
+  "spectral_radius": 0.9998559986214747,
+  "slowest_tau_s": 7.028778661586672
+ },
+ "25": {
+  "open_loop_mae_K": 0.23200603186012478,
+  "open_loop_max_K": 0.6204751940209547,
+  "open_loop_mae_0_1s": 0.22852843513155122,
+  "open_loop_mae_5_10s": 0.2523682457169706,
+  "one_step_mae_calibration_K": 0.00020797372866222853,
+  "one_step_mae_test_K": 0.0004921210154219937,
+  "spectral_radius": 0.9998525669989229,
+  "slowest_tau_s": 6.872484917815826
+ },
+ "30": {
+  "open_loop_mae_K": 0.2529012846938404,
+  "open_loop_max_K": 0.6324489109635323,
+  "open_loop_mae_0_1s": 0.2536834995426572,
+  "open_loop_mae_5_10s": 0.28340490790531436,
+  "one_step_mae_calibration_K": 0.0002146376188600885,
+  "one_step_mae_test_K": 0.0004782508264259512,
+  "spectral_radius": 0.9998496336326778,
+  "slowest_tau_s": 6.754821280735809
+ },
+ "40": {
+  "open_loop_mae_K": 0.28090053031090023,
+  "open_loop_max_K": 0.6547362496313269,
+  "open_loop_mae_0_1s": 0.28199002333119894,
+  "open_loop_mae_5_10s": 0.3232778529512541,
+  "one_step_mae_calibration_K": 0.00021387347845528603,
+  "one_step_mae_test_K": 0.00047496481795744996,
+  "spectral_radius": 0.999845715049154,
+  "slowest_tau_s": 6.604942535251949
+ },
+ "50": {
+  "open_loop_mae_K": 0.2989386403663331,
+  "open_loop_max_K": 0.6743355066031285,
+  "open_loop_mae_0_1s": 0.2950174807731495,
+  "open_loop_mae_5_10s": 0.3493273342453597,
+  "one_step_mae_calibration_K": 0.00020800994420063106,
+  "one_step_mae_test_K": 0.0004713839804677234,
+  "spectral_radius": 0.999843195290162,
+  "slowest_tau_s": 6.5077331915020755
+ },
+ "60": {
+  "open_loop_mae_K": 0.31662332147739514,
+  "open_loop_max_K": 0.6863781892339063,
+  "open_loop_mae_0_1s": 0.30971007100753206,
+  "open_loop_mae_5_10s": 0.37799865787035447,
+  "one_step_mae_calibration_K": 0.00020421927667758696,
+  "one_step_mae_test_K": 0.0004712369231218364,
+  "spectral_radius": 0.9998407303536908,
+  "slowest_tau_s": 6.420012595071626
+ }
+}

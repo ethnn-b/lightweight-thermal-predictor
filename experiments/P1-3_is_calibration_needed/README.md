@@ -56,6 +56,20 @@ Mean abs error per style (K):
 
 ![error by method](results/error_by_method.png)
 
+**Error against what it costs to get G.** Borrowing a G (c1, c2) or using S0 needs no HotSpot run
+on the target floorplan; S1 needs 8 steady runs (4.3 s, P1-1). All four predict with the same
+matrix-vector product, so the prediction time is the same (2.6 µs for S1, P2-1; not timed
+separately for the borrowed G), and calibration cost is the axis that differs. Medians (K):
+
+| G taken from | HotSpot runs | mean abs error | worst error |
+|---|---|---|---|
+| another Style_4 floorplan (c1, 90 pairs) | 0 | 1.1 | 3.4 |
+| s1_fp001 (c2) | 0 | 2.9 | 7.3 |
+| S0 power blurring | 0 | 0.62 | 2.3 |
+| calibrated on the target (S1) | 8 | 6×10⁻⁶ | 2×10⁻⁵ |
+
+![borrowed G: error vs calibration cost](results/borrowed_g_error_vs_cost.png)
+
 ## Conclusion
 
 - **Per-floorplan calibration is needed.** Every method that skips it is wrong by 0.5–2.7 K on
@@ -82,3 +96,5 @@ Mean abs error per style (K):
 - `results/all_results.csv` (every floorplan × method; c1 has one row per source floorplan),
   `results/summary.csv`, `results/per_style.csv`, `results/summary.json`.
 - `results/error_by_method.png`, `results/s0_kernel.png`, `results/s0_kernel.npz` (the S0 kernel).
+- `plot_borrowed_g.py` (reads `all_results.csv`, no HotSpot runs) writes
+  `results/borrowed_g_error_vs_cost.png` and `results/borrowed_g_error_vs_cost.csv`.

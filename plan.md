@@ -11,7 +11,7 @@ for checking accuracy. The *calibrated predictor* is the product.
 
 This file is the short plan. `hotspot_for_dummies.md` is the beginner's companion: Part A
 explains every concept used here, and Part B goes through each experiment (why, what you need to
-know, steps, what you should see). `lit_review.md` covers prior work and explains where each
+know, steps, what you should see). `docs/literature_review_and_references.md` covers prior work and explains where each
 model comes from. `dataset.md` describes the TA's sample dataset and the two works the TAs
 pointed to (IC-ThermBench, ATPlace2.5D). `Scope_Document.pdf` is the scope we submitted; this
 plan stays inside it.
@@ -472,7 +472,7 @@ steady predictor being used for a decision.
 
 ```
 Lightweight Thermal Predictor/
-├── hotspot_for_dummies.md, lit_review.md, plan.md, dataset.md, README_SETUP.md
+├── hotspot_for_dummies.md, plan.md, dataset.md, README_SETUP.md
 ├── setup/          build_hotspot_ltp.sh + ltp.patch: patched HotSpot (6-decimal output, LU caching)
 ├── configs/        HotSpot configs (base grid 64×64, base block)
 ├── data/sample_dataset/  the TA's dataset, as committed on branch p0-flpgen (read-only)

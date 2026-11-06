@@ -215,6 +215,7 @@ footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--li
       <li class="sub"><a href="#models-common">Notation and data</a></li>
       <li class="sub"><a href="#models-steady">Steady models</a></li>
       <li class="sub"><a href="#models-transient">Transient models</a></li>
+      <li class="sub"><a href="#models-cost">Calibration time</a></li>
       <li class="sub"><a href="#models-error">How error is measured</a></li>
       <li><a href="#tools">Tools we built</a></li>
       <li><a href="#p0">P0 · Trustworthy reference</a></li>
@@ -625,6 +626,30 @@ T = T_amb + x</div>
     <p>All are 0.5–2.7 K off on average, which is why per-floorplan calibration is used.</p>
   </article>
 
+  <h3 id="models-cost" style="margin:30px 0 10px">Calibration time of each model</h3>
+  <div class="prose">
+    <p>How long it takes to prepare each model for <b>one floorplan</b>. Almost all of it is HotSpot running, so the table counts the runs first. On our machine one steady HotSpot run takes <b>0.24 s</b> and one transient step takes <b>5.2–5.9 ms</b> (P0-4). Running 8 at once is the fastest setting but slows each run down, which is why some figures are in CPU-seconds.</p>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Model</th><th>What calibration needs</th><th>Time per floorplan</th></tr></thead>
+    <tbody>
+      <tr><td><b>S0</b> power blurring</td><td>Nothing on the target floorplan. One shared kernel from a single point-source run on a 28 mm die, measured once and cached</td><td>0 per floorplan (the one-off kernel run was not timed)</td></tr>
+      <tr class="hl"><td>S1 influence matrix</td><td>8 steady runs, 1 W in one core each</td><td><b>4.3 s</b></td></tr>
+      <tr><td><b>S1-hot-max</b></td><td>Nothing extra: the same 8 runs also write the 64×64 maps</td><td>same 4.3 s</td></tr>
+      <tr><td><b>S2</b> compressed G</td><td>Nothing extra: built from S1's G</td><td>negligible (not timed)</td></tr>
+      <tr><td><b>T1</b> first-order lag</td><td>The step runs shared with T3 (the 24-run set)</td><td>about 5 min</td></tr>
+      <tr class="hl"><td>T3 sum of exponentials (M = 4)</td><td>The 24 runs (8 steady, 8 short and 8 long step runs), shared with S1 and T1. The least-squares fit is small next to the runs</td><td><b>about 5 min</b> on an idle core (1,310 CPU-s with 8 runs in parallel)</td></tr>
+      <tr><td><b>T2</b> ARX (2,2)</td><td>S1's G, plus one 60 s excitation trace (60,000 steps). The 20 s prefix that works best costs about a third</td><td>about 1.8 min (20 s) to 5.5 min (60 s), plus S1's 4.3 s; the fit itself was not timed</td></tr>
+      <tr><td><b>T4</b> reduced state space</td><td>A separate debug HotSpot build that exports the matrices (built once), then reduction of the 16,396-state system</td><td>11–15 s reduction, plus the one-off build and export</td></tr>
+      <tr><td><b>S1 + leakage loop</b> (P4-3)</td><td>S1's runs plus one steady run per white-space block: 11–25 steady runs in total instead of 8</td><td>3–17 extra runs, about 1–4 s</td></tr>
+      <tr><td><b>Recalibration</b> after a package change (P4-2)</td><td>The same 24 runs under the new package. A change of ambient temperature needs none</td><td>about 5 CPU-min (1,200–3,000 CPU-s in parallel)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <p>For the whole TA dataset, 24 floorplans took 576 runs and <b>66 min</b> of wall time for S1, T1 and T3 together (P1-1). S1 alone is the cheap model; T3 costs about 70 times more HotSpot time, and T2 is the other expensive one.</p>
+    <p><b>Not included:</b> the time to <i>fit</i> S1, S2, T1, T2 and T3 after the runs was not recorded separately (we expect it to be small next to the runs, but that is not measured); prediction time (microseconds, see each experiment); and the ground-truth HotSpot runs used to test the models.</p>
+  </div>
+
   <h3 id="models-error" style="margin:30px 0 10px">How the error is measured</h3>
   <div class="prose">
     <p>Every test compares the model with HotSpot on inputs the model never saw during calibration. For each test case (one power vector, or one time step of a trace), the error of core i is</p>
@@ -820,13 +845,35 @@ T = T_amb + x</div>
     <p class="cap">Mean error / worst error over 8 test traces. “Unstable” = the prediction blows up.</p>
     <div class="found"><h4>What we found</h4><ul>
       <li>One trace works, but it must be <b>at least about 5 s long</b>: with 1 s, the slow heat sink is never seen.</li>
-      <li>Longer is not better beyond about 20 s.</li>
+      <li>Longer is not better beyond about 20 s: the error is lowest near 15–20 s and then <i>rises</i> (see the box below).</li>
       <li>Too many lags can make the model <b>unstable</b>: a stability check is needed if ARX is ever used.</li>
       <li><b>T3 from planned steps is 3–5× more accurate</b> and stable by construction. ARX stays useful for short forecasts from sensors (P3-2).</li>
     </ul></div>
     <figure><div class="plate"><img src="../experiments/P1-2_trace_calibration/results/error_vs_trace_length.png" alt="Error of ARX models against the length of the calibration trace." loading="lazy"></div><figcaption>Error vs calibration trace length.</figcaption></figure>
+    <div class="found"><h4>Why does ARX get worse with a longer calibration trace?</h4>
+      <p>Measured with ARX (2,2), all blocks, fitted on the first K seconds of the 60 s trace and tested open loop on the 10 s test traces (mean over the four main floorplans):</p>
+      <div class="tw"><table>
+        <thead><tr><th>Calibration trace</th><th class="n">5 s</th><th class="n">10 s</th><th class="n">15 s</th><th class="n">20 s</th><th class="n">30 s</th><th class="n">60 s</th></tr></thead>
+        <tbody>
+          <tr class="hl"><td>Open-loop error on test traces</td><td class="n">0.31 K</td><td class="n">0.22 K</td><td class="n">0.21 K</td><td class="n">0.21 K</td><td class="n">0.25 K</td><td class="n">0.32 K</td></tr>
+          <tr><td>One-step error on the calibration data</td><td class="n">0.21 mK</td><td class="n">0.21 mK</td><td class="n">0.20 mK</td><td class="n">0.20 mK</td><td class="n">0.21 mK</td><td class="n">0.20 mK</td></tr>
+          <tr><td>One-step error on the test traces</td><td class="n">0.54 mK</td><td class="n">0.53 mK</td><td class="n">0.50 mK</td><td class="n">0.50 mK</td><td class="n">0.48 mK</td><td class="n">0.47 mK</td></tr>
+          <tr><td>Slowest time constant of the fitted model</td><td class="n">7.7 s</td><td class="n">7.1 s</td><td class="n">7.1 s</td><td class="n">7.0 s</td><td class="n">6.8 s</td><td class="n">6.4 s</td></tr>
+        </tbody>
+      </table></div>
+      <p class="cap">“One-step” means the model is given HotSpot's own previous temperatures and predicts only the next 1 ms. “Open loop” means it feeds on its own predictions for 10,000 steps. Error is the mean over the cores.</p>
+      <ul>
+        <li><b>It is a real, smooth trend, not noise.</b> Every floorplan has its minimum around 10–20 s and rises afterwards (the worst, s2_fp004, goes from 0.33 K at 15 s to 0.64 K at 60 s).</li>
+        <li><b>It is not overfitting in the usual sense.</b> The error on the calibration data stays flat, and the one-step error on the test traces even <i>improves</i> slightly with more data.</li>
+        <li><b>The fit and the test measure different things.</b> Least squares minimises the <i>one-step</i> error, which is already tiny (about 0.0002–0.0005 K, a thousand times below the open-loop error) and almost identical for every length, so the fit cannot tell a 20 s model from a 60 s one. The test runs the model open loop for 10,000 steps. The fitted model has a pole very close to 1 (spectral radius 0.9999, a slowest time constant of 6–8 s, which is 6,000–8,000 steps), so a tiny change in the coefficients, invisible to the one-step fit, grows over thousands of steps into a few tenths of a kelvin. The slowest time constant of the fitted model drifts from 7.7 s to 6.4 s as the trace grows, while HotSpot's slowest mode is about 8.1 s (P3-4).</li>
+        <li><b>Too short is bad for another reason.</b> Below about 5 s the slow heat sink is never seen (1 s: 9.5 K error).</li>
+        <li><b>It is not because the extra seconds are “quieter”.</b> The power changes at the same rate in seconds 0–20 and 20–60 (about 14 changes per second, in 1.4 % of the steps).</li>
+        <li><b>What we do not know.</b> We showed the mismatch between the one-step fit and the open-loop test, and the drift of the slow time constant. We did <i>not</i> prove that this is the whole cause, and we did not test a fix. Fixes worth trying: fit the open-loop (multi-step) error directly instead of the one-step error, or simply calibrate on 15–20 s. T3 does not have the problem, because it fits the measured step responses directly.</li>
+      </ul>
+    </div>
+    <figure><div class="plate"><img src="../experiments/P1-2_trace_calibration/results/length_diagnostic.png" alt="Left: open-loop error of ARX (2,2) against calibration trace length, lowest near 15 to 20 seconds. Right: one-step error, which stays flat." loading="lazy"></div><figcaption>Left: the error we test (open loop) is lowest near 15–20 s and rises. Right: the error the fit minimises (one step ahead) is flat, so the fit cannot see the difference.</figcaption></figure>
     <p class="takeaway"><b>In one line:</b> planned step runs (T3) beat “record one trace and fit” (ARX).</p>
-    <p class="src">Folder: <code>experiments/P1-2_trace_calibration/</code></p>
+    <p class="src">Folder: <code>experiments/P1-2_trace_calibration/</code> (<code>diagnose_length.py</code> makes the box above)</p>
   </article>
 
   <article class="exp" id="p1-3">
@@ -1141,6 +1188,29 @@ T = T_amb + x</div>
       <li>Limit: HotSpot only supports leakage in steady state, so the transient side could not be tested.</li>
       <li><b>Caveat: most of this leakage comes from FILL blocks.</b> HotSpot applies the formula to every block by area, and FILL is most of the die (about 71 % on <code>s4_fp001</code>). If the white space is empty silicon, it would not really leak and these numbers are an upper bound; if it is uncore logic (caches, interconnect), it would. To ask the TA.</li>
     </ul></div>
+    <div class="found"><h4>S1 vs S1 + loop, side by side</h4>
+      <p>Range over the four main floorplans (50 random power vectors each, tested against HotSpot with leakage on).</p>
+      <div class="tw"><table>
+        <thead><tr><th></th><th class="n">S1 alone, default leakage</th><th class="n">S1 + loop, default leakage</th><th class="n">S1 alone, 10× leakage</th><th class="n">S1 + loop, 10× leakage</th></tr></thead>
+        <tbody>
+          <tr><td>Leakage power in the chip</td><td class="n" colspan="2">0.2–0.5 W</td><td class="n" colspan="2">2–5 W</td></tr>
+          <tr class="hl"><td>Mean error</td><td class="n">0.06–0.09 K</td><td class="n">5–7×10⁻⁶ K</td><td class="n">0.64–0.96 K</td><td class="n">0.8–4×10⁻⁵ K</td></tr>
+          <tr><td>Worst error</td><td class="n">0.08–0.10 K</td><td class="n">1–2×10⁻⁵ K</td><td class="n">0.77–1.07 K</td><td class="n">2–6×10⁻⁵ K</td></tr>
+          <tr><td>Time per prediction</td><td class="n">about 2.6 µs*</td><td class="n">22–25 µs</td><td class="n">about 2.6 µs*</td><td class="n">29–33 µs</td></tr>
+          <tr><td>Loop iterations</td><td class="n">1 (none)</td><td class="n">3</td><td class="n">1 (none)</td><td class="n">4</td></tr>
+          <tr><td>HotSpot runs to calibrate</td><td class="n">8</td><td class="n">11–25 (8 + 3–17 FILL blocks, about 1–4 s extra)</td><td class="n">8</td><td class="n">11–25</td></tr>
+          <tr><td>What it must know in advance</td><td class="n">nothing</td><td class="n">leakage formula (α, β)</td><td class="n">nothing</td><td class="n">leakage formula (α, β)</td></tr>
+        </tbody>
+      </table></div>
+      <p class="cap">*S1's time is the P2-1 measurement (one matrix–vector product); it was not timed again inside P4-3. The loop's time includes its iterations.</p>
+      <ul>
+        <li><b>Accuracy:</b> the loop cuts the mean error by a factor of about 10,000 at default leakage and 20,000–100,000 at 10×, down to about the output precision of HotSpot. It stays accurate when leakage grows, while S1 alone gets about 10× worse.</li>
+        <li><b>Speed:</b> the loop is about 10× slower than S1 alone (22–33 µs against 2.6 µs) because it repeats the matrix–vector product 3–4 times. That is still about 8,000× faster than one HotSpot steady run (0.24 s).</li>
+        <li><b>Cost:</b> the loop needs 3–17 more steady HotSpot runs per floorplan, because the white-space (FILL) blocks leak too and so need their own columns.</li>
+        <li><b>Which to ship:</b> with HotSpot's default leakage (0.1 K without the loop), plain S1 is enough. If leakage is several percent of chip power (1 K at 10×), add the loop. This holds only if the leakage formula is known, and only for steady state, since HotSpot could not simulate leakage in transient runs.</li>
+        <li><b>Caveat:</b> both strengths are upper bounds if the white space is empty silicon (see the caveat above).</li>
+      </ul>
+    </div>
     <p class="takeaway"><b>In one line:</b> leakage is a small, fully fixable effect at these temperatures.</p>
     <p class="src">Folder: <code>experiments/P4-3_leakage/</code></p>
   </article>

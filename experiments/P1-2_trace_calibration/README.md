@@ -47,9 +47,17 @@ each here, with four running in parallel). The 20 s prefix that works best costs
   With 1 s, the slow heat-sink part is never seen and every ARX model is 3–10 K off on average.
   From 5 s on, the error flattens: the steady gain is fixed to G, so the model does not need
   to *see* the sink settle, only enough of its trend.
-- **Longer is not better beyond about 20 s.** The 60 s fits are slightly worse: the least-squares
-  fit minimises one-step-ahead error, which is dominated by the many long, quiet phases, not the
-  open-loop accuracy we test.
+- **Longer is not better beyond about 20 s.** The 60 s fits are worse than the 15–20 s ones
+  (mean 0.32 K against 0.21 K; the open-loop error is lowest near 15 s and then rises smoothly on
+  every floorplan; `diagnose_length.py`, `results/length_diagnostic.*`). What the data show: the
+  fit minimises the one-step-ahead error, which is already tiny (0.0002–0.0005 K) and flat in the
+  trace length, while the test runs the model open loop for 10,000 steps. The fitted recursion
+  has a pole at 0.9999 (slowest time constant 6–8 s), so coefficient changes the one-step fit
+  cannot see are amplified over thousands of steps; the fitted slowest time constant drifts from
+  7.7 s (5 s trace) to 6.4 s (60 s), against about 8.1 s for HotSpot (P3-4). An earlier version of
+  this README blamed "long, quiet phases"; that is not supported, since the power changes at the
+  same rate in seconds 0–20 and 20–60 (about 14 changes/s). We did not prove this is the whole
+  cause and did not test a fix (fitting the open-loop error directly, or using 15–20 s).
 - **Order matters, and too high an order is dangerous.** Two lags clearly beat one (several time
   scales need more than one state per block), but (3,3) on all blocks is unstable in open loop:
   a fit with a tiny one-step error can still have poles outside the unit circle. A stability
@@ -66,3 +74,7 @@ each here, with four running in parallel). The 20 s prefix that works best costs
 
 - `results/all_results.csv` (every floorplan × test trace × model), `results/summary.csv`,
   `results/error_vs_trace_length.png`, `results/summary.json`, `results/log.txt`.
+- `diagnose_length.py` (reads the cached traces in `data/generated_traces/npz`; needs the 8 steady
+  runs per floorplan for G) writes `results/length_diagnostic.csv`,
+  `results/length_diagnostic_activity.csv`, `results/length_diagnostic_mean.json` and
+  `results/length_diagnostic.png`.

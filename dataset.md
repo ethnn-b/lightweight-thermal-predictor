@@ -274,7 +274,7 @@ our predictor serves for DTM.
 - **To check when we get the paper:** whether its thermal model is a superposition of
   pre-computed per-chiplet responses (a Green's-function / influence-matrix idea, the steady
   analogue of our G), how it is fitted to HotSpot, and its reported speed-up and error. If it is,
-  it is a direct citation for model S1 and belongs in `lit_review.md` §3.1.
+  it is a direct citation for model S1 and belongs in `docs/literature_review_and_references.md` Part A §3.1.
 
 ---
 
