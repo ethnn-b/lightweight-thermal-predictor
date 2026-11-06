@@ -51,14 +51,18 @@ temperatures with our package? Which cores get hottest?
 | s4_fp010 | 14×14 | 29% | 72.2 | Core_5 (little) | 74.8 | 77.5 | 80.8 |
 | het_a | 6×5 | 100% | 65.2 | Little3 (little) | 65.3 | 69.7 | 69.9 |
 
-**The TA's own Style_2 ptraces** (20 W on two 2×2 mm cores) against power assigned by size:
+**The TA's Style_2 ptraces, before and after the TA's correction.** The original files of
+s2_fp001/002/003/005 had the big- and little-core power swapped (20 W on two 2×2 mm cores). The TA
+confirmed this; we corrected the four `_steady.ptrace` and `_transient.ptrace` files (20 W on the
+4×4 mm cores, 8 W on the 2×2 mm cores). Original ptraces against power assigned by size, and the
+corrected ptraces rerun through the same check:
 
-| floorplan | TA ptrace: hottest core (°C) | TA ptrace: hottest cell (°C) | by size: hottest core (°C) | by size: hottest cell (°C) |
-|---|---|---|---|---|
-| s2_fp001 | 98.1 | 101.0 | 74.6 | 75.7 |
-| s2_fp002 | 96.9 | 100.7 | 76.0 | 76.4 |
-| s2_fp003 | 99.2 | 102.1 | 76.6 | 77.5 |
-| s2_fp005 | 99.7 | 102.0 | 76.5 | 77.3 |
+| floorplan | original ptrace: hottest core (°C) | original: hottest cell (°C) | corrected ptrace: hottest core (°C) | corrected: hottest cell (°C) | by size: hottest core (°C) | by size: hottest cell (°C) |
+|---|---|---|---|---|---|---|
+| s2_fp001 | 98.1 | 101.0 | 74.6 | 75.7 | 74.6 | 75.7 |
+| s2_fp002 | 96.9 | 100.7 | 76.0 | 76.4 | 76.0 | 76.4 |
+| s2_fp003 | 99.2 | 102.1 | 76.6 | 77.5 | 76.6 | 77.5 |
+| s2_fp005 | 99.7 | 102.0 | 76.5 | 77.3 | 76.5 | 77.3 |
 
 ![peak temperature vs density](results/peak_vs_density.png)
 ![example phase trace](results/phase_trace_example.png)
@@ -76,9 +80,11 @@ temperatures with our package? Which cores get hottest?
 - **Packing matters more than die size alone.** Style_4 (14×14 mm, 29 % cores, scattered) is
   coolest. Style_1 fp_003 has lots of white space (44 %) but clusters its little cores, so it is
   as hot as the densest Style_2 chips.
-- **The Style_2 ptrace problem is real.** Used as given, those files put 5 W/mm² on little cores
-  and the chip reaches about 100 °C, 23 °C hotter than with power assigned by size. We always
-  assign power by size. This should be reported to the TA.
+- **The Style_2 ptrace problem was real, and the TA has confirmed it.** The original files put
+  5 W/mm² on little cores and the chip reached about 100 °C, 23 °C hotter than with power
+  assigned by size. We corrected the four files; the corrected ptraces now give exactly the same
+  temperatures as power assigned by size. We always assign power by size, so no other
+  experiment's numbers change.
 - **s3_fp004 is s3_fp005 rotated by 90°** (x and y swapped), so both give identical
   temperatures; the square spreader and sink make the package symmetric. The two are not
   independent samples (relevant for P1-3).

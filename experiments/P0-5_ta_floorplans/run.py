@@ -3,7 +3,8 @@
   (a) load all 23 TA 2D floorplans (+ HET-A) and tag cores big/little by size;
   (b) power generators: random steady vectors and phase-based traces within the TA ranges;
   (c) steady temperatures of every floorplan at TA nominal power and at all-cores-max power;
-  (+) the TA's own Style_2 ptraces (big-core power on little cores) vs power assigned by size.
+  (+) the TA's Style_2 ptraces (original files had big/little power swapped; corrected) vs
+      power assigned by size.
 """
 import numpy as np
 
