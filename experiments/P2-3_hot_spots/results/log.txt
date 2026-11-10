@@ -1,8 +1,37 @@
-| model | size_bytes_median | mae_K_mean | max_K_worst | die_peak_err_K_worst | hottest_core_acc_min |
-|---|---|---|---|---|---|
-| S1 core average | 512 | 2.73 | 8.96 | 4.95 | 0.5 |
-| S1 + offset (nominal) | 576 | 0.586 | 4.11 | 1.32 | 0.817 |
-| S1-hot (hottest cell) | 512 | 0.291 | 3.97 | 3.56 | 0.683 |
-| S1-hot-max (candidate cells) | 3136 | 0.0775 | 1.6 | 0.715 | 0.9 |
-| all cells of each core | 114688 | 6.94e-06 | 2.87e-05 | 2.61e-05 | 1 |
-hottest cell moved away from the calibrated cell in 61.1% of (core, test vector) cases (worst floorplan 87.1%)
+s1_fp001: 2600 cells in cores, 1448 not dominated, 546 not dominated over the power range
+s1_fp002: 2300 cells in cores, 1300 not dominated, 496 not dominated over the power range
+s1_fp003: 1792 cells in cores, 1142 not dominated, 425 not dominated over the power range
+s2_fp001: 2880 cells in cores, 1670 not dominated, 430 not dominated over the power range
+s2_fp002: 2559 cells in cores, 1834 not dominated, 733 not dominated over the power range
+s2_fp003: 3193 cells in cores, 1512 not dominated, 530 not dominated over the power range
+s2_fp004: 3810 cells in cores, 2535 not dominated, 1075 not dominated over the power range
+s2_fp005: 3823 cells in cores, 2121 not dominated, 1118 not dominated over the power range
+s3_fp001: 2322 cells in cores, 1364 not dominated, 206 not dominated over the power range
+s3_fp002: 1449 cells in cores, 1128 not dominated, 76 not dominated over the power range
+s3_fp003: 2703 cells in cores, 1668 not dominated, 430 not dominated over the power range
+s3_fp004: 2725 cells in cores, 1724 not dominated, 477 not dominated over the power range
+s3_fp005: 2725 cells in cores, 1724 not dominated, 477 not dominated over the power range
+s4_fp001: 1161 cells in cores, 792 not dominated, 60 not dominated over the power range
+s4_fp002: 1170 cells in cores, 686 not dominated, 51 not dominated over the power range
+s4_fp003: 1161 cells in cores, 731 not dominated, 61 not dominated over the power range
+s4_fp004: 1171 cells in cores, 884 not dominated, 68 not dominated over the power range
+s4_fp005: 1152 cells in cores, 1044 not dominated, 74 not dominated over the power range
+s4_fp006: 1134 cells in cores, 606 not dominated, 82 not dominated over the power range
+s4_fp007: 1152 cells in cores, 622 not dominated, 106 not dominated over the power range
+s4_fp008: 1134 cells in cores, 597 not dominated, 88 not dominated over the power range
+s4_fp009: 1134 cells in cores, 574 not dominated, 78 not dominated over the power range
+s4_fp010: 1161 cells in cores, 680 not dominated, 107 not dominated over the power range
+| model | size_bytes_median | mae_K_mean | max_K_worst | die_peak_err_K_worst | hottest_core_acc_min | time_us_median |
+|---|---|---|---|---|---|---|
+| S1 core average | 512 | 2.73 | 8.96 | 4.95 | 0.5 | 3.1 |
+| S1-hot-max (all cells) | 114688 | 6.94e-06 | 2.87e-05 | 2.61e-05 | 1 | 7.5 |
+| float32 | 57344 | 7.05e-06 | 2.92e-05 | 2.68e-05 | 1 | 6.71 |
+| float16 | 28672 | 0.00222 | 0.0107 | 0.0107 | 0.983 | 6.71 |
+| dominated cells dropped | 73088 | 6.94e-06 | 2.87e-05 | 2.61e-05 | 1 | 6.23 |
+| dominated cells dropped, float16 | 18272 | 0.00222 | 0.0107 | 0.0107 | 0.983 | 5.64 |
+| dropped over the TA power range | 13184 | 6.94e-06 | 2.87e-05 | 2.61e-05 | 1 | 3.77 |
+| dropped over the TA power range, float16 | 3296 | 0.00222 | 0.0107 | 0.0107 | 0.983 | 3.47 |
+| coarse grid 32x32 | 28672 | 0.137 | 2.82 | 0.249 | 0.95 | 4.12 |
+| coarse grid 16x16 | 7168 | 0.468 | 4.72 | 1.11 | 0.85 | 3.22 |
+| low rank r=2 | 28800 | 3.38 | 11.4 | 7.93 | 0.1 | 7.56 |
+| low rank r=4 | 57600 | 2.8 | 11.6 | 10.2 | 0.15 | 7.82 |

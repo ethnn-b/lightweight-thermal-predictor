@@ -1,0 +1,14 @@
+52 floorplans in 5 batches of up to 12
+batch 1/5 done: 12 floorplans, 22.7 min elapsed, about 76 min left
+batch 2/5 done: 24 floorplans, 45.4 min elapsed, about 53 min left
+batch 3/5 done: 36 floorplans, 68.3 min elapsed, about 30 min left
+batch 4/5 done: 48 floorplans, 91.1 min elapsed, about 8 min left
+batch 5/5 done: 52 floorplans, 99.5 min elapsed, about 0 min left
+| style | floorplans | s1_mae_K_mean | s1_max_K_worst | s1_peak_err_K_worst | s1_hottest_acc_min | t3_mae_K_mean | t3_max_K_worst | t3_peak_err_K_worst | t3_hottest_acc_min | s1_time_us | t3_time_us_per_step | calib_hotspot_cpu_s_mean | calib_s1_only_cpu_s_mean |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Style_1 | 13 | 6.77e-06 | 3.4e-05 | 3.4e-05 | 1 | 0.108 | 0.34 | 0.301 | 0.965 | 1.17 | 3.1 | 773 | 4.87 |
+| Style_2 | 13 | 6.69e-06 | 2.6e-05 | 2.51e-05 | 1 | 0.114 | 0.315 | 0.284 | 0.992 | 1.17 | 3.13 | 773 | 4.95 |
+| Style_3 | 13 | 6.6e-06 | 2.8e-05 | 2.21e-05 | 1 | 0.085 | 0.308 | 0.231 | 0.884 | 1.19 | 3.29 | 778 | 4.83 |
+| Style_4 | 13 | 6.06e-06 | 2.6e-05 | 2.34e-05 | 1 | 0.0563 | 0.263 | 0.254 | 0.935 | 1.2 | 3.34 | 793 | 4.71 |
+| all | 52 | 6.53e-06 | 3.4e-05 | 3.4e-05 | 1 | 0.0909 | 0.34 | 0.301 | 0.884 | 1.18 | 3.21 | 779 | 4.84 |
+{'calibration': 4678, 'steady_test': 1095, 'transient_test': 188, 'evaluation': 4} total 99.5 min

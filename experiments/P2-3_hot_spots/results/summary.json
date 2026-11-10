@@ -6,42 +6,107 @@
    "mae_K_mean": 2.7279482750190973,
    "max_K_worst": 8.961529430782548,
    "die_peak_err_K_worst": 4.953528858569314,
-   "hottest_core_acc_min": 0.5
+   "hottest_core_acc_min": 0.5,
+   "time_us_median": 3.1019999369163997
   },
   {
-   "model": "S1 + offset (nominal)",
-   "size_bytes_median": 576,
-   "mae_K_mean": 0.5858658504253215,
-   "max_K_worst": 4.105690900061859,
-   "die_peak_err_K_worst": 1.3164075522514622,
-   "hottest_core_acc_min": 0.8166666666666667
-  },
-  {
-   "model": "S1-hot (hottest cell)",
-   "size_bytes_median": 512,
-   "mae_K_mean": 0.29078125239732744,
-   "max_K_worst": 3.9656700211210136,
-   "die_peak_err_K_worst": 3.5599856871619977,
-   "hottest_core_acc_min": 0.6833333333333333
-  },
-  {
-   "model": "S1-hot-max (candidate cells)",
-   "size_bytes_median": 3136,
-   "mae_K_mean": 0.07748842630989522,
-   "max_K_worst": 1.5994377765966874,
-   "die_peak_err_K_worst": 0.714768774955246,
-   "hottest_core_acc_min": 0.9
-  },
-  {
-   "model": "all cells of each core",
+   "model": "S1-hot-max (all cells)",
    "size_bytes_median": 114688,
    "mae_K_mean": 6.9430496677484935e-06,
    "max_K_worst": 2.8703177690658777e-05,
    "die_peak_err_K_worst": 2.614451710769572e-05,
-   "hottest_core_acc_min": 1.0
+   "hottest_core_acc_min": 1.0,
+   "time_us_median": 7.503000233555213
+  },
+  {
+   "model": "float32",
+   "size_bytes_median": 57344,
+   "mae_K_mean": 7.050209740949962e-06,
+   "max_K_worst": 2.9178100589888345e-05,
+   "die_peak_err_K_worst": 2.6750366203032172e-05,
+   "hottest_core_acc_min": 1.0,
+   "time_us_median": 6.710999969072873
+  },
+  {
+   "model": "float16",
+   "size_bytes_median": 28672,
+   "mae_K_mean": 0.0022175689080367643,
+   "max_K_worst": 0.010700437988305112,
+   "die_peak_err_K_worst": 0.010700437988305112,
+   "hottest_core_acc_min": 0.9833333333333333,
+   "time_us_median": 6.708999990223674
+  },
+  {
+   "model": "dominated cells dropped",
+   "size_bytes_median": 73088,
+   "mae_K_mean": 6.9430496677484935e-06,
+   "max_K_worst": 2.8703177690658777e-05,
+   "die_peak_err_K_worst": 2.614451710769572e-05,
+   "hottest_core_acc_min": 1.0,
+   "time_us_median": 6.234999773369054
+  },
+  {
+   "model": "dominated cells dropped, float16",
+   "size_bytes_median": 18272,
+   "mae_K_mean": 0.0022175689080367643,
+   "max_K_worst": 0.010700437988305112,
+   "die_peak_err_K_worst": 0.010700437988305112,
+   "hottest_core_acc_min": 0.9833333333333333,
+   "time_us_median": 5.639499931930914
+  },
+  {
+   "model": "dropped over the TA power range",
+   "size_bytes_median": 13184,
+   "mae_K_mean": 6.9430496677484935e-06,
+   "max_K_worst": 2.8703177690658777e-05,
+   "die_peak_err_K_worst": 2.614451710769572e-05,
+   "hottest_core_acc_min": 1.0,
+   "time_us_median": 3.76799971490982
+  },
+  {
+   "model": "dropped over the TA power range, float16",
+   "size_bytes_median": 3296,
+   "mae_K_mean": 0.0022175689080367643,
+   "max_K_worst": 0.010700437988305112,
+   "die_peak_err_K_worst": 0.010700437988305112,
+   "hottest_core_acc_min": 0.9833333333333333,
+   "time_us_median": 3.471000127319712
+  },
+  {
+   "model": "coarse grid 32x32",
+   "size_bytes_median": 28672,
+   "mae_K_mean": 0.13682432747490808,
+   "max_K_worst": 2.822372925491436,
+   "die_peak_err_K_worst": 0.24857609664815072,
+   "hottest_core_acc_min": 0.95,
+   "time_us_median": 4.118999640922993
+  },
+  {
+   "model": "coarse grid 16x16",
+   "size_bytes_median": 7168,
+   "mae_K_mean": 0.4681551994190584,
+   "max_K_worst": 4.716530097319492,
+   "die_peak_err_K_worst": 1.112600468398341,
+   "hottest_core_acc_min": 0.85,
+   "time_us_median": 3.2190000638365746
+  },
+  {
+   "model": "low rank r=2",
+   "size_bytes_median": 28800,
+   "mae_K_mean": 3.3830641619722663,
+   "max_K_worst": 11.43222889386459,
+   "die_peak_err_K_worst": 7.9308076924058355,
+   "hottest_core_acc_min": 0.1,
+   "time_us_median": 7.5594998634187505
+  },
+  {
+   "model": "low rank r=4",
+   "size_bytes_median": 57600,
+   "mae_K_mean": 2.7978400455500103,
+   "max_K_worst": 11.622267084953592,
+   "die_peak_err_K_worst": 10.164227895051283,
+   "hottest_core_acc_min": 0.15,
+   "time_us_median": 7.820000064384658
   }
- ],
- "hot_cell_moved_mean": 0.6107789855072464,
- "hot_cell_moved_max": 0.8708333333333333,
- "extra_bytes_S1_hot": 512
+ ]
 }

@@ -1,0 +1,83 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[hidelinks]{hyperref}
+\setlist{itemsep=1pt,topsep=3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Lightweight Temperature Predictor:\\[2pt] Calibrate Once, Predict Fast}\\[6pt]
+{\large Scope Document --- Computer Architecture Course Project}\\[2pt]
+Topic: \emph{Thermal management: lightweight temperature predictor}
+\end{center}
+
+\section*{1. Team}
+\begin{tabular}{@{}ll@{}}
+Ethan Bobby Kurien & HotSpot tooling, step-response calibration, closed-loop DTM setup\\
+Kaivalya Mase & floorplans, trace-based calibration, forecasting, DTM policies\\
+\end{tabular}
+
+\section*{2. Problem statement}
+For a given heterogeneous multicore floorplan, build a predictor that returns steady-state or
+transient block temperatures for any power input, much faster than HotSpot and with a very small
+model. The predictor works in two stages: a one-time \emph{calibration} per floorplan, which runs
+HotSpot a small number of times to fit a compact set of coefficients, and a \emph{prediction}
+stage that uses only those coefficients. HotSpot serves as the reference. Performance is judged on
+\textbf{accuracy}, \textbf{prediction time} and \textbf{model size}.
+
+\section*{3. End deliverables}
+\subsection*{Must-have}
+\begin{itemize}
+  \item A HotSpot-based ground-truth setup: run and parse scripts, and a few heterogeneous
+        floorplans with matching power ranges.
+  \item A calibration stage that fits predictor coefficients for a given floorplan.
+  \item A steady-state predictor.
+  \item A transient predictor.
+  \item Evaluation of both predictors against HotSpot on accuracy, prediction time and model size,
+        including a check that per-floorplan calibration is actually needed.
+  \item A small Python tool packaging calibration and prediction.
+\end{itemize}
+\subsection*{Stretch goals}
+\begin{itemize}
+  \item Proactive DTM: using the predictor's forecast to throttle or migrate tasks before a
+        temperature limit is crossed, compared against reactive DTM.
+  \item Robustness studies (unseen workloads, package changes, leakage).
+  \item Model-size reduction for larger core counts.
+\end{itemize}
+
+\section*{4. Plan and approach}
+\begin{enumerate}
+  \item \textbf{Ground truth:} establish HotSpot as a trusted, scriptable reference and confirm
+        that it behaves linearly without leakage, which is what makes a compact predictor possible.
+  \item \textbf{Calibration:} fit coefficients from a small number of planned HotSpot runs,
+        keeping calibration inputs separate from test inputs.
+  \item \textbf{Prediction and evaluation:} implement steady and transient predictors,
+        compare against simple baselines, and measure the three metrics.
+  \item \textbf{Extensions:} package the tool, then attempt the DTM stretch goal as time permits.
+\end{enumerate}
+Work is split between the two members along the calibration approach each owns, with shared file
+formats agreed early and all work tracked on GitHub.
+
+\section*{5. Anticipated risks}
+\begin{itemize}
+  \item \textbf{No given floorplan or real workload power:} synthetic heterogeneous floorplans and
+        power traces will be used; the method is not tied to a particular floorplan.
+  \item \textbf{HotSpot output precision (0.01\,K rounding):} to be addressed by patching the
+        output format.
+  \item \textbf{Block-level model may hide hot spots inside large cores:} to be quantified
+        against HotSpot's grid model.
+  \item \textbf{Stretch goals may not fit in the available time:} they are ordered last and
+        can be dropped without affecting the core deliverables.
+\end{itemize}
+
+\section*{6. LLM assistance}
+Claude (Anthropic) was used to help draft the project plan, literature review, a floorplan
+generation script, and this document. All output was reviewed by the team. Any further use will be
+disclosed in the same way.
+
+\end{document}

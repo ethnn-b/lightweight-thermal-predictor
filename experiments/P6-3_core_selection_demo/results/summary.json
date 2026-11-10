@@ -12,11 +12,11 @@
   "same_best_hot": true,
   "regret_core_K": 0.0,
   "regret_hot_K": 0.0,
-  "spearman_S1hot_vs_HotSpot": 0.9883124835972357,
+  "spearman_S1hot_vs_HotSpot": 1.0,
   "worst_minus_best_K": 4.858384999999998,
-  "S1_time_all_70_us": 12.649502999920514,
-  "HotSpot_cpu_s": 108.44508473799578,
-  "HotSpot_wall_s": 37.24953760899916
+  "S1_time_all_70_us": 7.0993179997458356,
+  "HotSpot_cpu_s": 62.8221112080023,
+  "HotSpot_wall_s": 8.149726884000302
  },
  {
   "floorplan": "s2_fp004",
@@ -26,16 +26,16 @@
   "same_best": true,
   "spearman_S1_vs_HotSpot": 1.0,
   "max_score_err_K": 1.1000002245964424e-05,
-  "best_by_S1hot": "0B+2L+4L+6L",
+  "best_by_S1hot": "2L+3L+5L+7L",
   "best_by_HotSpot_hotcell": "2L+3L+5L+7L",
-  "same_best_hot": false,
+  "same_best_hot": true,
   "regret_core_K": 0.0,
-  "regret_hot_K": 0.12988200000000916,
-  "spearman_S1hot_vs_HotSpot": 0.9934563905170152,
+  "regret_hot_K": 0.0,
+  "spearman_S1hot_vs_HotSpot": 1.0,
   "worst_minus_best_K": 3.6058969999999704,
-  "S1_time_all_70_us": 11.889037999935681,
-  "HotSpot_cpu_s": 93.24601962299676,
-  "HotSpot_wall_s": 32.16937580300146
+  "S1_time_all_70_us": 7.343428999774915,
+  "HotSpot_cpu_s": 54.21626071199762,
+  "HotSpot_wall_s": 7.1070844719997694
  },
  {
   "floorplan": "s3_fp002",
@@ -50,11 +50,11 @@
   "same_best_hot": true,
   "regret_core_K": 0.0,
   "regret_hot_K": 0.0,
-  "spearman_S1hot_vs_HotSpot": 0.9991251858979966,
+  "spearman_S1hot_vs_HotSpot": 1.0,
   "worst_minus_best_K": 3.0451980000000276,
-  "S1_time_all_70_us": 11.453496001195163,
-  "HotSpot_cpu_s": 106.78222166800333,
-  "HotSpot_wall_s": 36.89762579000126
+  "S1_time_all_70_us": 6.920513000295614,
+  "HotSpot_cpu_s": 51.356655302000945,
+  "HotSpot_wall_s": 6.753636494999682
  },
  {
   "floorplan": "s4_fp001",
@@ -69,10 +69,10 @@
   "same_best_hot": true,
   "regret_core_K": 0.0,
   "regret_hot_K": 0.0,
-  "spearman_S1hot_vs_HotSpot": 0.9994401189747179,
+  "spearman_S1hot_vs_HotSpot": 1.0,
   "worst_minus_best_K": 2.6100679999999556,
-  "S1_time_all_70_us": 13.933652999185142,
-  "HotSpot_cpu_s": 102.5036224609994,
-  "HotSpot_wall_s": 35.44587275900085
+  "S1_time_all_70_us": 7.384013000319101,
+  "HotSpot_cpu_s": 48.793332253000244,
+  "HotSpot_wall_s": 6.403744904999712
  }
 ]

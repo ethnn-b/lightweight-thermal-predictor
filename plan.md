@@ -150,7 +150,7 @@ the lit review: superposition (§3.1), MatEx and exponential models (§3.2), mod
 | S0 | **Uncalibrated baseline**: power blurring with a generic heat-spread kernel (no floorplan-specific fitting) | 1 point-source run, shared by all floorplans | kernel only | 1–3 K error, worst at die edges; shows what calibration buys |
 | S1 | **Influence matrix G** | N runs, 1 W in one block each (or N step runs, shared with T3) | N² | Exact without leakage (≪ 0.01 K) |
 | S2 | **Compressed G**: one shared "package" term for all cores (every watt warms the common spreader and sink) plus only the k nearest-neighbour couplings per core | same as S1 | ≈ N·(k+1) + 1 | Small accuracy loss; only matters for many cores (e.g. a 64-core floorplan), since G for the TA's N = 8 is just 512 B. Tested on larger floorplans we generate (P3-3) |
-| S1-hot | **Hot-spot G**: same as S1, but the output is the hottest grid cell inside each core instead of the core average (one extra row of G per core) | same runs as S1, reading the 64×64 grid map | N² more | Exact for the chosen cell; addresses the scope risk that block averages hide hot spots (P2-3) |
+| S1-hot-max | **Hot-spot G**: same as S1 for every grid cell inside each core; the output is the hottest of them instead of the core average | same runs as S1, reading the 64×64 grid map | cells × N (compressible, P2-3) | Exact for the chosen cell; addresses the scope risk that block averages hide hot spots (P2-3) |
 
 ### Transient
 
@@ -686,7 +686,7 @@ Where the work differs from this plan, and why:
 | P0-5(d) | generate more floorplans | 40 generated in the TA styles (`src/sim/tagen.py`) | as planned; used as extra training data in P1-3 |
 | P1-3 | (a)–(d) | plus (d2) with generated floorplans and (d3) S0 + learned correction | to give the calibration-free side its best chance |
 | S2 | one shared package term | one package term *per output* (mean of the dropped couplings), plus a low-rank variant for comparison | one global term was up to 17 K off on HOM-64 |
-| P2-3 | one hottest cell per core | plus S1-hot-max (max over a few candidate cells) | the hot spot moves with the power pattern |
+| P2-3 | one hottest cell per core | S1-hot-max: max over every grid cell inside each core, plus compression of that matrix | the hot spot moves with the power pattern |
 | T4 | balanced truncation of HotSpot's matrices | modal truncation → balanced truncation → fast-part filter | without the filter the error stalled at 3 K |
 | P6-1 | C stepper on HotSpot's library interface | HotSpot's own transient driven through pipes | simpler, same binary, verified identical |
 | P6-2 | DVFS and/or migration | DVFS only, two limits per floorplan | migration left as a next step |

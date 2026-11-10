@@ -63,6 +63,7 @@ def core_grid(rows, cols, core_w, core_h, x0=0.0, y0=0.0, prefix="Core"):
 def het_a():
     return [
         Block("Big0", 0, 2.5, 2, 2.5),
+        
         Block("Big1", 2, 2.5, 2, 2.5),
         *core_grid(2, 2, 1.0, 1.25, x0=4, y0=2.5, prefix="Little"),
         Block("NoC", 0, 2.0, 6, 0.5),

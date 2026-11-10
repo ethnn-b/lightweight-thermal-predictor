@@ -225,6 +225,7 @@ footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--li
       <li class="sub"><a href="#p0-5">P0-5 TA floorplans</a></li>
       <li class="sub"><a href="#p0-5d">P0-5d More floorplans</a></li>
       <li><a href="#p1">P1 · Calibration</a></li>
+      <li class="sub"><a href="#p1-time">Calibration time</a></li>
       <li class="sub"><a href="#p1-1">P1-1 Step calibration</a></li>
       <li class="sub"><a href="#p1-2">P1-2 One-trace calibration</a></li>
       <li class="sub"><a href="#p1-3">P1-3 Is it needed?</a></li>
@@ -237,6 +238,7 @@ footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--li
       <li class="sub"><a href="#p3-2">P3-2 Forecasting</a></li>
       <li class="sub"><a href="#p3-3">P3-3 Trade-offs</a></li>
       <li class="sub"><a href="#p3-4">P3-4 Exact model (T4)</a></li>
+      <li><a href="#ev">EV · Extended validation</a></li>
       <li><a href="#p4">P4 · Robustness</a></li>
       <li class="sub"><a href="#p4-1">P4-1 Unusual inputs</a></li>
       <li class="sub"><a href="#p4-2">P4-2 Package change</a></li>
@@ -249,6 +251,7 @@ footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--li
       <li><a href="#scorecard">Scorecard vs targets</a></li>
       <li><a href="#lessons">Ten lessons</a></li>
       <li><a href="#open">Open items</a></li>
+      <li><a href="#refs">References</a></li>
       <li><a href="#glossary">Glossary</a></li>
       <li><a href="#repo">Where things are</a></li>
     </ol>
@@ -419,7 +422,7 @@ where  a_ij1 + a_ij2 + … + a_ijM = G_ij   (so the final value is exactly right
       <tr><td>Style_4</td><td>Same 14×14 mm die, cores scattered (29 % covered)</td><td class="n">10</td><td>Clean “only the positions differ” test (P1-3)</td></tr>
       <tr><td>Main subset</td><td>One per style: <code>s1_fp001</code>, <code>s2_fp004</code>, <code>s3_fp002</code>, <code>s4_fp001</code></td><td class="n">4</td><td>Expensive experiments (long traces, DTM)</td></tr>
       <tr><td>HET-A</td><td>Our own heterogeneous layout from <code>flpgen.py</code> (with L2 and NoC blocks)</td><td class="n">1</td><td>A 24th, differently built floorplan</td></tr>
-      <tr><td>HOM-16, HOM-64</td><td>Grids of 16 and 64 identical cores</td><td class="n">2</td><td>Model compression for many cores (P2-1)</td></tr>
+      <tr><td>HOM-16, HOM-64</td><td>Synthetic chips made of identical 2×2 mm cores with no white space: HOM-16 is 4×4 cores on an 8×8 mm die, HOM-64 is 8×8 cores on a 16×16 mm die (<code>flpgen.core_grid</code>; files <code>floorplans/hom_16.flp</code>, <code>hom_64.flp</code>). Not TA floorplans, and not used for the 8-core results.</td><td class="n">2</td><td>Model compression for many cores (P2-1)</td></tr>
       <tr><td>EV6</td><td>HotSpot's classic Alpha processor example (30 blocks) with a real <code>gcc</code> power trace</td><td class="n">1</td><td>A real workload (P3-1)</td></tr>
       <tr><td>Generated</td><td>Our generator <code>src/sim/tagen.py</code>, 10 per TA style</td><td class="n">40</td><td>Extra training data (P0-5d, P1-3)</td></tr>
     </tbody>
@@ -452,21 +455,21 @@ where  a_ij1 + a_ij2 + … + a_ijM = G_ij   (so the final value is exactly right
   <div class="tw"><table>
     <thead><tr><th>Model</th><th>In plain words</th><th>Calibrated?</th><th>Verdict</th></tr></thead>
     <tbody>
-      <tr><td><b>S0</b> power blurring</td><td>One generic “heat spreads out like this” kernel, applied to any floorplan</td><td>No</td><td>Baseline only: 0.8 K mean, 5 K worst</td></tr>
+      <tr><td><b>S0</b> power blurring [9]</td><td>One generic “heat spreads out like this” kernel, applied to any floorplan</td><td>No</td><td>Baseline only: 0.8 K mean, 5 K worst</td></tr>
       <tr class="hl"><td>S1 influence matrix</td><td><code>T = T_amb + G·P</code>, with G measured on this floorplan</td><td>Yes, 8 runs</td><td>Exact; the steady model to ship</td></tr>
-      <tr><td><b>S1-hot-max</b></td><td>Same idea for a few candidate grid cells per core, take the hottest</td><td>Same runs</td><td>Predicts the hot spot inside each core; ship it too</td></tr>
+      <tr><td><b>S1-hot-max</b></td><td>Same idea for every grid cell inside each core, take the hottest</td><td>Same runs</td><td>Exact hot spot inside each core; compressed to about 3 kB; ship it too</td></tr>
       <tr><td><b>S2</b> compressed G</td><td>Each core keeps its k nearest neighbours; the rest share one “package” term</td><td>Yes</td><td>Only useful for many cores (64 cores: 5.8× smaller)</td></tr>
       <tr><td><b>S2-lr</b> low rank</td><td>Squeezes G into a few patterns</td><td>Yes</td><td>Does not suit heat flow; poor</td></tr>
       <tr><td><b>T0</b> persistence</td><td>“The temperature stays as it is.” No model at all</td><td>No</td><td>Up to 8 K wrong 10 ms ahead</td></tr>
       <tr><td><b>T1</b> first-order lag</td><td>Each core approaches its steady value with one speed</td><td>Yes</td><td>Too simple: 14 K wrong</td></tr>
-      <tr><td><b>T2</b> ARX</td><td>Next temperature = mix of the last few temperatures and powers, fitted to one long trace</td><td>Yes, 1 trace</td><td>Works (0.2 K mean); best for 1-step forecasts from sensors</td></tr>
+      <tr><td><b>T2</b> ARX [10, 13]</td><td>Next temperature = mix of the last few temperatures and powers, fitted to one long trace</td><td>Yes, 1 trace</td><td>Works (0.2 K mean); best for 1-step forecasts from sensors</td></tr>
       <tr class="hl"><td>T3 sum of exponentials</td><td>M shared time constants, weights per core pair (see the worked example)</td><td>Yes, 24 runs</td><td>The transient model to ship (M = 4)</td></tr>
-      <tr><td><b>T4</b> reduced state space</td><td>HotSpot's own 16,396-node network shrunk to r states</td><td>Needs patched HotSpot</td><td>Exact reference; 32 states → 0.047 K</td></tr>
+      <tr><td><b>T4</b> reduced state space [6, 7, 8]</td><td>HotSpot's own 16,396-node network shrunk to r states</td><td>Needs patched HotSpot</td><td>Exact reference; 32 states → 0.047 K</td></tr>
     </tbody>
   </table></div>
 
   <div class="prose">
-    <p>The rest of this section explains each model in full: the formula it uses to predict, the data it is trained on, the algorithm that fits it, and how its error is measured. <b>No model uses neural networks, decision trees, SVMs or gradient boosting.</b> HotSpot is a linear system (P0-2), so every model is a linear formula, and its numbers are measured directly or fitted with least squares. Only the calibration-free baselines of P1-3 use regression across floorplans (ridge regression).</p>
+    <p>The rest of this section explains each model in full: the formula it uses to predict, the data it is trained on, the algorithm that fits it, and how its error is measured. <b>No model uses neural networks, decision trees, SVMs or gradient boosting.</b> HotSpot is a linear system (P0-2) [2], so every model is a linear formula, and its numbers are measured directly or fitted with least squares. Only the calibration-free baselines of P1-3 use regression across floorplans (ridge regression).</p>
   </div>
 
   <h3 id="models-common" style="margin:26px 0 10px">Notation and training data shared by all models</h3>
@@ -499,7 +502,7 @@ G        influence matrix (n × N): G_ij = rise of block i per watt in core j</d
       <div style="display:contents"><dt>Trained on</dt><dd>The N steady runs.</dd></div>
       <div style="display:contents"><dt>Algorithm</dt><dd><b>No fitting at all: direct measurement.</b> In run j, core j gets 1 W and the others 0 W, so P is the unit vector e<sub>j</sub> and G·e<sub>j</sub> is column j of G. The rise HotSpot reports <i>is</i> that column:
 <div class="eq">G[:, j] = T_HotSpot(1 W in core j) − T_amb        for j = 1 … N</div>
-      Because HotSpot is linear (superposition, checked to 10⁻⁶ K in P0-2), these N columns predict <i>any</i> power vector exactly. The only error left is HotSpot's 6-decimal printing.</dd></div>
+      Because HotSpot is linear [2] (superposition, checked to 10⁻⁶ K in P0-2), these N columns predict <i>any</i> power vector exactly. The only error left is HotSpot's 6-decimal printing.</dd></div>
       <div style="display:contents"><dt>Cost and size</dt><dd>8 HotSpot runs (about 4 s). n × N numbers: 928 B with FILL rows, 512 B for 8 × 8 cores.</dd></div>
     </dl>
   </article>
@@ -507,18 +510,18 @@ G        influence matrix (n × N): G_ij = rise of block i per watt in core j</d
   <article class="exp">
     <header><span class="id">S1-hot-max</span><h3>Hot spot inside each core</h3></header>
     <dl class="qa">
-      <div style="display:contents"><dt>Predicts</dt><dd>The hottest point of each core, not its average:
-<div class="eq">T_hot(core c) = max over candidate cells q of c  ( T_amb + Σ_j Gcell_qj · P_j )</div></dd></div>
+      <div style="display:contents"><dt>Predicts</dt><dd>The hottest point of each core, not its average (block averages hide hot spots [3, 4]):
+<div class="eq">T_hot(core c) = max over every grid cell q inside c  ( T_amb + Σ_j Gcell_qj · P_j )</div></dd></div>
       <div style="display:contents"><dt>Trained on</dt><dd>The same N steady runs, but using the full 64 × 64 grid map instead of the block averages. That gives Gcell (4,096 × N): the rise of every cell per watt in each core.</dd></div>
-      <div style="display:contents"><dt>Algorithm</dt><dd>Measurement plus a selection rule. For each core, keep the cells that were its hottest point in any calibration run: the hottest cell when core 1 alone is heated, when core 2 alone is heated, …, plus the hottest at nominal power. That is at most N + 1 = 9 cells, but many repeat: 3 to 9 distinct cells per core, 6 on average. Store only those rows of Gcell. Each row is still exactly linear; the max picks whichever cell is hottest for the given power.</dd></div>
-      <div style="display:contents"><dt>Cost and size</dt><dd>No extra runs. About 3.1 kB.</dd></div>
+      <div style="display:contents"><dt>Algorithm</dt><dd>Measurement, as for S1. Keep the row of Gcell for every cell inside a core (1,134–3,823 cells on the TA floorplans). Each row is exactly linear, so each cell's temperature is exact, and the max picks whichever cell is hottest for the given power. The hot spot can therefore move with the power pattern.</dd></div>
+      <div style="display:contents"><dt>Cost and size</dt><dd>No extra runs. The full matrix is 115 kB (median; 8 numbers per cell). The size comes from the fine grid, not the 8 cores. Compressed without loss (P2-3): drop the cells that can never be the hottest for power within the TA range, then store in 16-bit numbers. That gives <b>about 3.3 kB at 0.002 K mean error</b>.</dd></div>
     </dl>
   </article>
 
   <article class="exp">
     <header><span class="id">S0</span><h3>Power blurring (uncalibrated baseline)</h3></header>
     <dl class="qa">
-      <div style="display:contents"><dt>Idea</dt><dd>Assume heat spreads out the same way on every chip, so one generic “spread shape” (a <b>kernel</b> K(r), in K per W at distance r) can stand in for G on any floorplan. “Uncalibrated” means it never runs HotSpot on the floorplan it predicts.</dd></div>
+      <div style="display:contents"><dt>Idea</dt><dd>Assume heat spreads out the same way on every chip, so one generic “spread shape” (a <b>kernel</b> K(r), in K per W at distance r) can stand in for G on any floorplan (power blurring [9]). “Uncalibrated” means it never runs HotSpot on the floorplan it predicts.</dd></div>
       <div style="display:contents"><dt>Trained on</dt><dd><b>One HotSpot run, once, for all floorplans</b>: a tiny 1 W source (0.44 × 0.44 mm) at the centre of a large 28 × 28 mm die with the same layer stack (128 × 128 grid). The rise of every cell is averaged in 0.2 mm rings around the source, which gives K(r).</dd></div>
       <div style="display:contents"><dt>Predicts</dt><dd>For a new floorplan, build an approximate G from the kernel, then use it like S1:
 <div class="eq">rise of cell q from 1 W in core j = Σ over cells s of core j  w_js · K(|q − s|)
@@ -570,7 +573,7 @@ T = T_amb + x</div></dd></div>
   <article class="exp">
     <header><span class="id">T3</span><h3>Sum of exponentials (the transient model we ship)</h3></header>
     <dl class="qa">
-      <div style="display:contents"><dt>Model</dt><dd>Each step response is written as M rising curves with M time constants τ<sub>1</sub> … τ<sub>M</sub> <b>shared by all pairs of cores</b> (they belong to the chip and package), and weights a<sub>ijm</sub> per pair:
+      <div style="display:contents"><dt>Model</dt><dd>Each step response is written as M rising curves [6] with M time constants τ<sub>1</sub> … τ<sub>M</sub> <b>shared by all pairs of cores</b> (they belong to the chip and package), and weights a<sub>ijm</sub> per pair:
 <div class="eq">s_ij(t) ≈ Σ_m a_ijm · (1 − e^(−t/τ_m))        with  Σ_m a_ijm = G_ij</div>
       The constraint makes the final value exactly S1's, so T3 is exact in steady state.</dd></div>
       <div style="display:contents"><dt>Predicts</dt><dd>It runs as N × M simple filters of the power, one per core and time constant, updated every step:
@@ -598,7 +601,7 @@ T = T_amb + x</div>
 <div class="eq">x[k] = A1·x[k−1] + A2·x[k−2] + B0·P[k] + B1·P[k−1]</div>
       A1, A2 are n × n matrices; B0, B1 are n × N. In forecasting, x[k−1] and x[k−2] can be real sensor readings; open loop, they are the model's own previous outputs.</dd></div>
       <div style="display:contents"><dt>Trained on</dt><dd>One HotSpot recording: the first 20 s (20,000 steps) of the excitation trace, with its power P[k] and HotSpot temperatures x[k].</dd></div>
-      <div style="display:contents"><dt>Algorithm</dt><dd><b>Linear least squares (ridge regression with a tiny penalty, λ = 10⁻⁹)</b>, i.e. classic system identification. Every step k gives one row of a regression: the features are the past rises and powers, the target is x[k]. All rows are stacked into X and Y and solved in one go:
+      <div style="display:contents"><dt>Algorithm</dt><dd><b>Linear least squares (ridge regression with a tiny penalty, λ = 10⁻⁹)</b>, i.e. classic system identification (ARX-type temperature predictors: [10, 13]). Every step k gives one row of a regression: the features are the past rises and powers, the target is x[k]. All rows are stacked into X and Y and solved in one go:
 <div class="eq">W = (Xᵀ X + λ I)⁻¹ Xᵀ Y</div>
       One extra rule: in steady state ARX must agree with S1, (I − A1 − A2)⁻¹ (B0 + B1) = G. To guarantee this, the equation is rewritten in differences from S1's target G·P[k], and B0 is computed from the rule instead of being fitted.</dd></div>
       <div style="display:contents"><dt>Watch out</dt><dd>Nothing in the fit forces the model to be stable. With 3 lags on all blocks, the prediction blew up (P1-2). A stability check is needed before using it.</dd></div>
@@ -608,7 +611,7 @@ T = T_amb + x</div>
   <article class="exp">
     <header><span class="id">T4</span><h3>Reduced state space <span class="chip tag">optional</span></h3></header>
     <dl class="qa">
-      <div style="display:contents"><dt>Idea</dt><dd>Not fitted to HotSpot's outputs at all. A patched HotSpot writes out its internal network: capacitances C, conductance matrix Gnet and power map B for 16,396 nodes:
+      <div style="display:contents"><dt>Idea</dt><dd>Not fitted to HotSpot's outputs at all. A patched HotSpot writes out its internal network (the same state-space form as [6]; reduced thermal models in estimators: [7, 8]): capacitances C, conductance matrix Gnet and power map B for 16,396 nodes:
 <div class="eq">C · dx/dt = −Gnet · x + B · P          (x = rise of every node)</div></dd></div>
       <div style="display:contents"><dt>Algorithm</dt><dd><b>Model-order reduction</b> from control theory, no data fitting: (1) <b>modal truncation</b>: keep the 200 slowest “modes” (eigenvectors of the pair Gnet, C, found with SciPy's <code>eigsh</code>); (2) <b>balanced truncation</b> to r states: solve two Lyapunov equations, take an SVD and keep the r best-observed and best-controlled directions; (3) a small first-order filter per pair of cores for the fast parts that were dropped. Then step it with backward Euler at 1 ms, exactly like HotSpot.</dd></div>
       <div style="display:contents"><dt>Result</dt><dd>32 states → 0.047 K worst. A reference that confirms S1 and T3, but it needs the patched HotSpot.</dd></div>
@@ -633,21 +636,21 @@ T = T_amb + x</div>
   <div class="tw"><table>
     <thead><tr><th>Model</th><th>What calibration needs</th><th>Time per floorplan</th></tr></thead>
     <tbody>
-      <tr><td><b>S0</b> power blurring</td><td>Nothing on the target floorplan. One shared kernel from a single point-source run on a 28 mm die, measured once and cached</td><td>0 per floorplan (the one-off kernel run was not timed)</td></tr>
+      <tr><td><b>S0</b> power blurring [9]</td><td>Nothing on the target floorplan. One shared kernel from a single point-source run on a 28 mm die, measured once and cached</td><td>0 per floorplan (the one-off kernel run was not timed)</td></tr>
       <tr class="hl"><td>S1 influence matrix</td><td>8 steady runs, 1 W in one core each</td><td><b>4.3 s</b></td></tr>
       <tr><td><b>S1-hot-max</b></td><td>Nothing extra: the same 8 runs also write the 64×64 maps</td><td>same 4.3 s</td></tr>
       <tr><td><b>S2</b> compressed G</td><td>Nothing extra: built from S1's G</td><td>negligible (not timed)</td></tr>
       <tr><td><b>T1</b> first-order lag</td><td>The step runs shared with T3 (the 24-run set)</td><td>about 5 min</td></tr>
       <tr class="hl"><td>T3 sum of exponentials (M = 4)</td><td>The 24 runs (8 steady, 8 short and 8 long step runs), shared with S1 and T1. The least-squares fit is small next to the runs</td><td><b>about 5 min</b> on an idle core (1,310 CPU-s with 8 runs in parallel)</td></tr>
       <tr><td><b>T2</b> ARX (2,2)</td><td>S1's G, plus one 60 s excitation trace (60,000 steps). The 20 s prefix that works best costs about a third</td><td>about 1.8 min (20 s) to 5.5 min (60 s), plus S1's 4.3 s; the fit itself was not timed</td></tr>
-      <tr><td><b>T4</b> reduced state space</td><td>A separate debug HotSpot build that exports the matrices (built once), then reduction of the 16,396-state system</td><td>11–15 s reduction, plus the one-off build and export</td></tr>
+      <tr><td><b>T4</b> reduced state space [6, 7, 8]</td><td>A separate debug HotSpot build that exports the matrices (built once), then reduction of the 16,396-state system</td><td>11–15 s reduction, plus the one-off build and export</td></tr>
       <tr><td><b>S1 + leakage loop</b> (P4-3)</td><td>S1's runs plus one steady run per white-space block: 11–25 steady runs in total instead of 8</td><td>3–17 extra runs, about 1–4 s</td></tr>
       <tr><td><b>Recalibration</b> after a package change (P4-2)</td><td>The same 24 runs under the new package. A change of ambient temperature needs none</td><td>about 5 CPU-min (1,200–3,000 CPU-s in parallel)</td></tr>
     </tbody>
   </table></div>
   <div class="prose">
     <p>For the whole TA dataset, 24 floorplans took 576 runs and <b>66 min</b> of wall time for S1, T1 and T3 together (P1-1). S1 alone is the cheap model; T3 costs about 70 times more HotSpot time, and T2 is the other expensive one.</p>
-    <p><b>Not included:</b> the time to <i>fit</i> S1, S2, T1, T2 and T3 after the runs was not recorded separately (we expect it to be small next to the runs, but that is not measured); prediction time (microseconds, see each experiment); and the ground-truth HotSpot runs used to test the models.</p>
+    <p><b>Not included:</b> the time to <i>fit</i> after the runs (S1 and T3 together take about 0.1 s, measured in a pilot; S2, T1 and T2 were not timed separately); prediction time (microseconds, see each experiment); and the ground-truth HotSpot runs used to test the models.</p>
   </div>
 
   <h3 id="models-error" style="margin:30px 0 10px">How the error is measured</h3>
@@ -798,6 +801,39 @@ T = T_amb + x</div>
   <div class="phase-head"><h2><span class="num">P1</span>Calibration</h2></div>
   <p class="intro">Stage one of the assignment: get the predictor's numbers for one floorplan from a few HotSpot runs. How few? And is it needed at all?</p>
 
+  <h3 id="p1-time" style="margin:22px 0 10px">How long does calibration take, model by model?</h3>
+  <div class="prose">
+    <p>The time is almost all HotSpot running. On our machine one steady run takes <b>0.24 s</b> and one transient step takes <b>5.2–5.9 ms</b> (P0-4). Everything below is <b>per floorplan</b>.</p>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Model</th><th>What calibration needs</th><th>Time</th><th>Where measured</th></tr></thead>
+    <tbody>
+      <tr><td><b>Borrowed G</b> / S0</td><td>No HotSpot run on the target floorplan</td><td>0 s, but 0.6–2.9 K off on average</td><td>P1-3</td></tr>
+      <tr class="hl"><td>S1 influence matrix</td><td>8 steady runs, 1 W in one core each</td><td><b>4.3 s</b>; fitting is just a copy of the results</td><td>P1-1</td></tr>
+      <tr><td><b>S1-hot-max</b></td><td>Nothing extra: the same 8 runs also write the 64×64 maps</td><td>same 4.3 s</td><td>P2-3</td></tr>
+      <tr><td><b>T1</b> first-order lag</td><td>The 24-run set below, shared with S1 and T3</td><td>about 5 min</td><td>P1-1</td></tr>
+      <tr class="hl"><td>T3 sum of exponentials (M = 4)</td><td>24 runs (8 steady, 8 short and 8 long step runs), shared with S1 and T1</td><td><b>about 5 min</b> on one idle core. Measured in a batch on 8 parallel workers: <b>about 100 s per floorplan</b> (397 s for 4 floorplans). Fitting S1 and T3 afterwards: <b>about 0.1 s</b></td><td>P1-1; batch and fit timings from a 4-floorplan pilot on this laptop</td></tr>
+      <tr><td><b>T2</b> ARX (2,2)</td><td>S1's G, plus one long power recording (60,000 steps for 60 s; 20 s is enough and costs a third)</td><td>about 1.8 min (20 s) to 5.5 min (60 s), plus S1's 4.3 s. The fit itself was not timed</td><td>P1-2</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <p><b>By floorplan style.</b> HotSpot time of the calibration runs of the 23 TA floorplans (P1-1), in CPU-seconds summed over the runs, measured with 8 runs in parallel (so larger than the 5 min on one idle core). The style hardly matters: the grid is always 64×64 and every floorplan has 8 cores, so the cost depends on the machine load, not the layout.</p>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Style</th><th class="n">Floorplans</th><th class="n">All 24 runs (S1 + T1 + T3): mean (min–max)</th><th class="n">S1 only (8 steady runs): mean</th></tr></thead>
+    <tbody>
+      <tr><td>Style_1</td><td class="n">3</td><td class="n">1,358 s (1,315–1,436)</td><td class="n">4.6 s</td></tr>
+      <tr><td>Style_2</td><td class="n">5</td><td class="n">1,353 s (1,309–1,373)</td><td class="n">4.4 s</td></tr>
+      <tr><td>Style_3</td><td class="n">5</td><td class="n">1,349 s (1,340–1,354)</td><td class="n">4.2 s</td></tr>
+      <tr><td>Style_4</td><td class="n">10</td><td class="n">1,302 s (1,295–1,313)</td><td class="n">4.2 s</td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">Style_4 is about 4 % cheaper than the other styles; that is the only visible trend. Source: <code>experiments/P1-1_step_calibration/results/calibration_summary.csv</code> (columns <code>hotspot_cpu_s</code> and <code>hotspot_cpu_s_S1_only</code>). The HET-A floorplan (1,266 s) is not one of the TA styles and is left out.</p>
+  <div class="prose">
+    <p><b>For a whole dataset.</b> The 24 TA floorplans took 576 runs and <b>66 min</b> in P1-1 (about 2.75 min each). The faster batch rate in the pilot is about 1.7 min each, so the numbers depend on the machine and the batch size. Running 8 jobs at once is the fastest setting, but it slows each run down, which is why the same work is 5 min on an idle core and 1.7–2.75 min per floorplan in a batch.</p>
+    <p><b>The trade.</b> S1 alone needs only 8 runs (4.3 s), so the steady model is cheap to calibrate; T3 needs the full 24 (about 70× more HotSpot time than S1 alone) because it also needs the slow, 100 s heat-sink response. Skipping calibration entirely costs 0.6–2.9 K of error (P1-3).</p>
+  </div>
+
   <article class="exp" id="p1-1">
     <header><span class="id">P1-1</span><h3>Calibration with planned step runs</h3></header>
     <dl class="qa">
@@ -850,7 +886,7 @@ T = T_amb + x</div>
       <li><b>T3 from planned steps is 3–5× more accurate</b> and stable by construction. ARX stays useful for short forecasts from sensors (P3-2).</li>
     </ul></div>
     <figure><div class="plate"><img src="../experiments/P1-2_trace_calibration/results/error_vs_trace_length.png" alt="Error of ARX models against the length of the calibration trace." loading="lazy"></div><figcaption>Error vs calibration trace length.</figcaption></figure>
-    <div class="found"><h4>Why does ARX get worse with a longer calibration trace?</h4>
+    <div class="found"><h4>Why does ARX get worse with a longer calibration trace? <span style="font-weight:400">(ARX for temperature: [10, 13]; the diagnosis below is our own measurement, no paper in our reference list covers it)</span></h4>
       <p>Measured with ARX (2,2), all blocks, fitted on the first K seconds of the 60 s trace and tested open loop on the 10 s test traces (mean over the four main floorplans):</p>
       <div class="tw"><table>
         <thead><tr><th>Calibration trace</th><th class="n">5 s</th><th class="n">10 s</th><th class="n">15 s</th><th class="n">20 s</th><th class="n">30 s</th><th class="n">60 s</th></tr></thead>
@@ -930,7 +966,7 @@ T = T_amb + x</div>
     </table></div>
     <p class="cap"><b>S0 (uncalibrated)</b>: power blurring with one generic heat-spread kernel; no HotSpot run on the floorplan being predicted (see <a href="#models-steady">S0</a>). <b>302 inputs per call</b>: all 302 test vectors of a floorplan (nominal, max and 300 random) given to S1 at once as a 302 × 8 matrix, so one matrix–matrix product replaces 302 separate calls and Python's per-call overhead is paid only once. 0.06 µs is the total time divided by 302. Same model, same answers, just batched.</p>
     <div class="tw"><table>
-      <thead><tr><th>Chip with 64 cores</th><th class="n">Size</th><th class="n">Worst error</th></tr></thead>
+      <thead><tr><th>HOM-64 (synthetic: 8×8 identical cores on a 16×16 mm die)</th><th class="n">Size</th><th class="n">Worst error</th></tr></thead>
       <tbody>
         <tr><td>Full S1</td><td class="n">32.8 kB</td><td class="n">exact</td></tr>
         <tr class="hl"><td>S2, 8 neighbours</td><td class="n">5.7 kB</td><td class="n">0.59 K</td></tr>
@@ -941,7 +977,7 @@ T = T_amb + x</div>
     <div class="found"><h4>What we found</h4><ul>
       <li><b>S1 beats every target by a wide margin</b>: exact (0.00003 K vs a 0.1 K target), 2.6 µs (target 20 µs), under 1 kB (target 5 kB), always the right hottest core.</li>
       <li>32-bit numbers are enough: half the size, no loss.</li>
-      <li>For 8 cores, compression is pointless (G is already under 1 kB). For 64 cores, S2 shrinks the model 5.8× for 0.6 K.</li>
+      <li>For 8 cores, compression is pointless (G is already under 1 kB). For HOM-64 (a synthetic 64-core chip, not a TA floorplan), S2 shrinks the model 5.8× for 0.6 K.</li>
       <li><b>Low rank does not suit heat flow</b>: heat spreads locally, so G looks like “strong diagonal + a constant”, which is exactly what S2 stores.</li>
     </ul></div>
     <figure><div class="plate"><img src="../experiments/P2-1_steady_predictor/results/steady_accuracy.png" alt="Steady-state accuracy of S0, S1 and S2 models." loading="lazy"></div><figcaption>Steady-state accuracy of the models.</figcaption></figure>
@@ -970,27 +1006,35 @@ T = T_amb + x</div>
   <article class="exp" id="p2-3">
     <header><span class="id">P2-3</span><h3>Predicting the hot spot inside each core</h3></header>
     <dl class="qa">
-      <div style="display:contents"><dt>Question</dt><dd>S1 predicts a core's average, but the hottest point is 3–4 K above it (P0-3). Can we predict each core's hottest point directly?</dd></div>
-      <div style="display:contents"><dt>What we did</dt><dd>The calibration runs already produced full 64×64 maps, so we know how every cell responds to every core's watt. Tested several ways to estimate each core's peak on 1,380 unseen HotSpot runs.</dd></div>
+      <div style="display:contents"><dt>Question</dt><dd>S1 predicts a core's average, but the hottest point is several K above it (P0-3). Can we predict each core's hottest point directly, and how small can that model be?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>The calibration runs already produced full 64×64 maps, so we know how every grid cell responds to every core's watt. <b>S1-hot-max</b> takes, for each core, the hottest of all its cells. We then compressed its matrix. Test: 60 random power vectors on each of the 23 TA floorplans (1,380 unseen HotSpot runs with maps); the truth is each core's hottest cell.</dd></div>
     </dl>
     <div class="tw"><table>
       <thead><tr><th>Model</th><th class="n">Size</th><th class="n">Mean error</th><th class="n">Worst error</th><th class="n">Hottest core right</th></tr></thead>
       <tbody>
         <tr><td>Core average (plain S1)</td><td class="n">512 B</td><td class="n">2.73 K</td><td class="n">8.96 K</td><td class="n">50 %</td></tr>
-        <tr><td>Average + fixed offset</td><td class="n">576 B</td><td class="n">0.59 K</td><td class="n">4.11 K</td><td class="n">82 %</td></tr>
-        <tr><td>One fixed hottest cell</td><td class="n">512 B</td><td class="n">0.29 K</td><td class="n">3.97 K</td><td class="n">68 %</td></tr>
-        <tr class="hl"><td>S1-hot-max (a few candidate cells)</td><td class="n">3.1 kB</td><td class="n">0.078 K</td><td class="n">1.6 K</td><td class="n">90 %</td></tr>
-        <tr><td>All cells (exact)</td><td class="n">115 kB</td><td class="n">0.000007 K</td><td class="n">0.00003 K</td><td class="n">100 %</td></tr>
+        <tr><td>S1-hot-max (all cells), full</td><td class="n">115 kB</td><td class="n">0.000007 K</td><td class="n">0.00003 K</td><td class="n">100 %</td></tr>
+        <tr><td>… in 32-bit numbers</td><td class="n">57 kB</td><td class="n">0.000007 K</td><td class="n">0.00003 K</td><td class="n">100 %</td></tr>
+        <tr><td>… never-hottest cells dropped (any power)</td><td class="n">73 kB</td><td class="n">0.000007 K</td><td class="n">0.00003 K</td><td class="n">100 %</td></tr>
+        <tr><td>… never-hottest cells dropped (TA power range)</td><td class="n">13 kB</td><td class="n">0.000007 K</td><td class="n">0.00003 K</td><td class="n">100 %</td></tr>
+        <tr class="hl"><td>… dropped (TA power range), 16-bit numbers</td><td class="n">3.3 kB</td><td class="n">0.0022 K</td><td class="n">0.011 K</td><td class="n">98 %</td></tr>
+        <tr><td>… coarser grid, 32×32</td><td class="n">29 kB</td><td class="n">0.14 K</td><td class="n">2.8 K</td><td class="n">95 %</td></tr>
+        <tr><td>… coarser grid, 16×16</td><td class="n">7.2 kB</td><td class="n">0.47 K</td><td class="n">4.7 K</td><td class="n">85 %</td></tr>
+        <tr><td>… low rank, r = 4</td><td class="n">58 kB</td><td class="n">2.8 K</td><td class="n">11.6 K</td><td class="n">15 %</td></tr>
       </tbody>
     </table></div>
-    <p class="cap">“Hottest core right” is for the worst floorplan.</p>
+    <p class="cap">Size: median over the 23 floorplans. “Hottest core right” is for the worst floorplan; the 98 % comes from a few near-ties between cores (within 0.01 K).</p>
     <div class="found"><h4>What we found</h4><ul>
-      <li>The core average <b>underestimates the true peak by up to 9 K</b>.</li>
-      <li><b>The hot spot moves</b>: in 61 % of cases the hottest cell is a different cell than at nominal power, because a hot neighbour pulls it towards the shared edge. So a fixed offset or a fixed cell is not enough.</li>
-      <li><b>S1-hot-max</b> works like S1, but for a few grid cells instead of whole cores. The 8 calibration runs already gave the full 64×64 map, so for every cell we know its rise per watt in each core (one row of 8 numbers). For each core we keep only the cells that ever were its hottest point during calibration: the hottest cell when core 1 alone was heated, when core 2 alone was heated, … and at nominal power. That is at most 9 cells, but many repeat, leaving <b>3 to 9 candidate cells per core, 6 on average</b>, near the edges facing the hot neighbours. To predict, compute each candidate's temperature with S1's formula (T_amb + row · P, exact because HotSpot is linear) and take the <b>largest</b> as the core's hot spot. The max lets the hot spot move with the power pattern. Error appears only when the true hottest cell is not a candidate, and then a neighbouring candidate is almost as hot: 0.08 K mean, 1.6 K worst, for 3 kB and no extra HotSpot runs.</li>
+      <li>The core average <b>underestimates the true peak by 2.7 K on average and up to 9 K</b>. A DTM limit on core averages lets the real hot spot run that much hotter.</li>
+      <li><b>S1-hot-max is exact</b> (0.00003 K worst, HotSpot's printed precision) and needs no extra HotSpot runs. It is S1 applied to every grid cell inside the cores, with the max per core.</li>
+      <li><b>Its matrix is large because the grid is fine</b> (1,134–3,823 cells × 8 numbers, 115 kB), not because of the core count.</li>
+      <li><b>Most cells can never be the hottest, so they can be dropped without any loss.</b> Take two cells in the same core. If one rises at least as much as the other for every possible power vector, the other is never the core's maximum. For any non-negative power that leaves 73 kB. For power within the TA ranges (big 10–20 W, little 5–10 W) it leaves 13 kB. Both are still exact.</li>
+      <li><b>16-bit numbers then bring it to 3.3 kB</b> at 0.002 K mean and 0.011 K worst error: about 35× smaller than the full matrix, for a loss far below anything else in this guide.</li>
+      <li><b>Lossy shortcuts are worse.</b> A coarser grid misses the peak (2.8 K worst at 32×32), and low rank is worse than the plain core average.</li>
+      <li><b>Limit:</b> the 13 kB / 3.3 kB versions are exact only while every core stays within its TA power range. For higher power (P4-1 tests up to 3×), use the version that is exact for any power (73 kB, or 18 kB in 16-bit numbers).</li>
     </ul></div>
-    <figure><div class="plate"><img src="../experiments/P2-3_hot_spots/results/hot_spot_error.png" alt="Error of the hot-spot predictors." loading="lazy"></div><figcaption>Error of each hot-spot predictor.</figcaption></figure>
-    <p class="takeaway"><b>In one line:</b> ship S1-hot-max alongside S1 so DTM can protect the real hot spot, not the average.</p>
+    <figure><div class="plate"><img src="../experiments/P2-3_hot_spots/results/size_vs_error.png" alt="Mean and worst error against model size for the core average, S1-hot-max and its compressed versions." loading="lazy"></div><figcaption>Error against model size (log-log). Left: mean error; right: worst error over 23 floorplans × 60 vectors.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> ship S1-hot-max (about 3 kB after compression) alongside S1 so DTM can protect the real hot spot, not the average.</p>
     <p class="src">Folder: <code>experiments/P2-3_hot_spots/</code></p>
   </article>
 </section>
@@ -1022,7 +1066,7 @@ T = T_amb + x</div>
     <div class="found"><h4>What we found</h4><ul>
       <li><b>T3 with M = 4 is the transient model to ship</b>: 0.06–0.09 K average, 0.3 K worst, 3 µs per step (1,800× faster than HotSpot), about 4 kB.</li>
       <li>Accuracy improves smoothly with M; speed barely changes. M is the accuracy-vs-size knob.</li>
-      <li>T1 is not usable (overshoots early, lags later). ARX works but is about 2× worse than T3.</li>
+      <li>T1 is not usable (overshoots early, lags later). ARX works [10, 13] but is about 2× worse than T3.</li>
       <li>It carries over to a real workload on a different chip (EV6 + gcc): 0.07 K average.</li>
     </ul></div>
     <figure><div class="plate"><img src="../experiments/P3-1_transient_predictor/results/trace_example.png" alt="Example temperature trace: HotSpot, T1 and T3 overlaid." loading="lazy"></div><figcaption>HotSpot and the models on one test trace. T3 sits on top of HotSpot.</figcaption></figure>
@@ -1102,6 +1146,89 @@ T = T_amb + x</div>
     <figure><div class="plate"><img src="../experiments/P3-4_state_space_T4/results/t4_reduction.png" alt="Error of the reduced model against the number of states." loading="lazy"></div><figcaption>Error vs number of states r.</figcaption></figure>
     <p class="takeaway"><b>In one line:</b> HotSpot really is a 16,000-node linear system that a 32-state model captures almost perfectly, but T3 is still the smarter product.</p>
     <p class="src">Folder: <code>experiments/P3-4_state_space_T4/</code></p>
+  </article>
+</section>
+
+<!-- ============================================================ Extended validation -->
+<section class="part" id="ev">
+  <div class="phase-head"><h2><span class="num">EV</span>Extended validation: 52 generated floorplans</h2></div>
+  <p class="intro">Everything so far was judged on the 23 TA floorplans. Does S1 and T3 hold up on floorplans we generated ourselves, with different shapes and sizes?</p>
+
+  <article class="exp" id="ev-1">
+    <header><span class="id">EV-1</span><h3>S1 and T3 (M = 4) on 52 generated floorplans</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Are the errors we reported on the TA floorplans typical, or did we just get lucky with those 23?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>Generated floorplans in the four TA styles (13 per style: the 40 from P0-5d plus 12 new ones, <code>gen_011</code> to <code>gen_013</code> per style). Each was calibrated like a new floorplan (8 steady runs for S1, all 24 runs for T3) and tested against HotSpot: S1 on 302 steady power vectors, T3 on one 2 s phase trace from a cold chip. The models never saw the test data. Run on a laptop, about 100 min.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Style</th><th class="n">Floorplans</th><th class="n">S1 mean error</th><th class="n">S1 worst</th><th class="n">T3 mean error</th><th class="n">T3 worst</th></tr></thead>
+      <tbody>
+        <tr><td>Style_1</td><td class="n">13</td><td class="n">6.8e-6 K</td><td class="n">3.4e-5 K</td><td class="n">0.108 K</td><td class="n">0.34 K</td></tr>
+        <tr><td>Style_2</td><td class="n">13</td><td class="n">6.7e-6 K</td><td class="n">2.6e-5 K</td><td class="n">0.114 K</td><td class="n">0.32 K</td></tr>
+        <tr><td>Style_3</td><td class="n">13</td><td class="n">6.6e-6 K</td><td class="n">2.8e-5 K</td><td class="n">0.085 K</td><td class="n">0.31 K</td></tr>
+        <tr><td>Style_4</td><td class="n">13</td><td class="n">6.1e-6 K</td><td class="n">2.6e-5 K</td><td class="n">0.056 K</td><td class="n">0.26 K</td></tr>
+        <tr class="hl"><td><b>All 52</b></td><td class="n">52</td><td class="n">6.5e-6 K</td><td class="n">3.4e-5 K</td><td class="n">0.091 K</td><td class="n">0.34 K</td></tr>
+        <tr><td><i>TA floorplans (P2-1, P3-1)</i></td><td class="n"><i>24</i></td><td class="n"><i>6e-6 K</i></td><td class="n"><i>3e-5 K</i></td><td class="n"><i>0.090 K</i></td><td class="n"><i>0.30 K</i></td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>The TA results carry over.</b> Over 52 new floorplans, S1 is off by about 0.000007 K on average and T3 by 0.09 K, the same as on the TA floorplans. Nothing broke on any floorplan: the worst single error was 0.34 K for T3 and 0.00003 K for S1.</li>
+      <li><b>S1 is floorplan-independent.</b> Its error is at the 6-digit rounding of HotSpot's output, and it always picks the hottest core correctly (100% on every floorplan).</li>
+      <li><b>T3's error varies a little by style</b> (0.056 K in Style_4 to 0.114 K in Style_2); the spread within a style is about the same size as the spread between styles. Three floorplans had a worst error just above 0.30 K.</li>
+      <li><b>Picking the hottest core with T3 is not perfect:</b> on a 2 s trace, T3 names the right hottest core in 88-100% of the steps (worst floorplan <code>g3_gen009</code>, 88%), which happens when two cores are within a fraction of a kelvin of each other. The error in the peak temperature itself is at most 0.30 K.</li>
+      <li><b>Cost is unchanged:</b> calibration takes about 780 s of HotSpot time per floorplan for T3 (5 s for S1 alone), S1 predicts in about 1.2 µs and T3 in about 3.2 µs per step.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/extended_validation/results/error_by_style.png" alt="Error of S1 and T3 on each generated floorplan, grouped by style, with the TA reference." loading="lazy"></div><figcaption>One dot per floorplan; black bar = median; red line = TA floorplans. Log scale.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> S1 and T3 were not tuned to the TA floorplans: on 52 floorplans we generated, they are as accurate as before.</p>
+    <p class="src">Folder: <code>experiments/extended_validation/</code> (local only, not pushed). Only the 2 s test trace was used here, and two generated floorplans are rotated copies of TA ones (see the folder's README).</p>
+  </article>
+
+  <article class="exp" id="ev-2">
+    <header><span class="id">EV-2</span><h3>Predicted heatmaps against HotSpot's, one floorplan per style</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>What do the calibrated models' predictions look like next to HotSpot's own temperature map?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>One new floorplan per style (<code>gen_012</code>; chosen before looking at its error, not for being the best or worst) with one random steady power vector from the test set (about 67-79 W total). We ran HotSpot's 64x64 grid model to get its full map, averaged it per block (what S1 is trained to predict), and compared that with S1's prediction. S1 predicts one number per block, so its "map" is blocks painted flat. For T3 (M = 4) we did the same at t = 2 s of the 2 s phase trace from a cold chip: HotSpot's grid map at the last step against T3's prediction for each block (HotSpot can only write grid maps for every step, a 0.5 GB file per run, so we read the last one).</dd></div>
+    </dl>
+    <figure><div class="plate"><img src="../experiments/extended_validation/results/heatmaps.png" alt="For each of four floorplans: HotSpot grid map, HotSpot block averages, S1 prediction, and the difference." loading="lazy"></div><figcaption>Columns: HotSpot's 64x64 map; HotSpot's block averages; S1's prediction (same colour scale); S1 minus HotSpot in micro-kelvin (note the unit).</figcaption></figure>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>S1 and HotSpot's block averages look identical.</b> The largest difference is 10-19 µK (0.00001-0.00002 K) in any block, and the difference column shows only rounding-sized noise: HotSpot writes six decimals.</li>
+      <li><b>The models do not show hot spots inside a block.</b> The first column has much hotter spots than the block averages: the hottest grid cell is 1.3 K (<code>g1</code>), 2.2 K (<code>g2</code>), 3.7 K (<code>g3</code>) and 4.0 K (<code>g4</code>) above the hottest core's average. Smaller cores with the same power have sharper hot spots (compare Style_3 and Style_4 to Style_1). This is a limit of every model here, since they predict block averages, as the TA's setup reports them; a within-block map would need a different model (P0-3 measured the same gap).</li>
+      <li><b>The hottest core is the same in all four cases, to the six decimals shown.</b> Core maxima: 76.40, 72.75, 71.06 and 69.80 °C for both S1 and HotSpot.</li>
+    </ul></div>
+    <h4>T3 (M = 4), same four floorplans, at t = 2 s</h4>
+    <figure><div class="plate"><img src="../experiments/extended_validation/results/heatmaps_t3.png" alt="For each of four floorplans: HotSpot grid map at 2 s, HotSpot block averages, T3 prediction, and the difference." loading="lazy"></div><figcaption>Same columns as above, at the end of the 2 s phase trace. The last column is in kelvin (not micro-kelvin).</figcaption></figure>
+    <div class="found"><h4>What we found for T3</h4><ul>
+      <li><b>T3's map looks the same as HotSpot's.</b> Every block is within 0.18, 0.25, 0.17 and 0.14 K of HotSpot at t = 2 s (the four floorplans), against block temperatures of 50-70 °C. Hot and cold blocks are in the same places.</li>
+      <li><b>The error is almost the same sign everywhere:</b> T3 is a little too cool in every block (the difference column is all blue). The hottest core is 0.09-0.21 K too cool at t = 2 s (for example 68.83 against 69.01 °C). T3 therefore under-reports the peak slightly at this moment, so a thermal limit would need a margin of a few tenths of a kelvin. This is one instant on one trace per floorplan, so we do not know whether the sign is systematic.</li>
+      <li>The within-block hot spots are missing here too (hottest cell 2.3-4.2 K above the hottest core's average).</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/extended_validation/results/transient_check.png" alt="T3 against HotSpot on the 2 s phase trace for the hottest core of each of the four floorplans." loading="lazy"></div><figcaption>The hottest core (at 2 s) on the 2 s test trace from a cold chip. T3 (red dashed) follows HotSpot (black) through every power step.</figcaption></figure>
+    <p>T3's mean error over all 8 cores on these four traces is 0.110, 0.124, 0.085 and 0.060 K, and the worst is 0.26, 0.27, 0.24 and 0.19 K. It sits off by a fraction of a kelvin after power steps and in the slow rise that follows; otherwise the curves are indistinguishable.</p>
+    <h4>T3 (M = 4) over time: t = 2.0, 2.5, … 5.0 s</h4>
+    <p>The same four floorplans, now with a longer 5 s phase trace from a cold chip (1 ms steps; a new trace, so t = 2 s here is not the snapshot above). For each floorplan, one figure: the rows are HotSpot's 64×64 grid map, HotSpot's block averages, T3's prediction and T3 minus HotSpot; the columns are t = 2.0 to 5.0 s every 0.5 s. All temperature panels in a figure share one colour scale, so the map can be compared across time.</p>
+    <figure><div class="plate"><img src="../experiments/extended_validation/results/heatmaps_t3_time_g1_gen012.png" alt="g1_gen012: HotSpot grid map, HotSpot block averages, T3 prediction and their difference at t = 2.0 to 5.0 s." loading="lazy"></div><figcaption>g1_gen012 (Style_1). Rows: HotSpot grid, HotSpot block average, T3, T3 minus HotSpot (K). Columns: t = 2.0 … 5.0 s.</figcaption></figure>
+    <figure><div class="plate"><img src="../experiments/extended_validation/results/heatmaps_t3_time_g2_gen012.png" alt="g2_gen012: HotSpot grid map, HotSpot block averages, T3 prediction and their difference at t = 2.0 to 5.0 s." loading="lazy"></div><figcaption>g2_gen012 (Style_2).</figcaption></figure>
+    <figure><div class="plate"><img src="../experiments/extended_validation/results/heatmaps_t3_time_g3_gen012.png" alt="g3_gen012: HotSpot grid map, HotSpot block averages, T3 prediction and their difference at t = 2.0 to 5.0 s." loading="lazy"></div><figcaption>g3_gen012 (Style_3).</figcaption></figure>
+    <figure><div class="plate"><img src="../experiments/extended_validation/results/heatmaps_t3_time_g4_gen012.png" alt="g4_gen012: HotSpot grid map, HotSpot block averages, T3 prediction and their difference at t = 2.0 to 5.0 s." loading="lazy"></div><figcaption>g4_gen012 (Style_4).</figcaption></figure>
+    <div class="tw"><table>
+      <thead><tr><th>Floorplan</th><th class="n">Worst core error at the 7 snapshots</th><th class="n">Mean over the whole 5 s</th><th class="n">Worst over the whole 5 s</th><th class="n">Time T3 is too cool</th></tr></thead>
+      <tbody>
+        <tr><td>g1_gen012</td><td class="n">0.075–0.21 K</td><td class="n">0.109 K</td><td class="n">0.29 K</td><td class="n">82 %</td></tr>
+        <tr><td>g2_gen012</td><td class="n">0.044–0.19 K</td><td class="n">0.113 K</td><td class="n">0.30 K</td><td class="n">84 %</td></tr>
+        <tr><td>g3_gen012</td><td class="n">0.071–0.19 K</td><td class="n">0.087 K</td><td class="n">0.30 K</td><td class="n">83 %</td></tr>
+        <tr><td>g4_gen012</td><td class="n">0.033–0.13 K</td><td class="n">0.062 K</td><td class="n">0.26 K</td><td class="n">79 %</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Errors over the 8 cores against HotSpot's block temperatures. “Time T3 is too cool” is the share of (core, step) pairs where T3 is below HotSpot.</p>
+    <figure><div class="plate"><img src="../experiments/extended_validation/results/t3_error_over_time.png" alt="T3 worst core error over the 5 s trace for each floorplan, with the seven snapshot times marked." loading="lazy"></div><figcaption>T3's worst core error over the whole 5 s trace; red dots are the snapshot times shown above.</figcaption></figure>
+    <div class="found"><h4>What we found over time</h4><ul>
+      <li><b>T3 follows the map as it changes.</b> The hot core moves between snapshots (on <code>g1</code> the hottest block changes several times between 2 and 5 s), and T3's map changes the same way. At every snapshot every core is within 0.21 K of HotSpot.</li>
+      <li><b>The error is largest after power changes and shrinks as the chip settles.</b> Snapshot errors are 0.11–0.21 K at 2–3 s and 0.03–0.10 K at 4.5–5 s. The worst moments of the whole trace (0.26–0.30 K) are short spikes right after power steps (error plot).</li>
+      <li><b>T3 is mostly too cool</b>, as in the 2 s snapshot above: 79–84 % of the time. At 5 s a few blocks are slightly too warm (about +0.05 K on <code>g2</code>), so it is a tendency, not a fixed offset.</li>
+      <li>As before, the within-block hot spots in the first row (grid cells several K above the block average) are not in T3's map, which predicts block averages.</li>
+    </ul></div>
+    <p class="takeaway"><b>In one line:</b> to the eye, S1 reproduces HotSpot's block temperatures exactly and T3 follows its traces closely; what neither shows is the hot spot inside a block.</p>
+    <p class="src">Folder: <code>experiments/extended_validation/</code> (<code>maps.py</code>, <code>maps_time.py</code>, <code>results/heatmaps.png</code>, <code>results/transient_check.png</code>, <code>results/heatmaps_t3_time_*.png</code>, <code>results/t3_error_over_time.png</code>, <code>results/heatmaps_summary.csv</code>, <code>results/heatmaps_time_summary.csv</code>).</p>
   </article>
 </section>
 
@@ -1313,7 +1440,8 @@ T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)   # next steps, anchored on t
       <div style="display:contents"><dt>What we did</dt><dd>Scored all 70 possible placements on each main floorplan with S1 and with HotSpot.</dd></div>
     </dl>
     <div class="found"><h4>What we found</h4><ul>
-      <li><b>S1 picks the same best placement as HotSpot on all 4 floorplans</b> and ranks all 70 identically, in about 12 µs for all 70 together, against about 100 CPU-seconds for HotSpot: <b>about 8,000,000× faster</b>.</li>
+      <li><b>S1 picks the same best placement as HotSpot on all 4 floorplans</b> and ranks all 70 identically, in about 7 µs for all 70 together, against 49–63 CPU-seconds for HotSpot: <b>about 7,000,000× faster</b>.</li>
+      <li><b>For the hottest spot instead of the hottest core</b>, S1-hot-max also picks the same placement as HotSpot on all 4 floorplans and ranks all 70 identically.</li>
       <li>The choice matters: the worst placement is 2.6–4.9 K hotter than the best.</li>
       <li>The best placement differs per floorplan (both big cores on one, four spread-out little cores on another). Only a floorplan-specific model can know this.</li>
     </ul></div>
@@ -1356,7 +1484,7 @@ T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)   # next steps, anchored on t
     <li><b>Calibration is cheap and essential.</b> 8 runs (4 s) make the steady model exact; skipping it costs 0.5–2.7 K on average, up to 12 K.</li>
     <li><b>Position matters, not just core type.</b> Edges, neighbours and die size make each floorplan's numbers unique.</li>
     <li><b>Little cores are the hot ones</b>: higher power density means about 2.4× the self-heating per watt.</li>
-    <li><b>Core averages hide hot spots</b> 3–9 K hotter, and the hot spot moves; S1-hot-max tracks it for 3 kB.</li>
+    <li><b>Core averages hide hot spots</b> 3–9 K hotter, and S1-hot-max predicts it exactly, and its matrix compresses to about 3 kB.</li>
     <li><b>Heat moves on time scales from 1 ms to 8 s</b>; one time constant (T1) cannot capture it, four (T3) can.</li>
     <li><b>Planned step runs beat fitting a recorded trace</b>, by 3–5× and with guaranteed stability.</li>
     <li><b>Forecasting needs a model</b>: “temperature stays the same” is up to 8 K wrong 10 ms ahead.</li>
@@ -1380,6 +1508,24 @@ T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)   # next steps, anchored on t
 </section>
 
 <!-- ============================================================ GLOSSARY -->
+<section class="part" id="refs">
+  <h2>References cited in this guide</h2>
+  <div class="prose">
+    <p>The numbers in square brackets follow the compact reference list in <code>docs/literature_review_and_references.md</code> (Part A, section 9). Only the entries cited above are listed. For most of them only the abstract was read, so check the paper before quoting a number.</p>
+    <ol style="list-style:none;padding-left:0">
+      <li>[2] W. Huang et al., “HotSpot: A Compact Thermal Modeling Methodology for Early-Stage VLSI Design,” IEEE TVLSI 14(5):501–513, 2006.</li>
+      <li>[3] W. Huang et al., “An Improved Block-Based Thermal Model in HotSpot 4.0 with Granularity Considerations,” WDDD 2007.</li>
+      <li>[4] W. Huang et al., “Accurate, Pre-RTL Temperature-Aware Design Using a Parameterized, Geometric Thermal Model,” IEEE Trans. Computers, 2008.</li>
+      <li>[6] S. Pagani, J.-J. Chen, M. Shafique, J. Henkel, “MatEx: Efficient Transient and Peak Temperature Computation for Compact Thermal Models,” DATE 2015.</li>
+      <li>[7] S. Sharifi, C. Liu, T. S. Rosing, “Accurate Temperature Estimation for Efficient Thermal Management,” ISQED 2008.</li>
+      <li>[8] S. Sharifi, T. S. Rosing, “Accurate Direct and Indirect On-Chip Temperature Sensing for Efficient Dynamic Thermal Management,” IEEE TCAD, 2010.</li>
+      <li>[9] A. Ziabari et al., “Power Blurring: Fast Static and Transient Thermal Analysis Method for Packaged Integrated Circuits and Power Devices,” IEEE TVLSI 22(11):2366–2379, 2014.</li>
+      <li>[10] A. K. Coskun, T. S. Rosing, K. C. Gross, “Utilizing Predictors for Efficient Thermal Management in Multiprocessor SoCs,” IEEE TCAD 28(10), 2009.</li>
+      <li>[13] G. Singla, G. Kaur, A. K. Unver, U. Y. Ogras, “Predictive Dynamic Thermal and Power Management for Heterogeneous Mobile Platforms,” DATE 2015.</li>
+    </ol>
+  </div>
+</section>
+
 <section class="part" id="glossary">
   <h2>Glossary</h2>
   <dl class="gloss">
@@ -1403,7 +1549,7 @@ T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)   # next steps, anchored on t
     <dt>Linear / superposition</dt><dd>Effects scale with power and add up across cores.</dd>
     <dt>M</dt><dd>Number of time constants in T3. More M = more accurate and slightly bigger.</dd>
     <dt>MAE</dt><dd>Mean absolute error: average size of the error.</dd>
-    <dt>Nominal power</dt><dd>The TA's typical power: big core 20 W, little core 8 W, 88 W per chip. Used as a reference test vector, for P1-1's fit error and for S1-hot-max's candidate cells.</dd>
+    <dt>Nominal power</dt><dd>The TA's typical power: big core 20 W, little core 8 W, 88 W per chip. Used as a reference test vector and for P1-1's fit error.</dd>
     <dt>Open loop</dt><dd>The model sees only power, never the true temperatures.</dd>
     <dt>Package term</dt><dd>The part of G every core shares through the spreader and heat sink, 0.10–0.14 K/W: the coupling between the two farthest-apart cores.</dd>
     <dt>Pareto front</dt><dd>The models for which no other model is both smaller and more accurate.</dd>

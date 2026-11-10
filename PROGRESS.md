@@ -30,7 +30,9 @@ Short dated notes: who did what, and what was found. Details are in each
   S2 (neighbours + per-row package term) shrinks HOM-64 from 33 kB to 5.7 kB at 0.6 K.
 - 2026-10-30 E: P2-2 layout effects: edges (+8-27 % self-heating), distance, die size; peak vs
   core coverage r = +0.83. P2-3 hot spots: core average misses the peak by up to 9 K; the hot
-  spot moves (61 %); S1-hot-max (3 kB) gets 0.08 K mean, 1.6 K worst.
+  spot moves. (Updated 2026-11-07: S1-hot-max now uses every cell inside each core, exact at
+  115 kB; dropping cells that can never be the hottest over the TA power range plus float16 gives
+  3.3 kB at 0.002 K mean, 0.011 K worst. The earlier candidate-cell version was removed.)
 - 2026-10-30 E: P3-1 T3 M=4: 0.06-0.09 K mean, 0.3 K worst, 3 us/step (~1,800x HotSpot); works on
   EV6 + real gcc trace. P3-2 T3 anchored on sensors: < 0.005 K at 10 ms ahead; persistence 8 K.
   P3-3 Pareto: T3 is the front 2-6 kB. P3-4 T4 from HotSpot's own matrices: exact (1e-6 K); 32

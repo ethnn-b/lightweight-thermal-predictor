@@ -4,7 +4,7 @@ Four busy tasks must run on 4 of the 8 cores; busy cores run at the top of their
 little 10 W), idle cores at the bottom (big 10 W, little 5 W). All C(8,4) = 70 choices are scored
 by their hottest core, once with the calibrated S1 and once with HotSpot (70 steady runs).
 Questions: is the coolest choice the same? How well do the rankings agree? How long does each
-take? Done on one floorplan per style. The same with the hottest cell on the chip as the objective, predicted by S1-hot-max (P2-3).
+take? Done on one floorplan per style. The same with the hottest cell on the chip as the objective, predicted by S1-hot-max (P2-3: the max over every grid cell inside the cores).
 """
 import itertools
 import time
@@ -48,12 +48,9 @@ def main():
         for _ in range(1000):
             s1 = (AMB + P @ G.T).max(1)
         t_s1 = (time.perf_counter() - t0) / 1000
-        # S1-hot-max (P2-3): max over a few candidate cells per core
-        mn = Gc @ fp.nominal_power()
-        cand = sorted({int(cells[i][np.argmax(Gc[cells[i], j])]) for i in fp.power_idx
-                       for j in range(fp.n_power)} |
-                      {int(cells[i][np.argmax(mn[cells[i]])]) for i in fp.power_idx})
-        s1hot = (AMB + P @ Gc[cand].T).max(1)
+        # S1-hot-max (P2-3): max over every grid cell inside the cores
+        allc = np.concatenate([cells[i] for i in fp.power_idx])
+        s1hot = (AMB + P @ Gc[allc].T).max(1)
         t0 = time.perf_counter()
         hs = pmap(hs_job, [dict(fp=fp, p=p) for p in P])
         t_hs_wall = time.perf_counter() - t0

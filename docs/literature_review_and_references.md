@@ -360,7 +360,7 @@ paper see Part A (§ numbers below point there) and `dataset.md`. Model names ar
 |---|---|---|
 | S0 | power blurring (no calibration) | `src/ltp/baselines.py`, P1-3, P2-1 |
 | S1 | steady influence matrix, T = T_amb + G·P | P1-1, P2-1 |
-| S1-hot-max | S1 on candidate hot cells | P2-3 |
+| S1-hot-max | S1 on every grid cell inside each core; per core, the hottest | P2-3 |
 | S2 | compressed G (shared package term + k neighbours) | P2-1 |
 | T1 | first-order lag per core | P1-1, P3-1 |
 | T2 | ARX (power-aware autoregressive) | P1-2, P3-1, P3-2 |
@@ -402,7 +402,7 @@ Each entry carries one of these tags.
 |---|---|---|
 | **S1**: superposition. Run N times with 1 W in one block; matrix G is then exact and each prediction is one matrix–vector product | No single paper. Standard linear-systems superposition, noted in Part A §3.1; justified for HotSpot by the linearity in Huang et al. 2006 and verified in P0-2 | [cited] |
 | **S0**: power blurring. Convolve the power map with a point-source response kernel (we measure one radial kernel on a 28 mm reference die) | A. Ziabari, J.-H. Park, E. K. Ardestani, J. Renau, S.-M. Kang, A. Shakouri, "Power Blurring: Fast Static and Transient Thermal Analysis Method for Packaged Integrated Circuits and Power Devices," IEEE TVLSI 22(11):2366–2379, 2014. [PDF](https://users.soe.ucsc.edu/~renau/docs/tvlsi13.pdf) (Part A §3.4) | [cited] |
-| **S1-hot-max**: block averages hide hot spots, so output the hottest grid cell per core | Motivated by the block-versus-grid limits in Huang et al. (WDDD 2007, TC 2008) above; the candidate-cell scheme itself is our own design (P2-3) | [cited] |
+| **S1-hot-max**: block averages hide hot spots, so output the hottest grid cell per core | Motivated by the block-versus-grid limits in Huang et al. (WDDD 2007, TC 2008) above; the all-cells matrix and its compression are our own design (P2-3) | [cited] |
 | **S2**: compressed G with a shared package term | Our own design (plan.md §3); no source | none |
 | Learned alternatives compared against S1 in P1-3 (calibration-free regression) and the accuracy targets | IC-ThermBench (§5 below) | [cited] |
 
