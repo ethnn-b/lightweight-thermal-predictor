@@ -77,25 +77,44 @@ def main():
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.2))
     for ax, group, title in ((axes[0], trans, "transient (10 s traces, main subset, worst case)"),
                              (axes[1], steady, "steady (24 floorplans, worst case)")):
-        t = np.array([g["time_us"] for g in group])
-        has_t = ~np.isnan(t)
-        sc = ax.scatter(np.array([g["size_bytes"] for g in group])[has_t],
-                        np.maximum([g["error_K"] for g in group], 1e-7)[has_t],
-                        c=t[has_t], cmap="viridis", s=40, zorder=3)
-        ax.scatter(np.array([g["size_bytes"] for g in group])[~has_t],
-                   np.maximum([g["error_K"] for g in group], 1e-7)[~has_t],
-                   facecolors="none", edgecolors="grey", s=40, zorder=3, label="time not measured")
-        for g in group:
-            ax.annotate(g["model"], (g["size_bytes"], max(g["error_K"], 1e-7)), fontsize=6,
-                        xytext=(3, 3), textcoords="offset points",
-                        weight="bold" if g["pareto"] else "normal")
-        pts = sorted([(g["size_bytes"], max(g["error_K"], 1e-7)) for g in group if g["pareto"]])
-        ax.plot(*zip(*pts), "r--", lw=0.8, label="Pareto front")
-        ax.set(xscale="log", yscale="log", xlabel="model size (bytes of coefficients)",
-               ylabel="worst max abs error over cores (K)", title=title)
-        fig.colorbar(sc, ax=ax, label="prediction time (µs per step / call)")
-        ax.legend(fontsize=7)
+        draw(fig, ax, group, title)
     fig.savefig(OUT / "pareto.png")
+
+    # one figure per panel, for the Stage 3 report; the transient one without T4 (not reported)
+    no_t4 = [dict(g) for g in trans if not g["model"].startswith("T4")]
+    idx = pareto([(g["size_bytes"], g["error_K"]) for g in no_t4])
+    for i, g in enumerate(no_t4):
+        g["pareto"] = i in idx
+    for group, title, name in ((no_t4, "transient (10 s traces, main subset, worst case)",
+                                "pareto_transient.png"),
+                               (steady, "steady (24 floorplans, worst case)", "pareto_steady.png")):
+        fig, ax = plt.subplots(figsize=(7.5, 4.6))
+        draw(fig, ax, group, title, fontsize=7)
+        fig.savefig(OUT / name)
+
+
+def draw(fig, ax, group, title, fontsize=6):
+    """Error against size for one group of models, coloured by prediction time."""
+    t = np.array([g["time_us"] for g in group])
+    has_t = ~np.isnan(t)
+    sc = ax.scatter(np.array([g["size_bytes"] for g in group])[has_t],
+                    np.maximum([g["error_K"] for g in group], 1e-7)[has_t],
+                    c=t[has_t], cmap="viridis", s=40, zorder=3)
+    ax.scatter(np.array([g["size_bytes"] for g in group])[~has_t],
+               np.maximum([g["error_K"] for g in group], 1e-7)[~has_t],
+               facecolors="none", edgecolors="grey", s=40, zorder=3, label="time not measured")
+    for g in group:
+        ax.annotate(g["model"], (g["size_bytes"], max(g["error_K"], 1e-7)), fontsize=fontsize,
+                    xytext=(3, 3), textcoords="offset points",
+                    weight="bold" if g["pareto"] else "normal")
+    pts = sorted([(g["size_bytes"], max(g["error_K"], 1e-7)) for g in group if g["pareto"]])
+    ax.plot(*zip(*pts), "r--", lw=0.8, label="Pareto front")
+    ax.set(xscale="log", yscale="log", xlabel="model size (bytes of coefficients)",
+           ylabel="worst max abs error over cores (K)", title=title)
+    lo, hi = ax.get_xlim()
+    ax.set_xlim(lo, hi * 1.6)                # room for the labels of the largest models
+    fig.colorbar(sc, ax=ax, label="prediction time (µs per step / call)")
+    ax.legend(fontsize=7)
 
 
 if __name__ == "__main__":

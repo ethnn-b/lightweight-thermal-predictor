@@ -175,8 +175,7 @@ def figures(fps, cals):
         ax.semilogx(cal["t_coarse"], cal["Y_coarse"][:, k, j], "grey", lw=1)
         ax.semilogx(tt, t3.step_response(tt)[:, k, j], "C1--", lw=1)
         ax.set(xlabel="time after a 1 W step (s)", ylabel="temperature rise (K)",
-               title=f"{n}: 1 W in {fp.power_names[j]} ({fp.power_types[j]})
-"
+               title=f"{n}: 1 W in {fp.power_names[j]} ({fp.power_types[j]})\n"
                      f"thick = that core, thin = {fp.names[k]}")
         ax.legend(fontsize=7)
     fig.savefig(OUT / "step_response_fits.png")
