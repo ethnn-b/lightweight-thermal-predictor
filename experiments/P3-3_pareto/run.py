@@ -65,6 +65,13 @@ def main():
             steady.append(dict(model=r["model"], size_bytes=float(r["size_bytes_median"]),
                                error_K=float(r["max_K_worst"]), mae_K=float(r["mae_K_mean"]),
                                time_us=float(r["time_us_median"])))
+    # prediction times of the models P1-2 / P2-1 did not time (time_untimed.py), if measured
+    extra = OUT / "extra_times.csv"
+    if extra.exists():
+        times = {r["model"]: float(r["time_us"]) for r in read(extra)}
+        for g in trans + steady:
+            if np.isnan(g["time_us"]) and g["model"] in times:
+                g["time_us"] = times[g["model"]]
     for group in (trans, steady):
         idx = pareto([(g["size_bytes"], g["error_K"]) for g in group])
         for i, g in enumerate(group):
@@ -100,9 +107,10 @@ def draw(fig, ax, group, title, fontsize=6):
     sc = ax.scatter(np.array([g["size_bytes"] for g in group])[has_t],
                     np.maximum([g["error_K"] for g in group], 1e-7)[has_t],
                     c=t[has_t], cmap="viridis", s=40, zorder=3)
-    ax.scatter(np.array([g["size_bytes"] for g in group])[~has_t],
-               np.maximum([g["error_K"] for g in group], 1e-7)[~has_t],
-               facecolors="none", edgecolors="grey", s=40, zorder=3, label="time not measured")
+    if (~has_t).any():
+        ax.scatter(np.array([g["size_bytes"] for g in group])[~has_t],
+                   np.maximum([g["error_K"] for g in group], 1e-7)[~has_t],
+                   facecolors="none", edgecolors="grey", s=40, zorder=3, label="time not measured")
     for g in group:
         ax.annotate(g["model"], (g["size_bytes"], max(g["error_K"], 1e-7)), fontsize=fontsize,
                     xytext=(3, 3), textcoords="offset points",

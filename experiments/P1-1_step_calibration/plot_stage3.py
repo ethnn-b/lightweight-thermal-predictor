@@ -1,5 +1,6 @@
 """P1-1 figure for the Stage 3 report (v4 on): step responses of one floorplan with T1 and
-T3 (M = 2 and M = 4), self-heating only (no coupling curves).
+T3 (M = 2 and M = 4), self-heating only (no coupling curves). HotSpot is drawn as one curve: the
+1 ms run up to 2 s and the 20 ms run after it.
 
 Reads the cached calibration runs ($LTP_RUNS/calib/s4_fp001.npz); no new HotSpot runs.
 Run inside WSL, like the experiments:
@@ -33,9 +34,13 @@ def main():
     fig, axes = plt.subplots(1, 2, figsize=(10, 3.8))
     for ax, j in zip(axes, [0, 2]):
         i = fp.power_idx[j]
-        ax.semilogx(cal["t_fine"], cal["Y_fine"][:, i, j], "k", lw=2, label="HotSpot, 1 ms steps")
-        ax.semilogx(cal["t_coarse"], cal["Y_coarse"][:, i, j], "grey", lw=2,
-                    label="HotSpot, 20 ms steps")
+        # HotSpot as one curve, combined the way calibration uses it: the 1 ms run up to
+        # T_SWITCH (2 s), the 20 ms run after it
+        fine = cal["t_fine"] <= C.T_SWITCH
+        coarse = cal["t_coarse"] > C.T_SWITCH
+        ax.semilogx(np.concatenate([cal["t_fine"][fine], cal["t_coarse"][coarse]]),
+                    np.concatenate([cal["Y_fine"][fine, i, j], cal["Y_coarse"][coarse, i, j]]),
+                    "k", lw=2, label="HotSpot")
         ax.semilogx(tt, t3[4].step_response(tt)[:, i, j], "C1--", label="T3 (M = 4)")
         ax.semilogx(tt, t3[2].step_response(tt)[:, i, j], "C2-.", label="T3 (M = 2)")
         ax.semilogx(tt, G[i, j] * (1 - np.exp(-tt / t1.tau[i])), "C0:", label="T1")
