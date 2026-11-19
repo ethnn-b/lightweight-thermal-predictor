@@ -109,31 +109,35 @@ def generate(style, n, seed=0):
         lay = _layout(style, rng)
         if lay is None:
             continue
-        W, H, cores = lay
-        occ = np.zeros((H, W), bool)
-        for t, x, y in cores:
-            s = BIG if t == "big" else LITTLE
-            occ[y:y + s, x:x + s] = True
-        # y in the occupancy grid counts from the bottom; HotSpot uses bottom-left coordinates
         k += 1
         name = f"gen_{k:03d}"
-        d = GEN_DIR / f"Style_{style}" / name
-        d.mkdir(parents=True, exist_ok=True)
-        lines = []
-        for i, (t, x, y) in enumerate(sorted(cores, key=lambda c: c[0] != "big")):
-            s = BIG if t == "big" else LITTLE
-            lines.append(f"Core_{i}_L0 {s/1e3:.6f} {s/1e3:.6f} {x/1e3:.6f} {y/1e3:.6f}")
-        for i, (x, y, w, h) in enumerate(_fill_rects(occ)):
-            lines.append(f"FILL_{i}_L0 {w/1e3:.6f} {h/1e3:.6f} {x/1e3:.6f} {y/1e3:.6f}")
-        (d / f"{name}_layer_0.flp").write_text("\n".join(lines) + "\n")
-        (d / f"{name}_tim.flp").write_text(f"TIM_Top {W/1e3:.6f} {H/1e3:.6f} 0.000000 0.000000\n")
-        (d / f"{name}.lcf").write_text(
-            "# Layer 0: Silicon\n0\nY\nY\n"
-            f"{SILICON['cap']:g}\n{SILICON['res']:g}\n{SILICON['thick']:g}\n{name}_layer_0.flp\n\n"
-            "# Layer 1: TIM\n1\nY\nN\n"
-            f"{TIM['cap']:g}\n{TIM['res']:g}\n{TIM['thick']:g}\n{name}_tim.flp\n")
+        write_floorplan(GEN_DIR / f"Style_{style}" / name, name, *lay)
         out.append(load(style, name))
     return out
+
+
+def write_floorplan(d, name, W, H, cores):
+    """Write one layout (die W x H mm, cores from _layout) as TA-style files in folder d."""
+    occ = np.zeros((H, W), bool)
+    for t, x, y in cores:
+        s = BIG if t == "big" else LITTLE
+        occ[y:y + s, x:x + s] = True
+    # y in the occupancy grid counts from the bottom; HotSpot uses bottom-left coordinates
+    d = Path(d)
+    d.mkdir(parents=True, exist_ok=True)
+    lines = []
+    for i, (t, x, y) in enumerate(sorted(cores, key=lambda c: c[0] != "big")):
+        s = BIG if t == "big" else LITTLE
+        lines.append(f"Core_{i}_L0 {s/1e3:.6f} {s/1e3:.6f} {x/1e3:.6f} {y/1e3:.6f}")
+    for i, (x, y, w, h) in enumerate(_fill_rects(occ)):
+        lines.append(f"FILL_{i}_L0 {w/1e3:.6f} {h/1e3:.6f} {x/1e3:.6f} {y/1e3:.6f}")
+    (d / f"{name}_layer_0.flp").write_text("\n".join(lines) + "\n")
+    (d / f"{name}_tim.flp").write_text(f"TIM_Top {W/1e3:.6f} {H/1e3:.6f} 0.000000 0.000000\n")
+    (d / f"{name}.lcf").write_text(
+        "# Layer 0: Silicon\n0\nY\nY\n"
+        f"{SILICON['cap']:g}\n{SILICON['res']:g}\n{SILICON['thick']:g}\n{name}_layer_0.flp\n\n"
+        "# Layer 1: TIM\n1\nY\nN\n"
+        f"{TIM['cap']:g}\n{TIM['res']:g}\n{TIM['thick']:g}\n{name}_tim.flp\n")
 
 
 def load(style, name):
