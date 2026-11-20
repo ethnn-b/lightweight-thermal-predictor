@@ -21,6 +21,9 @@
 \newcommand{\us}{\,$\mu$s}
 \newcommand{\degC}{\,\textdegree C}
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+% Framed box standing in for an image that is still to be made: [width]{height}{what goes here}.
+\newcommand{\imgplaceholder}[3][0.8]{\fbox{\parbox[c][#2][c]{#1\linewidth}{\centering\small
+  \textcolor{gray}{[Image placeholder]}\\[2pt]\textcolor{gray}{#3}}}}
 
 \begin{document}
 
@@ -342,7 +345,8 @@ The hot spot moves in 61\,\% of cases, so fixed offsets fail. On HOM-64, S1-hot-
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.48\linewidth]{P1-3_is_calibration_needed/results/error_by_method.png}\hfill
-  \includegraphics[width=0.48\linewidth]{P2-3_hot_spots/results/hot_spot_error.png}
+  \imgplaceholder[0.48]{4.5cm}{Error of each hot-spot predictor (P2-3).
+  \texttt{hot\_spot\_error.png} does not exist; \texttt{size\_vs\_error.png} might replace it.}
   \caption{Left: error by method in P1-3. Right: error of each hot-spot predictor.}
 \end{figure}
 
@@ -442,23 +446,164 @@ since HotSpot does not support leakage in transients.
 
 %=====================================================================
 \section{P5: the \texttt{ltp} tool}
+\texttt{ltp} (\emph{lightweight thermal predictor}) packages both stages of the predictor as one
+command-line tool and one Python class. The calibration stage runs HotSpot and writes a single
+model file per floorplan; every prediction command afterwards needs only that file and NumPy, so
+it can run on a machine without HotSpot.
+
+\begin{figure}[h]
+  \centering
+  \imgplaceholder[0.9]{4.5cm}{Workflow diagram: floorplan folder (.flp, .lcf) $\rightarrow$
+  \texttt{ltp calibrate} (24 HotSpot runs) $\rightarrow$ \texttt{model.npz} $\rightarrow$
+  \texttt{steady} / \texttt{transient} / \texttt{forecast} (NumPy only); \texttt{bench} compares
+  the model file with fresh HotSpot runs.}
+  \caption{How the \texttt{ltp} commands fit together.}
+  \label{fig:ltp-flow}
+\end{figure}
+
+\subsection{Installation}
+\todo{replace with the final install steps once packaging is done, e.g.
+\texttt{pip install .} from the repository root, and the \texttt{ltp} entry point.} Until then the
+tool runs from the repository root as \texttt{python3 -m src.ltp <command>}. Requirements: Python 3
+and NumPy for prediction; SciPy (T3 fit) and the patched HotSpot inside WSL
+(\texttt{setup/build\_hotspot\_ltp.sh}) for \texttt{calibrate} and \texttt{bench}.
+
+\subsection{Commands}
+\begin{center}
+\small
+\begin{tabular}{@{}l p{5.6cm} p{4.6cm} c@{}}
+\toprule
+Command & Input & Output & HotSpot? \\
+\midrule
+\texttt{calibrate} & floorplan (TA folder or name); \texttt{-o} model file; \texttt{--M} (default 4); \texttt{--refresh} & model file (\texttt{.npz}) & yes \\
+\texttt{steady} & model; \texttt{--power} (one vector, W) or \texttt{--ptrace} (one vector per row) & steady temperature of every block (\degC) & no \\
+\texttt{transient} & model; \texttt{--ptrace}; \texttt{--dt} (default 1\,ms); \texttt{--warm}; \texttt{-o} & temperature trace (\degC, or a \texttt{.ttrace} file) & no \\
+\texttt{forecast} & model; \texttt{--history} (past powers); \texttt{--temps} (sensor readings now, \degC); \texttt{--next} (planned powers) & forecast for each planned step (\degC) & no \\
+\texttt{bench} & model; floorplan; \texttt{--n} (300 vectors); \texttt{--steps} (2000) & size, error and time against fresh HotSpot runs & yes \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{\texttt{calibrate}} runs the $3N$ planned HotSpot runs (Section~3.1; 24 for 8 cores) in
+parallel, caches them in \texttt{\textasciitilde/ltp\_runs/calib/}, fits S1 and T3, and adds one
+hot-spot row per core (its hottest cell at nominal power). A second call reuses the cache.
 {\small\begin{verbatim}
-python3 -m src.ltp calibrate s4_fp001 -o model_s4_fp001.npz   # 24 HotSpot runs, cached
-python3 -m src.ltp steady    model_s4_fp001.npz --power 20,20,8,8,8,8,8,8
-python3 -m src.ltp transient model_s4_fp001.npz --ptrace trace.ptrace -o out.ttrace
-python3 -m src.ltp forecast  model_s4_fp001.npz --history past.ptrace \
-                             --temps T_now.txt --next plan.ptrace
-python3 -m src.ltp bench     model_s4_fp001.npz s4_fp001
+python3 -m src.ltp calibrate s4_fp001 -o model_s4_fp001.npz
 \end{verbatim}}
-\texttt{bench} on s4\_fp001: model 8{,}032\,B; steady $5.2\times10^{-6}$\,K mean, 2.6\us\ per call;
-transient 0.051\,K mean, 0.189\,K max, 3.5\us\ per step. From Python:
+
+\textbf{\texttt{steady}} evaluates S1, $T = T_\text{amb} + G\,P$, for one power vector or for every
+row of a \texttt{.ptrace} file (the TA files are read directly; columns are matched by name).
+{\small\begin{verbatim}
+python3 -m src.ltp steady model_s4_fp001.npz --power 20,20,8,8,8,8,8,8
+\end{verbatim}}
+
+\textbf{\texttt{transient}} runs T3 over a power trace, from a cold chip or, with \texttt{--warm},
+from the steady state of the first row. With \texttt{-o} it writes a HotSpot-style
+\texttt{.ttrace} (kelvin, 6 decimals), so existing HotSpot scripts can read it.
+{\small\begin{verbatim}
+python3 -m src.ltp transient model_s4_fp001.npz --ptrace trace.ptrace -o out.ttrace
+\end{verbatim}}
+
+\textbf{\texttt{forecast}} replays the power history to get T3's state, then predicts the next
+steps under the planned powers, anchored on the sensor readings (Section~3.2).
+{\small\begin{verbatim}
+python3 -m src.ltp forecast model_s4_fp001.npz --history past.ptrace \
+                            --temps T_now.txt --next plan.ptrace
+\end{verbatim}}
+
+\textbf{\texttt{bench}} checks a model file against fresh HotSpot runs on unseen inputs and reports
+the three metrics.
+{\small\begin{verbatim}
+python3 -m src.ltp bench model_s4_fp001.npz s4_fp001
+\end{verbatim}}
+
+\begin{figure}[h]
+  \centering
+  \imgplaceholder[0.46]{4cm}{Terminal screenshot: \texttt{ltp calibrate s4\_fp001} and
+  \texttt{ltp steady} output}\hfill
+  \imgplaceholder[0.46]{4cm}{Terminal screenshot: \texttt{ltp bench} output on s4\_fp001}
+  \caption{\texttt{ltp} in use. \todo{insert screenshots.}}
+  \label{fig:ltp-cli}
+\end{figure}
+
+\textbf{Example: \texttt{bench} on s4\_fp001} (300 new steady vectors, a 2\,s test trace):
+\begin{center}
+\small
+\begin{tabular}{@{}l c c c@{}}
+\toprule
+& Mean error & Worst error & Time \\
+\midrule
+Steady (S1) & $5.2\times10^{-6}$\,K & $1.4\times10^{-5}$\,K & 2.6\us\ per call \\
+Transient (T3, $M=4$) & 0.051\,K & 0.189\,K & 3.5\us\ per step \\
+\bottomrule
+\end{tabular}
+\end{center}
+The model file holds 8{,}032\,B of coefficients. \todo{re-run \texttt{bench} on the final code
+and update these numbers.}
+
+\begin{figure}[h]
+  \centering
+  \imgplaceholder[0.75]{5cm}{Plot: \texttt{ltp transient} output (\texttt{out.ttrace}) against
+  HotSpot's \texttt{.ttrace} for the same \texttt{.ptrace}, hottest core of s4\_fp001}
+  \caption{Output of \texttt{ltp transient} against HotSpot. \todo{generate.}}
+  \label{fig:ltp-trace}
+\end{figure}
+
+\subsection{The model file}
+One \texttt{.npz} file per floorplan (NumPy's archive format, readable from any language with an
+\texttt{.npz} reader):
+\begin{center}
+\small
+\begin{tabular}{@{}l l p{8cm}@{}}
+\toprule
+Entry & Shape & Meaning \\
+\midrule
+\texttt{names}, \texttt{power\_names} & $n$, $N$ & output blocks and power inputs, in order \\
+\texttt{t\_amb} & scalar & ambient temperature (K) \\
+\texttt{G} & $n \times N$ & S1 influence matrix (K/W) \\
+\texttt{A}, \texttt{tau} & $n \times N \times M$, $M$ & T3 weights $a_{ijm}$ (K/W) and time constants (s) \\
+\texttt{G\_hot}, \texttt{hot\_names} & $N \times N$, $N$ & optional: hot-spot rows, one per core \\
+\bottomrule
+\end{tabular}
+\end{center}
+For s4\_fp001 ($n = 25$ blocks, $N = 8$ cores, $M = 4$): $G$ is 1{,}600\,B and T3 6{,}432\,B, 8{,}032\,B
+in total.
+
+\subsection{Python interface}
+The same model is available as a class, for use inside a simulator or a DTM controller:
+\begin{center}
+\small
+\begin{tabular}{@{}l p{10cm}@{}}
+\toprule
+Method & Returns \\
+\midrule
+\texttt{Predictor.load(path)} & the predictor stored in a model file \\
+\texttt{steady(P)} & steady temperatures (K) for one or many power vectors \\
+\texttt{steady\_hot(P)} & hot-spot temperature of each core \\
+\texttt{transient(P, dt, z0=None)} & temperature trace for a power trace \\
+\texttt{step(z, p, dt)} & one time step: new state and temperatures (for online use) \\
+\texttt{run\_state(P, dt)} & T3's state after a power history \\
+\texttt{forecast(T\_now, z, P\_next, dt)} & anchored forecast for the planned powers \\
+\texttt{size\_bytes()} & bytes of coefficients \\
+\bottomrule
+\end{tabular}
+\end{center}
 {\small\begin{verbatim}
 from src.ltp.predictor import Predictor
 p = Predictor.load("model_s4_fp001.npz")
-T = p.steady([20, 20, 8, 8, 8, 8, 8, 8])
-z = p.run_state(P_history, dt=1e-3)
-T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)
+T = p.steady([20, 20, 8, 8, 8, 8, 8, 8])            # every block, steady state
+z = p.initial_state()                               # cold chip
+for P_k in power_stream:                            # every 1 ms
+    z, T_k = p.step(z, P_k, dt=1e-3)
+T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)  # e.g. 20 ms ahead, for DTM
 \end{verbatim}}
+This is how the proactive controller of P6 uses the predictor.
+
+\subsection{Testing}
+\texttt{tests/test\_models.py} checks that S1 is exact on a linear system, that T3 recovers known
+time constants and step responses, that ARX and T1 converge to $G$, and that a model file
+round-trips through \texttt{save}/\texttt{load} and forecasts correctly. \todo{add the test run
+output and any tests added for packaging.}
 
 %=====================================================================
 \section{P6: proactive DTM}
@@ -584,7 +729,7 @@ Timing & One idle machine & One laptop, partly shared with HotSpot jobs. \\
   \item Block-level models do not show hot spots inside a block, except through S1-hot-max.
   \item Leakage was tested in steady state only.
   \item A model is tied to its package: a new heat sink needs recalibration.
-  \item \texttt{ltp} is not yet a \texttt{pip}-installable package.
+  \item \todo{\texttt{ltp} packaging for \texttt{pip install}: remove this item once done.}
   \item Open questions for the TA: the configuration used, the Style\_2 power files, and whether
         the FILL white space should leak.
 \end{itemize}
