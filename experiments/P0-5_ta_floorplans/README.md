@@ -88,7 +88,7 @@ corrected ptraces rerun through the same check:
 - **s3_fp004 is s3_fp005 rotated by 90°** (x and y swapped), so both give identical
   temperatures; the square spreader and sink make the package symmetric. The two are not
   independent samples (relevant for P1-3).
-- (d), generating more floorplans in each TA style (`dataset.md` §1.9), is done separately in
+- (d), generating more floorplans in each TA style (`docs/dataset.md` §1.9), is done separately in
   `experiments/P0-5d_generated_floorplans/`.
 
 ## Files

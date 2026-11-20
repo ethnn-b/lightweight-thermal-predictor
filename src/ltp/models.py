@@ -1,4 +1,4 @@
-"""models.py: the calibrated predictors (plan.md §3).
+"""models.py: the calibrated predictors (docs/plan.md §3).
 
 All temperatures are in kelvin. "Rise" x = T - T_amb. Inputs are power vectors over the
 floorplan's power blocks (cores; FILL blocks are always 0 W). Outputs are all blocks of the power

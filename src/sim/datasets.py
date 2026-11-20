@@ -1,6 +1,6 @@
 """datasets.py: HotSpot ground-truth test sets, generated from seeds and cached.
 
-Test inputs are never used for calibration (plan.md §6). Seeds are derived from the floorplan
+Test inputs are never used for calibration (docs/plan.md §6). Seeds are derived from the floorplan
 name, so every experiment that asks for the same set gets exactly the same data.
 Cache: $LTP_RUNS/datasets/<name>.npz
 """

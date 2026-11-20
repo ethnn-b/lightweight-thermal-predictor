@@ -3,7 +3,7 @@
 Beginner-friendly overview of everything below: [`docs/guide.html`](../docs/guide.html) (open in a browser).
 
 One folder per experiment (`<ID>_<name>/`): `run.py` (the experiment), `README.md` (question,
-setup, results, conclusion) and `results/` (CSVs, figures, `log.txt`). IDs follow `plan.md` §5.
+setup, results, conclusion) and `results/` (CSVs, figures, `log.txt`). IDs follow `docs/plan.md` §5.
 
 **Run** (inside WSL, from the repo root): `bash experiments/run.sh <ID>_<name>`.
 One-time setup: `bash setup/build_hotspot_ltp.sh` (patched HotSpot, see P0-4). HotSpot runs are
@@ -15,7 +15,7 @@ Floorplans: the 23 TA 2D floorplans (+ HET-A, EV6, generated ones where stated).
 
 | ID | experiment | headline result |
 |---|---|---|
-| P0-1 | example1 reproduced | done earlier (`README_SETUP.md`) |
+| P0-1 | example1 reproduced | done earlier (`docs/setup.md`) |
 | [P0-2](P0-2_linearity/) | linearity | HotSpot is linear to 10⁻⁶ K, steady and transient |
 | [P0-3](P0-3_block_vs_grid/) | block vs grid model | block model is 1–5 K off; 64×64 is converged; hottest cell 3–4 K above core average |
 | [P0-4](P0-4_infrastructure/) | infrastructure, HotSpot timing | patched HotSpot: 6-decimal output, 29× faster transients (identical results); 0.24 s per steady run, ~5.5 ms per step |

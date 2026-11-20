@@ -176,7 +176,7 @@ def get(name):
     return plain_floorplan(name)
 
 
-MAIN_SUBSET = ["s1_fp001", "s2_fp004", "s3_fp002", "s4_fp001"]   # plan.md §4.1
+MAIN_SUBSET = ["s1_fp001", "s2_fp004", "s3_fp002", "s4_fp001"]   # docs/plan.md §4.1
 
 
 def from_folder(d):

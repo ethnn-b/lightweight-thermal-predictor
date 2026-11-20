@@ -1,4 +1,4 @@
-"""stepper.py: HotSpot as a closed-loop 'chip' (plan.md P6-1).
+"""stepper.py: HotSpot as a closed-loop 'chip' (docs/plan.md P6-1).
 
 DTM needs a plant whose power can change every interval in response to its temperature. HotSpot's
 transient mode reads a power trace row by row, so we give it a pipe instead of a file: each call

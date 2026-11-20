@@ -90,6 +90,6 @@ numbers everywhere.
   slide or into the footer must be fixed.
 - Edit the `.tex` with exact-string edits. Python heredoc replacements failed here on
   backslash-heavy LaTeX strings.
-- Do not touch `reports/`; other people edit it. The older 15-minute deck `reports/slides.tex`
+- Do not touch `reports/`; other people edit it. The older 15-minute deck `reports/archive/slides.tex`
   is kept as it is.
 - Do not commit unless the user asks.

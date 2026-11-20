@@ -280,7 +280,7 @@ for beginners, with the concepts it needs, in `hotspot_for_dummies.md` Part B.
 
 ### Phase P0: Ground truth you can trust
 
-**P0-1 [CORE] ★ Example1 reproduced and understood.** *Done* (see `README_SETUP.md`).
+**P0-1 [CORE] ★ Example1 reproduced and understood.** *Done* (see `setup.md`).
 
 **P0-2 [CORE] ★ Linearity checks.**
 Scale all power by 0.5×, 2× and 3×; run two power patterns separately and together; zero power.
@@ -472,8 +472,11 @@ steady predictor being used for a decision.
 
 ```
 Lightweight Thermal Predictor/
-├── hotspot_for_dummies.md, plan.md, dataset.md, README_SETUP.md
-├── setup/          build_hotspot_ltp.sh + ltp.patch: patched HotSpot (6-decimal output, LU caching)
+├── README.md       project overview and repository map
+├── docs/           plan.md, hotspot_for_dummies.md, dataset.md, setup.md, PROGRESS.md,
+│                   literature_review_and_references.md, guide.html
+├── setup/          build_hotspot_ltp.sh + ltp.patch: patched HotSpot (6-decimal output, LU caching);
+│                   example1/ = the first HotSpot sanity run (P0-1)
 ├── configs/        HotSpot configs (base grid 64×64, base block)
 ├── data/sample_dataset/  the TA's dataset, as committed on branch p0-flpgen (read-only)
 ├── floorplans/     het_a, hom_16 (flpgen.py); stacks/ = generated TA-style .lcf files
@@ -482,7 +485,9 @@ Lightweight Thermal Predictor/
 ├── src/ltp/        the product: models.py (S1, T1, T2, T3), calibrate.py; later CLI, bench
 ├── experiments/<ID>_<name>/   one folder per experiment: run.py, README.md (findings),
 │                   results/ (CSVs, figures, log.txt); run with  bash experiments/run.sh <ID>_<name>
-└── PROGRESS.md     short dated log of what each of us did and found
+├── demo/           live demo: new floorplan and power, HotSpot vs S1 / T3 maps
+├── reports/        stage reports (LaTeX + PDF); archive/ = superseded versions
+└── presentations/  final presentation (Beamer)
 ~/ltp_runs/ (inside WSL, not in git): every HotSpot run, the calibration cache (calib/) and
                     test sets (datasets/), all regenerated from seeds by the experiment scripts
 ```
@@ -613,7 +618,7 @@ together:
 - The repo already forces LF line endings (`.gitattributes`), so CRLF problems with scripts
   won't come back.
 - Use the same HotSpot: the submodule pins a commit (currently `f18831e`). Both run
-  `git submodule update --init` and `make SUPERLU=1` as in `README_SETUP.md`. Also add a
+  `git submodule update --init` and `make SUPERLU=1` as in `setup.md`. Also add a
   `requirements.txt` with pinned versions and one Python venv each.
 
 **Day to day:**

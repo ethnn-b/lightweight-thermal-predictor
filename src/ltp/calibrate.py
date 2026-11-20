@@ -1,4 +1,4 @@
-"""calibrate.py: the one-time, per-floorplan calibration stage (plan.md P1-1).
+"""calibrate.py: the one-time, per-floorplan calibration stage (docs/plan.md P1-1).
 
 For each power block j of the floorplan:
   - one steady HotSpot run with 1 W in block j alone   -> column j of G (and of the 64x64 map)

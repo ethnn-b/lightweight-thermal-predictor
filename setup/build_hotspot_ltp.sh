@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build a copy of HotSpot that prints temperatures with 6 decimals instead of 2, and whose grid
-# transient solver reuses its LU factorisation (plan.md P0-4).
+# transient solver reuses its LU factorisation (docs/plan.md P0-4).
 # The stock build at ~/projects/HotSpot stays untouched.
 #   usage (inside WSL):  bash setup/build_hotspot_ltp.sh
 # Result: ~/projects/HotSpot-ltp/hotspot, and setup/ltp.patch (the diff that was applied).

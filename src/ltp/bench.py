@@ -1,4 +1,4 @@
-"""bench.py: the prediction-time metric (plan.md §6).
+"""bench.py: the prediction-time metric (docs/plan.md §6).
 
 Median wall time per call over many calls after a warm-up, in one Python process on one thread,
 Python overhead included. Set OPENBLAS_NUM_THREADS=1 / OMP_NUM_THREADS=1 before importing NumPy

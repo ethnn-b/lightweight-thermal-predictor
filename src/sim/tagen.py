@@ -1,4 +1,4 @@
-"""tagen.py: generate more floorplans in the TA styles (plan.md P0-5(d), dataset.md §1.9).
+"""tagen.py: generate more floorplans in the TA styles (docs/plan.md P0-5(d), docs/dataset.md §1.9).
 
 Same cores as the TA set (2 big 4x4 mm + 6 little 2x2 mm), same file format and layer stack
 (.flp + _tim.flp + .lcf), whole-millimetre coordinates, white space tiled with FILL blocks.

@@ -12,3 +12,6 @@ __pycache__/
 *.vrb
 # annotated review copies of the reports
 reports/*_annotated*.pdf
+
+# raw local copy of the TA dataset (the committed, corrected copy is data/sample_dataset/)
+Dataset/

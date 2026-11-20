@@ -271,7 +271,7 @@ footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--li
   <p class="eyebrow">Course project · Thermal management · Master guide</p>
   <h1>A lightweight temperature predictor: <em>calibrate once, predict fast</em></h1>
   <p class="lede">This guide explains the whole project in plain language. It covers the problem, the background ideas, the data, the models, and every experiment from P0 to P6, with what each one found. You don't need to know thermal simulation to follow it.</p>
-  <p class="meta">Branch <code>e/p0-p1</code> · results as of 30–31 Oct 2026 · built from every <code>experiments/*/README.md</code>, <code>plan.md</code> and <code>dataset.md</code></p>
+  <p class="meta">Branch <code>e/p0-p1</code> · results as of 30–31 Oct 2026 · built from every <code>experiments/*/README.md</code>, <code>docs/plan.md</code> and <code>docs/dataset.md</code></p>
 </header>
 
 <!-- ============================================================ OVERVIEW -->
@@ -459,7 +459,7 @@ P = \begin{bmatrix} 8 \\ 20 \end{bmatrix} \text{W} \;\; \begin{matrix} \text{(li
       <li><b><code>s3_fp004</code> is <code>s3_fp005</code> rotated by 90°</b>, so they give identical temperatures and are not independent samples.</li>
       <li>The TA's transient power files are constant: all 200 rows are identical to the steady row, so they do not exercise the transient model. We generate our own traces (<code>src/sim/powergen.py</code>). The 38 traces used in the experiments, with HotSpot's temperatures for each, are in <code>data/generated_traces/</code> (as <code>.npz</code> and as TA-style <code>.ptrace</code> + temperature <code>.tsv</code>).</li>
     </ul>
-    <p class="src">More detail, plus the two papers the TAs pointed to (IC-ThermBench and ATPlace2.5D), is in <code>dataset.md</code>.</p>
+    <p class="src">More detail, plus the two papers the TAs pointed to (IC-ThermBench and ATPlace2.5D), is in <code>docs/dataset.md</code>.</p>
   </div>
 </section>
 
@@ -1509,7 +1509,7 @@ T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)   # next steps, anchored on t
 <!-- ============================================================ SCORECARD -->
 <section class="part" id="scorecard">
   <h2>Scorecard against our targets</h2>
-  <p class="intro">The targets from <code>plan.md</code> §1.4, taken from the literature before we started.</p>
+  <p class="intro">The targets from <code>docs/plan.md</code> §1.4, taken from the literature before we started.</p>
   <div class="tw"><table>
     <thead><tr><th>Metric</th><th>Target</th><th>Achieved</th><th>Status</th></tr></thead>
     <tbody>
@@ -1627,9 +1627,9 @@ T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)   # next steps, anchored on t
   <div class="tw"><table>
     <thead><tr><th>Path</th><th>What it holds</th></tr></thead>
     <tbody>
-      <tr><td><code>plan.md</code></td><td>The project plan, targets (§1.4), experiments (§5) and status (§15)</td></tr>
-      <tr><td><code>dataset.md</code></td><td>The TA dataset and the two papers</td></tr>
-      <tr><td><code>PROGRESS.md</code></td><td>Dated log of results</td></tr>
+      <tr><td><code>docs/plan.md</code></td><td>The project plan, targets (§1.4), experiments (§5) and status (§15)</td></tr>
+      <tr><td><code>docs/dataset.md</code></td><td>The TA dataset and the two papers</td></tr>
+      <tr><td><code>docs/PROGRESS.md</code></td><td>Dated log of results</td></tr>
       <tr><td><code>experiments/README.md</code></td><td>Index of all experiments with one-line results</td></tr>
       <tr><td><code>experiments/&lt;ID&gt;_&lt;name&gt;/</code></td><td><code>run.py</code>, <code>README.md</code>, <code>results/</code> for each experiment</td></tr>
       <tr><td><code>setup/</code></td><td>Script and patches that build the improved HotSpot</td></tr>
@@ -1654,7 +1654,7 @@ bash experiments/run.sh P2-1_steady_predictor
 </section>
 
 <footer class="end">
-  Compiled from the experiment READMEs, <code>plan.md</code> and <code>dataset.md</code> on branch <code>e/p0-p1</code>. Every number here comes from those files; see each experiment's folder for full tables and raw results.
+  Compiled from the experiment READMEs, <code>docs/plan.md</code> and <code>docs/dataset.md</code> on branch <code>e/p0-p1</code>. Every number here comes from those files; see each experiment's folder for full tables and raw results.
 </footer>
 
 </main>

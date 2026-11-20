@@ -85,7 +85,7 @@ separately for the borrowed G), and calibration cost is the axis that differs. M
   not the amount of data but how hard it is to describe heat flow with a handful of features. The
   best calibration-free model is physics plus a learned correction (d3): 0.55 K mean, 3.4 K worst.
   That is still four orders of magnitude worse than 8 HotSpot runs. This agrees with IC-ThermBench
-  (`dataset.md` §2), where learned surrogates are off by 0.35–1.3 K even when trained on
+  (`docs/dataset.md` §2), where learned surrogates are off by 0.35–1.3 K even when trained on
   thousands of layouts.
 - **S0 is worst on dense chips** (Style_2, 1.2 K) and best on the sparse Style_4 (0.4 K). Its
   kernel comes from a large die and knows nothing about die edges, which matter most when cores

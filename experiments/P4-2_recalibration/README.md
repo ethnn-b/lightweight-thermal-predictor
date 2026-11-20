@@ -2,7 +2,7 @@
 
 **Question.** The coefficients belong to one floorplan *and* one package (heat sink, ambient).
 What happens if the package changes, and what does recalibration cost? (IC-ThermBench varies
-ambient temperature and convection the same way; `dataset.md` §2.)
+ambient temperature and convection the same way; `docs/dataset.md` §2.)
 
 **Reproduce.** `bash experiments/run.sh P4-2_recalibration` (about 30 min; 144 HotSpot
 calibration runs).

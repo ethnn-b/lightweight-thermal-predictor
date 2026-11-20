@@ -1,4 +1,4 @@
-"""powergen.py: power inputs for calibration and testing (plan.md §4.2).
+"""powergen.py: power inputs for calibration and testing (docs/plan.md §4.2).
 
 All power is assigned by core type (from block size), within the TA ranges:
 big 10-20 W, little 5-10 W (L2/NoC on HET-A: 1-4 W). Every generator takes a seed, so any data

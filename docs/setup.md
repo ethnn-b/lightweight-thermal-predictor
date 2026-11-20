@@ -19,8 +19,8 @@ WSL was installed from an administrator PowerShell with `wsl --install -d Ubuntu
 | HotSpot source and built binary (Linux side, used for runs) | `~/projects/HotSpot` inside Ubuntu |
 | Same files seen from Windows | `\\wsl$\Ubuntu\home\ethan\projects\HotSpot` |
 | Original HotSpot download (untouched) | `HotSpot/` in this folder |
-| Analysis scripts | `analysis/` (this folder, and a copy in `~/projects/HotSpot/analysis`) |
-| Copy of example1 inputs and outputs | `results/example1/` |
+| Analysis scripts | `setup/example1/` (and a copy in `~/projects/HotSpot/analysis`) |
+| Copy of example1 inputs and outputs | `setup/example1/results/` |
 
 Runs happen in the Linux copy because file I/O there is much faster than under `/mnt/c`.
 The Windows `HotSpot/` folder is just the pristine source.
@@ -79,11 +79,11 @@ cd ~/projects/HotSpot/examples/example1
 python3 ../../analysis/analyze_example1.py outputs
 ```
 
-`analysis/run_example1.sh` does the whole pipeline in one go (re-run HotSpot, convert, copy the
-results into `results/example1/`). From PowerShell:
+`setup/example1/run_example1.sh` does the whole pipeline in one go (re-run HotSpot, convert, copy the
+results into `setup/example1/results/`). From PowerShell:
 
 ```powershell
-wsl -d Ubuntu -- bash -c "sed 's/\r$//' '/mnt/c/Users/ethan/projects/Lightweight Thermal Predictor/analysis/run_example1.sh' > /tmp/r.sh && bash /tmp/r.sh"
+wsl -d Ubuntu -- bash -c "sed 's/\r$//' '/mnt/c/Users/ethan/projects/Lightweight Thermal Predictor/setup/example1/run_example1.sh' > /tmp/r.sh && bash /tmp/r.sh"
 ```
 
 Files produced (temperatures converted to °C):

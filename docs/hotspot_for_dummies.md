@@ -492,7 +492,7 @@ the `data/` layout, the `summary.csv` columns). Write them into `src/ltp/README.
 ## Phase P0: Ground truth you can trust
 
 ### P0-1. Example1 reproduced (E, done)
-See `README_SETUP.md`. HotSpot built, example1 run, outputs converted to CSV and plotted.
+See `setup.md`. HotSpot built, example1 run, outputs converted to CSV and plotted.
 
 ### P0-2. Linearity checks (E)
 **Goal:** prove HotSpot is linear (A5) on our setup, so that later errors in S1/T2/T3 can only be
