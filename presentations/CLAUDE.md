@@ -1,6 +1,7 @@
 # Presentations
 
-Beamer slides for the final presentation of TapaSense (Lightweight Temperature Predictor).
+Beamer slides for the final presentation of TapSense (Lightweight Temperature Predictor).
+Spell the name "TapSense" in slide text (footer included), never "TapaSense".
 The current deck is `presentation.tex` (about 25 slides, a 10-12 minute talk).
 
 ## Sources: only the reports
@@ -34,22 +35,37 @@ The current deck is `presentation.tex` (about 25 slides, a 10-12 minute talk).
 
 ## Story
 
-1. Main part 1 (about 7 min, 14 slides): problem, HotSpot is linear, two stages, models we
-   tried, S1, is calibration needed, S1 against HotSpot, hot spots (S1-hot-max), step responses,
+1. Main part 1 (about 7 min): problem, HotSpot is linear, two stages, models we
+   tried, S1 ("is calibration needed" is a backup slide, `b-calib`, linked from S1), S1 against HotSpot, hot spots (S1-hot-max), step responses,
    T3 with a T1/T2/T3 table, unseen floorplans, `ltp` with demo output, results against targets.
    Main ideas only; details go to backup.
-2. Main part 2 (about 3 min, 5 slides): what is new, code and team, verification, learnings and
-   challenges, limitations. Then "Thank you".
+2. Main part 2 (about 3 min, 3 slides): "Contributions and team" (contributions + lines of
+   code per member), "Verification", "Learnings, challenges and limitations" (three blocks plus
+   the heavy-AI-usage note). Then "Thank you".
 3. Backup slides after "Thank you" (`\appendix`, numbered separately): an index slide with links,
    then one slide per model or study (S0, S2, hot spots, leakage, T1, T2, T3, choosing M, test
    trace, robustness). Main slides link to them with small "more" buttons (`\backup{label}{text}`).
-- Lines of code (tracked .py/.sh/.patch, 6,087 total). Team split as the user set it:
-  Ethan (~1,500): HotSpot runner and patches (src/sim/hotspot, parallel, stepper, gridmap,
-  setup/), linearity, P0-4, steady models (P2-1), S1-hot-max (P2-3), leakage (P4-3).
-  Kaivalya (~2,900): flpgen + generated floorplans, step calibration (P1-1), ARX (P1-2),
-  calibration-needed study (P1-3), transient (P3-1), Pareto (P3-3), extended validation,
-  robustness (P4-1, P4-2), src/ltp and tests. Both (~1,650): floorplan/power tooling (tagen,
-  floorplans, datasets, powergen, P0-5) and the remaining experiments.
+- Lines of code: keep it minimal. Count only code lines (no blanks, comments or docstrings) of
+  the main experiments and the tool; no plot scripts, demos, tests, setup or out-of-scope
+  experiments. The slide shows only Ethan and Kaivalya with their counts: no "Both" block, no
+  total, no explanatory note. Split by topic: steady state is Ethan, transient is Kaivalya.
+  Ethan (~1,350): src/sim hotspot, parallel, stepper, gridmap, floorplans, powergen, datasets,
+  tagen, experiments/common.py, added lines of setup/ltp.patch, P0-2, P1-3, P2-1, P2-3, P4-2,
+  P4-3. Kaivalya (~1,300): flpgen + P0-5d, P1-1, P1-2, P3-1, P3-3, extended_validation/run.py,
+  P4-1, src/ltp.
+- Unseen-floorplan results live on the Verification slide (table: floorplans and power vectors
+  per floorplan, steady and transient); there is no separate "chips we never saw" slide.
+  The slide is only that table plus a crop of P0-5d examples.png (generated floorplans). Rows:
+  Steady S1 24 given (302) and 500 generated (15, from extended_validation_s1/results_500, an
+  approved exception to the reports-only rule); Transient T3 24 given and 52 generated (2,000).
+  No calibration-free, S1-hot-max, T3 results or other text.
+- The `ltp` slide holds only "Demo of the ltp package" and a link to the user's Google Drive
+  video (no image, no embedded video). Stills from it
+  (`figures/ltp_demo_*.png`, black bars cropped) are on four backup slides (label `b-demo`) in
+  case the video does not play.
+- Limitations slide ends with an "AI usage" block, worded from the reports' LLM disclosure.
+- Transient time/size targets reuse the Stage 2 targets (20 us, 5 kB).
+- T2 backup: no "long trace" wording; results are "on a test trace".
 - No "128x128" in captions: call it the HotSpot grid. Main slides show the formula of each
   kept model (S1 as G_ij, S1-hot-max, T3). Keep formulas simple: no complex ones (the S0
   kernel formula was removed on request).

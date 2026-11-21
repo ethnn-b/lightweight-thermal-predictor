@@ -39,7 +39,7 @@
 % link to a backup slide, shown small in the corner of a main slide
 \newcommand{\backup}[2]{\hfill\hyperlink{#1}{\beamerbutton{#2}}}
 
-\title[TapaSense]{Lightweight Temperature Predictor}
+\title[TapSense]{Lightweight Temperature Predictor}
 \author[Kurien, Mase]{Ethan Bobby Kurien \and Kaivalya Mase}
 \date{}
 
@@ -140,32 +140,12 @@
       \]
       Then predict $T = T_\text{amb} + G\,P$.\\[0.6em]
       One HotSpot run per core, about \alert{4\,s} in total.\\
-      Exact, because HotSpot is linear.
+      Exact, because HotSpot is linear.\\[0.4em]
+      \backup{b-calib}{calibration needed?}
     \column{0.50\textwidth}
       \centering
       \adjincludegraphics[trim={0 {.5\height} {.5\width} 0},clip,height=0.58\textheight]{P1-1_step_calibration/results/G_heatmaps_stage2.png}\\
       \sub{Little cores heat themselves most.}
-  \end{columns}
-\end{frame}
-
-% ---------------------------------------------------------------------
-\begin{frame}{Is calibration really needed?}
-  \begin{columns}[c]
-    \column{0.54\textwidth}
-      \fig[0.74]{P1-3_is_calibration_needed/results/error_by_method_stage2.png}
-    \column{0.44\textwidth}
-      \alert{\textbf{Yes.}} Without runs on the chip:\\[0.4em]
-      \small
-      \begin{tabular}{@{}l c@{}}
-        \toprule
-        Method & Mean error \\
-        \midrule
-        \textbf{S1, calibrated} & \textbf{0.000007\,K} \\
-        S0 power blurring & 0.76\,K \\
-        Borrow $G$, same style & 1.11\,K \\
-        Borrow $G$, other style & 2.79\,K \\
-        \bottomrule
-      \end{tabular}
   \end{columns}
 \end{frame}
 
@@ -181,8 +161,7 @@
     \midrule
     \alert{0.00003\,K} & \alert{2.6\us} & \alert{928\,B} & \alert{91{,}000$\times$} faster \\
     \bottomrule
-  \end{tabular}\\[0.3em]
-  \sub{Tested on 24 floorplans, 302 power vectors each.}
+  \end{tabular}
 \end{frame}
 
 % ---------------------------------------------------------------------
@@ -237,63 +216,40 @@
     Model & Mean & Worst & Time/step & Size \\
     \midrule
     T1 one time constant & 7.25\,K & 14.6\,K & 1.5\us & 1.0\,kB \\
-    T2 fitted to one trace & 0.19\,K & 0.57\,K & 5.4\us & 6.2\,kB \\
+    \midrule
+    T3, $M=2$ & 0.92\,K & 2.9\,K & 3.0\us & 1.9\,kB \\
+    T3, $M=3$ & 0.19\,K & 1.1\,K & 3.0\us & 2.8\,kB \\
     \textbf{T3, $M=4$} & \textbf{0.090\,K} & \textbf{0.30\,K} & \textbf{3.1\us} & \textbf{3.7\,kB} \\
+    T3, $M=6$ & 0.0093\,K & 0.13\,K & 3.2\us & 5.6\,kB \\
     \bottomrule
   \end{tabular}\\[0.8em]
-  \sub{Test traces from a cold chip, 24 floorplans.}
   \backup{b-m}{choosing $M$}
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}{Does it work on chips we never saw?}
-  \fig[0.42]{extended_validation/results/transient_check.png}\\[-0.1em]
-  \centering\sub{Hottest core of one new floorplan per style: T3 (red dashed) on HotSpot (black).}\\[0.4em]
-  \small
-  \begin{tabular}{@{}l c c@{}}
-    \toprule
-    & T3 mean & T3 worst \\
-    \midrule
-    24 floorplans (development) & 0.090\,K & 0.30\,K \\
-    52 new generated floorplans & 0.091\,K & 0.34\,K \\
-    \bottomrule
-  \end{tabular}
+\begin{frame}{The tool: \texttt{ltp}}
+  \centering\vfill
+  Demo of the \texttt{ltp} package\\[0.8em]
+  \small\href{https://drive.google.com/file/d/17LGxmwjRJ7HFM2tcyoChDRHj6CJB3jxa/view?usp=sharing}{\alert{\texttt{drive.google.com/file/d/17LGxmwjRJ7HFM2tcyoChDRHj6CJB3jxa}}}
+  \vfill
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}[fragile]{The tool: \texttt{ltp}}
-  Both stages from the command line or Python, only NumPy needed.
-  \vspace{0.4em}
-  \footnotesize
-\begin{verbatim}
-python3 -m src.ltp calibrate s4_fp001 -o model.npz
-python3 -m src.ltp transient model.npz --ptrace in.ptrace -o out.ttrace
-$ python3 -m src.ltp steady model.npz --power 20,20,8,8,8,8,8,8
-Core_0  Core_1  Core_2  Core_3  Core_4  Core_5  Core_6  Core_7
-66.313  67.214  68.344  67.488  69.297  68.614  68.760  67.769
-\end{verbatim}
-  \normalsize
-  \vspace{0.4em}
-  \begin{itemize}
-    \item Reads the given \texttt{.ptrace} files, writes HotSpot-style \texttt{.ttrace}.
-    \item \texttt{bench} checks a model against fresh HotSpot runs.
-  \end{itemize}
-\end{frame}
-
-% ---------------------------------------------------------------------
-\begin{frame}{Results against our targets}
+\begin{frame}{Results}
   \centering
-  \begin{tabular}{@{}l l c c@{}}
+  \begin{tabular}{@{}l l c@{}}
     \toprule
-    & Metric & Target & Achieved \\
+    & Metric & Achieved \\
     \midrule
-    Steady & mean error & $\le$ 0.1\,K & \alert{0.000006\,K} \\
-           & peak error & $\le$ 0.2\,K & \alert{0.00003\,K} \\
-           & time & $\le$ 20\us & \alert{2.6\us} \\
-           & size & $\le$ 5\,kB & \alert{928\,B} \\
+    Steady & mean error & \alert{0.000006\,K} \\
+           & peak error & \alert{0.00003\,K} \\
+           & time & \alert{2.6\us} \\
+           & size & \alert{928\,B} \\
     \midrule
-    Transient & mean error & $\le$ 0.5\,K & \alert{0.09\,K} \\
-              & worst error & $\le$ 1\,K & \alert{0.30\,K} \\
+    Transient & mean error & \alert{0.09\,K} \\
+              & worst error & \alert{0.30\,K} \\
+              & time per step & \alert{3.1\us} \\
+              & size & \alert{3.7\,kB} \\
     \bottomrule
   \end{tabular}
 \end{frame}
@@ -301,89 +257,86 @@ Core_0  Core_1  Core_2  Core_3  Core_4  Core_5  Core_6  Core_7
 % =====================================================================
 % MAIN PART 2 (about 3 minutes)
 % =====================================================================
-\begin{frame}{What is new in our work}
-  \begin{itemize}
-    \item \alert{Exact} steady predictor, \alert{91{,}000$\times$ faster} than HotSpot, from one run per core.
-    \item Shown that calibration is \alert{needed}: no shortcut comes close.
-    \item Exact hot spots inside cores from the \alert{same runs}.
-    \item Transient model: 3.7\,kB, exact in steady state.
-    \item Leakage: added as extra power, exact again in 3 iterations.
-    \item Tested on \alert{52 floorplans} the models never saw.
-    \item Packaged as a tool: \texttt{ltp}.
-  \end{itemize}
-\end{frame}
-
-% ---------------------------------------------------------------------
-\begin{frame}{Code and team}
+\begin{frame}{Contributions and team}
+  \setbeamerfont{block title}{size=\small}
   \small
-  \begin{block}{Ethan \hfill $\approx$ 1{,}500 lines}
-    HotSpot runner and patches, linearity, steady-state models, S1-hot-max, leakage.
-  \end{block}
-  \begin{block}{Kaivalya \hfill $\approx$ 2{,}900 lines}
-    Generated floorplans, transient models (T1, T2, T3), calibration-needed study,
-    packaging into \texttt{ltp}.
-  \end{block}
-  \begin{block}{Both \hfill $\approx$ 1{,}650 lines}
-    Floorplan and power tooling, other experiments, reports.
-  \end{block}
-  \centering\normalsize \alert{Total: about 6{,}100 lines}
+  \begin{itemize}\setlength{\itemsep}{0pt}
+    \item \alert{Exact} steady predictor, \alert{91{,}000$\times$} faster than HotSpot; exact hot spots from the same runs.
+    \item Transient T3: 3.7\,kB, exact in steady state. Leakage: exact in 3 iterations.
+    \item Tested on \alert{generated floorplans}; packaged as the tool \texttt{ltp}.
+  \end{itemize}
+  \vspace{0.4em}
+  \footnotesize
+  \begin{columns}[T]
+    \column{0.49\textwidth}
+      \begin{block}{Ethan: steady state \hfill $\approx$ 1{,}350 lines}
+        HotSpot runner and patches, floorplan and power tooling, linearity, S0 and S1,
+        calibration-needed study, S1-hot-max, leakage, heat-sink changes.
+      \end{block}
+    \column{0.49\textwidth}
+      \begin{block}{Kaivalya: transient \hfill $\approx$ 1{,}300 lines}
+        Generated floorplans, step responses, T1, T2, T3, choosing $M$,
+        robustness, packaging into \texttt{ltp}.
+      \end{block}
+  \end{columns}
 \end{frame}
 
 % ---------------------------------------------------------------------
 \begin{frame}{Verification}
-  \begin{columns}[T]
-    \column{0.52\textwidth}
-      \textbf{Approach}
-      \begin{itemize}
-        \item Final check on 52 new floorplans.
-        \item Stress tests beyond normal use.
-        \item Unit tests for the tool.
-      \end{itemize}
-    \column{0.46\textwidth}
-      \textbf{Test cases}\\[0.3em]
+  \begin{columns}[c]
+    \column{0.56\textwidth}
       \small
-      \begin{tabular}{@{}l r@{}}
+      \begin{tabular}{@{}l c c@{}}
         \toprule
-        Steady test runs & 7{,}248 \\
-        Calibration-free tests & 6{,}946 \\
-        Hot-spot test runs & 1{,}380 \\
-        Transient floorplans & 24 + 52 \\
-        Unit tests (\texttt{ltp}) & 7 \\
+        Model & Floorplans & \begin{tabular}{@{}c@{}}Power vectors\\per floorplan\end{tabular} \\
+        \midrule
+        Steady S1 & 24 given & 302 \\
+        Steady S1 & \alert{500 generated} & 15 \\
+        \midrule
+        Transient T3 & 24 given & 2{,}000 \\
+        Transient T3 & \alert{52 generated} & 2{,}000 \\
         \bottomrule
       \end{tabular}
+    \column{0.42\textwidth}
+      \centering
+      \adjincludegraphics[trim={0 {.49\height} {.5\width} {.06\height}},clip,width=\linewidth]{P0-5d_generated_floorplans/results/examples.png}\\
+      \sub{Generated floorplans}
   \end{columns}
-  \backup{b-robust}{robustness}
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}{Learnings and challenges}
+\begin{frame}{Learnings, challenges and limitations}
+  \setbeamerfont{block title}{size=\small}
+  \setlength{\leftmargini}{1.2em}
+  \footnotesize
   \begin{columns}[T]
-    \column{0.50\textwidth}
+    \column{0.47\textwidth}
       \begin{block}{Key learnings}
-        \begin{itemize}
+        \begin{itemize}\setlength{\itemsep}{0pt}
           \item HotSpot is linear: a matrix can be exact.
-          \item Borrowing $G$ does worse than calibration.
+          \item Borrowing $G$ does worse than calibration at runtime.
           \item More than one time constant is required.
           \item Averages hide hot spots.
         \end{itemize}
       \end{block}
-    \column{0.46\textwidth}
-      \begin{block}{Challenges}
-        \begin{itemize}
-          \item HotSpot prints 0.01\,K, our errors are $10^{-5}$\,K: patched it.
-          \item Long transient runs were slow: we cached HotSpot's matrix factorisation, 29$\times$ faster.
+    \column{0.49\textwidth}
+      \begin{block}{Challenge}
+        HotSpot prints 0.01\,K, our errors are $10^{-5}$\,K: we patched it.
+      \end{block}
+      \begin{block}{Limitations}
+        \begin{itemize}\setlength{\itemsep}{0pt}
+          \item Results against HotSpot, not real silicon.
+          \item New heat sink needs recalibration.
+          \item Leakage in steady state only.
         \end{itemize}
       \end{block}
   \end{columns}
-\end{frame}
-
-% ---------------------------------------------------------------------
-\begin{frame}{Limitations}
-  \begin{itemize}
-    \item All results are against HotSpot, not real silicon.
-    \item A new heat sink needs recalibration (old model 4.4--8.5\,K off).
-    \item Leakage handled in steady state only; HotSpot has no transient leakage.
-  \end{itemize}
+  \vfill
+  \footnotesize
+  \begin{block}{Note: heavy AI usage}
+    LLMs were used to understand HotSpot, for literature review, to generate floorplans,
+    and for calibration and testing scripts.
+  \end{block}
 \end{frame}
 
 % ---------------------------------------------------------------------
@@ -405,6 +358,7 @@ Core_0  Core_1  Core_2  Core_3  Core_4  Core_5  Core_6  Core_7
       \textbf{Steady state}
       \begin{itemize}
         \item \hyperlink{b-s0}{S0: power blurring}
+        \item \hyperlink{b-calib}{Is calibration needed?}
         \item \hyperlink{b-s2}{S2: low-rank $G$}
         \item \hyperlink{b-hot}{Hot spots in detail}
         \item \hyperlink{b-leak}{Leakage}
@@ -418,6 +372,7 @@ Core_0  Core_1  Core_2  Core_3  Core_4  Core_5  Core_6  Core_7
         \item \hyperlink{b-m}{Choosing $M$}
         \item \hyperlink{b-trace}{T3 on a test trace}
         \item \hyperlink{b-robust}{Robustness}
+        \item \hyperlink{b-demo}{\texttt{ltp} demo stills}
       \end{itemize}
   \end{columns}
 \end{frame}
@@ -435,6 +390,27 @@ Core_0  Core_1  Core_2  Core_3  Core_4  Core_5  Core_6  Core_7
       \end{itemize}
       \vspace{0.4em}
       Result: \alert{0.76\,K} mean, 5.2\,K worst.
+  \end{columns}
+\end{frame}
+
+% ---------------------------------------------------------------------
+\begin{frame}[label=b-calib]{Is calibration really needed?}
+  \begin{columns}[c]
+    \column{0.54\textwidth}
+      \fig[0.74]{P1-3_is_calibration_needed/results/error_by_method_stage2.png}
+    \column{0.44\textwidth}
+      \alert{\textbf{Yes.}} Without runs on the chip:\\[0.4em]
+      \small
+      \begin{tabular}{@{}l c@{}}
+        \toprule
+        Method & Mean error \\
+        \midrule
+        \textbf{S1, calibrated} & \textbf{0.000007\,K} \\
+        S0 power blurring & 0.76\,K \\
+        Borrow $G$, same style & 1.11\,K \\
+        Borrow $G$, other style & 2.79\,K \\
+        \bottomrule
+      \end{tabular}
   \end{columns}
 \end{frame}
 
@@ -513,17 +489,17 @@ Core_0  Core_1  Core_2  Core_3  Core_4  Core_5  Core_6  Core_7
 \end{frame}
 
 % ---------------------------------------------------------------------
-\begin{frame}[label=b-t2]{T2: fitted to one long trace (ARX)}
+\begin{frame}[label=b-t2]{T2: fitted to one trace (ARX)}
   Next temperature from past temperatures and powers:
   \[
     x[k] = A_1 x[k-1] + A_2 x[k-2] + B_0 P[k] + B_1 P[k-1]
   \]
   \begin{itemize}
-    \item Fitted to one recorded 60\,s HotSpot trace.
-    \item Every core switches between random power levels, 1\,ms to 5\,s phases.
+    \item Fitted to one recorded HotSpot trace.
+    \item Every core switches between random power levels.
   \end{itemize}
   \vspace{0.4em}
-  \centering Result: \alert{0.19\,K} mean, 0.57\,K worst. Needs a long trace.
+  \centering On a test trace: \alert{0.19\,K} mean, 0.57\,K worst.
 \end{frame}
 
 % ---------------------------------------------------------------------
@@ -592,6 +568,29 @@ Core_0  Core_1  Core_2  Core_3  Core_4  Core_5  Core_6  Core_7
   \end{tabular}\\[1em]
   \normalsize
   The coefficients belong to the chip \alert{and} its cooling.
+\end{frame}
+
+% ---------------------------------------------------------------------
+% stills from figures/ltp_demo.mp4, in case the video does not play
+\begin{frame}[label=b-demo]{\texttt{ltp} demo: floorplan and power}
+  \begin{columns}[c]
+    \column{0.42\textwidth}
+      \fig[0.72]{ltp_demo_power.png}
+    \column{0.56\textwidth}
+      \fig[0.72]{ltp_demo_trace.png}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{\texttt{ltp} demo: calibrate, then predict}
+  \fig[0.76]{ltp_demo_terminal.png}
+\end{frame}
+
+\begin{frame}{\texttt{ltp} demo: steady, HotSpot vs S1}
+  \fig[0.76]{ltp_demo_steady.png}
+\end{frame}
+
+\begin{frame}{\texttt{ltp} demo: transient, HotSpot vs T3}
+  \fig[0.76]{ltp_demo_transient.png}
 \end{frame}
 
 \end{document}
