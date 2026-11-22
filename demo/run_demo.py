@@ -19,6 +19,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.patches import Patch  # noqa: E402
 
 from src.sim import hotspot as H, powergen, tagen  # noqa: E402
 from src.sim.floorplans import Floorplan  # noqa: E402
@@ -41,16 +42,141 @@ def log(msg):
 
 
 # ---------------------------------------------------------------- 1. floorplan
-def new_floorplan(style, seed, out):
+def pick_style(style, seed):
+    """The given style, or one drawn from the seed (so a seed alone fixes the floorplan)."""
+    return style or int(np.random.default_rng(seed).integers(1, 5))
+
+
+def new_floorplan(style, seed, d):
+    """Generate the floorplan for (style, seed) and write its TA-style files into folder d."""
     rng = np.random.default_rng(seed)
     lay = None
     while lay is None:
         lay = tagen._layout(style, rng)
     name = f"demo_s{style}_{seed}"
-    d = out / "floorplan"
+    d = Path(d)
     tagen.write_floorplan(d, name, *lay)
     return Floorplan(name=name, dir=d, flp=d / f"{name}_layer_0.flp", lcf=d / f"{name}.lcf",
                      extra_files=[d / f"{name}_tim.flp"], style=f"demo_Style_{style}")
+
+
+def new_power(fp, seed, steps):
+    """A random steady power vector and a phase trace (steps x 1 ms), both new for this seed."""
+    p = powergen.random_steady(fp, 1, seed=seed + 1)[0]
+    P = powergen.phase_trace(fp, steps, seed=seed + 2, max_phase=steps // 2)
+    return p, P
+
+
+def plot_floorplan(ax, fp):
+    block_image(ax, fp, [0.6 if i in fp.power_idx else 0.15 for i in range(len(fp.names))], 0, 1, "Greys")
+    W, Hd = fp.die
+    ax.set(title=f"{fp.name}: {W * 1e3:g} x {Hd * 1e3:g} mm", xlabel="mm", ylabel="mm")
+
+
+def plot_power(ax, fp, P):
+    tt = np.arange(1, len(P) + 1) * DT
+    for j, i in enumerate(fp.power_idx):
+        ax.plot(tt, P[:, j], lw=1, label=label(fp, i))
+    ax.set(title="transient power trace (new)", xlabel="time (s)", ylabel="W")
+    ax.legend(fontsize=7, ncol=4)
+
+
+def steady_power_figure(fp, p):
+    """Steady power per core: bars against each core's allowed range, and painted on the floorplan."""
+    lo_b, hi_b = fp.power_bounds()
+    names = [label(fp, i) for i in fp.power_idx]
+    W, Hd = fp.die
+    fig, ax = plt.subplots(1, 2, figsize=(12, 4.6), layout="constrained",
+                           gridspec_kw=dict(width_ratios=[1.25, 1]))
+    x = np.arange(fp.n_power)
+    colors = ["#c0392b" if t == "big" else "#2e86c1" for t in fp.power_types]
+    ax[0].bar(x, hi_b - lo_b, bottom=lo_b, width=0.75, color="0.88")
+    ax[0].bar(x, p, width=0.45, color=colors)
+    for k, v in enumerate(p):
+        ax[0].text(k, v + 0.3, f"{v:.1f}", ha="center", va="bottom", fontsize=8)
+    ax[0].set_xticks(x, names)
+    ax[0].set(ylabel="power (W)", ylim=(0, hi_b.max() * 1.15),
+              title=f"Steady power per core ({p.sum():.1f} W in total)")
+    ax[0].legend(handles=[Patch(color="0.88", label="allowed range"),
+                          Patch(color="#c0392b", label="big core (4 x 4 mm)"),
+                          Patch(color="#2e86c1", label="little core (2 x 2 mm)")],
+                 fontsize=8, loc="upper right")
+    ax[0].grid(axis="y", alpha=0.3)
+    full = fp.full_power(p)
+    norm, cm = plt.Normalize(0, hi_b.max()), plt.get_cmap("YlOrRd")
+    for i, b in enumerate(fp.blocks):
+        is_core = i in fp.power_idx
+        ax[1].add_patch(plt.Rectangle((b.x * 1e3, b.y * 1e3), b.w * 1e3, b.h * 1e3,
+                                      fc=cm(norm(full[i])) if is_core else "0.93",
+                                      ec="0.3" if is_core else "none", lw=0.8))
+        if is_core:
+            ax[1].text((b.x + b.w / 2) * 1e3, (b.y + b.h / 2) * 1e3, f"{label(fp, i)}\n{full[i]:.1f} W",
+                       ha="center", va="center", fontsize=7)
+    ax[1].set(xlim=(0, W * 1e3), ylim=(0, Hd * 1e3), aspect="equal", xlabel="mm", ylabel="mm",
+              title=f"{fp.name}: where the power goes")
+    fig.colorbar(plt.cm.ScalarMappable(norm, cm), ax=ax[1], shrink=0.8, label="W")
+    return fig
+
+
+def steady_figure(fp, hs_grid, hs_T, s1_T, title):
+    """HotSpot 64 x 64 map | HotSpot block averages | S1 | S1 minus HotSpot (µK)."""
+    lo = min(hs_grid.min(), s1_T.min()) - K2C
+    hi = max(hs_grid.max(), s1_T.max()) - K2C
+    W, Hd = fp.die
+    fig, ax = plt.subplots(1, 4, figsize=(15, 3.6 * Hd / W + 1.3), layout="constrained")
+    im = grid_image(ax[0], fp, hs_grid - K2C, lo, hi)
+    block_image(ax[1], fp, hs_T - K2C, lo, hi)
+    block_image(ax[2], fp, s1_T - K2C, lo, hi)
+    d = (s1_T - hs_T) * 1e6
+    m = max(np.abs(d).max(), 1e-9)
+    e1 = block_image(ax[3], fp, d, -m, m, "coolwarm")
+    for a_, ttl in zip(ax, ["HotSpot, 64 x 64 grid", "HotSpot, block averages",
+                            "S1 prediction", "S1 minus HotSpot (µK)"]):
+        a_.set_title(ttl); a_.set_xlabel("mm")
+    fig.colorbar(im, ax=ax[:3], shrink=0.8, label="°C")
+    fig.colorbar(e1, ax=ax[3], shrink=0.8, label="µK")
+    fig.suptitle(title)
+    return fig
+
+
+def transient_figure(fp, hs_grid_end, hs_end, t3_end, title):
+    """At the last step: HotSpot 64 x 64 map | HotSpot block averages | T3 | T3 minus HotSpot (K)."""
+    lo = min(hs_grid_end.min(), t3_end.min()) - K2C
+    hi = max(hs_grid_end.max(), t3_end.max()) - K2C
+    W, Hd = fp.die
+    fig, ax = plt.subplots(1, 4, figsize=(15, 3.6 * Hd / W + 1.3), layout="constrained")
+    im = grid_image(ax[0], fp, hs_grid_end - K2C, lo, hi)
+    block_image(ax[1], fp, hs_end - K2C, lo, hi)
+    block_image(ax[2], fp, t3_end - K2C, lo, hi)
+    d = t3_end - hs_end
+    m = max(np.abs(d).max(), 1e-9)
+    e1 = block_image(ax[3], fp, d, -m, m, "coolwarm")
+    for a_, ttl in zip(ax, ["HotSpot, 64 x 64 grid", "HotSpot, block averages",
+                            "T3 (M = 4) prediction", "T3 minus HotSpot (K)"]):
+        a_.set_title(ttl); a_.set_xlabel("mm")
+    fig.colorbar(im, ax=ax[:3], shrink=0.8, label="°C")
+    fig.colorbar(e1, ax=ax[3], shrink=0.8, label="K")
+    fig.suptitle(title)
+    return fig
+
+
+def over_time_figure(fp, hs_Tt, t3_Tt):
+    """Every core over time, HotSpot (solid) and T3 (dashed), and the worst core error."""
+    core = fp.power_idx
+    tt = np.arange(1, len(hs_Tt) + 1) * DT
+    fig, ax = plt.subplots(2, 1, figsize=(10, 6), sharex=True, layout="constrained",
+                           gridspec_kw=dict(height_ratios=[3, 1]))
+    for j, i in enumerate(core):
+        ax[0].plot(tt, hs_Tt[:, i] - K2C, color=f"C{j}", lw=1.4, label=label(fp, i))
+        ax[0].plot(tt, t3_Tt[:, i] - K2C, color="black", lw=0.7, ls="--")
+    ax[0].plot([], [], color="black", lw=0.7, ls="--", label="T3 (dashed)")
+    ax[0].set(ylabel="°C", title="Core temperatures: HotSpot (solid) and T3 (dashed)")
+    ax[0].legend(fontsize=7, ncol=5)
+    ax[1].plot(tt, np.abs(t3_Tt[:, core] - hs_Tt[:, core]).max(1), lw=0.8, color="C3")
+    ax[1].set(xlabel="time (s)", ylabel="worst core |error| (K)")
+    for a_ in ax:
+        a_.grid(alpha=0.3)
+    return fig
 
 
 # ---------------------------------------------------------------- plotting helpers
@@ -116,14 +242,13 @@ def main():
     ap.add_argument("--steps", type=int, default=2000, help="transient length in 1 ms steps (default 2000)")
     a = ap.parse_args()
     seed = a.seed if a.seed is not None else int(time.time()) % 100000
-    rng = np.random.default_rng(seed)
-    style = a.style or int(rng.integers(1, 5))
+    style = pick_style(a.style, seed)
 
     # 1. floorplan ---------------------------------------------------------------
     fp_name = f"demo_s{style}_{seed}"
     out = DEMO / "output" / fp_name
     out.mkdir(parents=True, exist_ok=True)
-    fp = new_floorplan(style, seed, out)
+    fp = new_floorplan(style, seed, out / "floorplan")
     core = fp.power_idx
     W, Hd = fp.die
     log(f"[1] new floorplan {fp.name}: Style_{style} ({STYLE_TEXT[style]}), die "
@@ -131,8 +256,7 @@ def main():
     log(f"    files: {fp.dir}")
 
     # 2. power -------------------------------------------------------------------
-    p = powergen.random_steady(fp, 1, seed=seed + 1)[0]
-    P = powergen.phase_trace(fp, a.steps, seed=seed + 2, max_phase=a.steps // 2)
+    p, P = new_power(fp, seed, a.steps)
     H.write_ptrace(out / "steady_power.ptrace", fp.names, fp.full_power(p))
     H.write_ptrace(out / "transient_power.ptrace", fp.names, np.array([fp.full_power(r) for r in P]))
     log(f"[2] new power: steady {p.sum():.1f} W total ({', '.join(f'{x:.1f}' for x in p)} W); "
@@ -179,72 +303,20 @@ def main():
 
     # 5. figures -----------------------------------------------------------------
     log("[5] saving figures...")
-    asp = Hd / W
     names_c = [label(fp, i) for i in core]
-
-    # floorplan + powers
     fig, ax = plt.subplots(1, 2, figsize=(9.5, 4.2), layout="constrained",
                            gridspec_kw=dict(width_ratios=[1, 1.4]))
-    block_image(ax[0], fp, [0.6 if i in core else 0.15 for i in range(len(fp.names))], 0, 1, "Greys")
-    ax[0].set(title=f"{fp.name}: {W * 1e3:g} x {Hd * 1e3:g} mm, Style_{style}", xlabel="mm", ylabel="mm")
-    tt = np.arange(1, a.steps + 1) * DT
-    for j in range(fp.n_power):
-        ax[1].plot(tt, P[:, j], lw=1, label=names_c[j])
-    ax[1].set(title="transient power trace (new)", xlabel="time (s)", ylabel="W")
-    ax[1].legend(fontsize=7, ncol=4)
+    plot_floorplan(ax[0], fp); plot_power(ax[1], fp, P)
     fig.savefig(out / "1_floorplan_and_power.png"); plt.close(fig)
-
-    # steady maps
-    lo = min(hs_grid.min(), s1_T.min()) - K2C
-    hi = max(hs_grid.max(), s1_T.max()) - K2C
-    fig, ax = plt.subplots(1, 4, figsize=(15, 3.6 * asp + 1.3), layout="constrained")
-    im = grid_image(ax[0], fp, hs_grid - K2C, lo, hi)
-    block_image(ax[1], fp, hs_T - K2C, lo, hi)
-    block_image(ax[2], fp, s1_T - K2C, lo, hi)
-    d = (s1_T - hs_T) * 1e6
-    m = max(np.abs(d).max(), 1e-9)
-    e1 = block_image(ax[3], fp, d, -m, m, "coolwarm")
-    for a_, ttl in zip(ax, ["HotSpot, 64 x 64 grid", "HotSpot, block averages",
-                            "S1 prediction", "S1 minus HotSpot (µK)"]):
-        a_.set_title(ttl); a_.set_xlabel("mm")
-    fig.colorbar(im, ax=ax[:3], shrink=0.8, label="°C")
-    fig.colorbar(e1, ax=ax[3], shrink=0.8, label="µK")
-    fig.suptitle(f"Steady state, {fp.name}, new power vector ({p.sum():.1f} W). "
-                 f"HotSpot {hs['wall_s']:.2f} s, S1 {s1_t * 1e6:.0f} µs")
+    fig = steady_figure(fp, hs_grid, hs_T, s1_T,
+                        f"Steady state, {fp.name}, new power vector ({p.sum():.1f} W). "
+                        f"HotSpot {hs['wall_s']:.2f} s, S1 {s1_t * 1e6:.0f} µs")
     fig.savefig(out / "2_steady_maps.png"); plt.close(fig)
-
-    # transient maps at the end
-    lo = min(hs_grid_end.min(), t3_Tt[-1].min()) - K2C
-    hi = max(hs_grid_end.max(), t3_Tt[-1].max()) - K2C
-    fig, ax = plt.subplots(1, 4, figsize=(15, 3.6 * asp + 1.3), layout="constrained")
-    im = grid_image(ax[0], fp, hs_grid_end - K2C, lo, hi)
-    block_image(ax[1], fp, hs_Tt[-1] - K2C, lo, hi)
-    block_image(ax[2], fp, t3_Tt[-1] - K2C, lo, hi)
-    d = t3_Tt[-1] - hs_Tt[-1]
-    m = max(np.abs(d).max(), 1e-9)
-    e1 = block_image(ax[3], fp, d, -m, m, "coolwarm")
-    for a_, ttl in zip(ax, [f"HotSpot, 64 x 64 grid", "HotSpot, block averages",
-                            "T3 (M = 4) prediction", "T3 minus HotSpot (K)"]):
-        a_.set_title(ttl); a_.set_xlabel("mm")
-    fig.colorbar(im, ax=ax[:3], shrink=0.8, label="°C")
-    fig.colorbar(e1, ax=ax[3], shrink=0.8, label="K")
-    fig.suptitle(f"Transient, end of the trace (t = {a.steps * DT:g} s, cold start), {fp.name}. "
-                 f"HotSpot {tr['wall_s']:.1f} s, T3 {t3_t * 1e3:.1f} ms")
+    fig = transient_figure(fp, hs_grid_end, hs_Tt[-1], t3_Tt[-1],
+                           f"Transient, end of the trace (t = {a.steps * DT:g} s, cold start), {fp.name}. "
+                           f"HotSpot {tr['wall_s']:.1f} s, T3 {t3_t * 1e3:.1f} ms")
     fig.savefig(out / "3_transient_maps_end.png"); plt.close(fig)
-
-    # transient core temperatures over time
-    fig, ax = plt.subplots(2, 1, figsize=(10, 6), sharex=True, layout="constrained",
-                           gridspec_kw=dict(height_ratios=[3, 1]))
-    for j, i in enumerate(core):
-        ax[0].plot(tt, hs_Tt[:, i] - K2C, color=f"C{j}", lw=1.4, label=names_c[j])
-        ax[0].plot(tt, t3_Tt[:, i] - K2C, color="black", lw=0.7, ls="--")
-    ax[0].plot([], [], color="black", lw=0.7, ls="--", label="T3 (dashed)")
-    ax[0].set(ylabel="°C", title="Core temperatures: HotSpot (solid) and T3 (dashed)")
-    ax[0].legend(fontsize=7, ncol=5)
-    ax[1].plot(tt, np.abs(e_all).max(1), lw=0.8, color="C3")
-    ax[1].set(xlabel="time (s)", ylabel="worst core |error| (K)")
-    for a_ in ax:
-        a_.grid(alpha=0.3)
+    fig = over_time_figure(fp, hs_Tt, t3_Tt)
     fig.savefig(out / "4_transient_over_time.png"); plt.close(fig)
 
     # tables

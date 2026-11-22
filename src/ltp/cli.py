@@ -1,7 +1,7 @@
 """ltp command line.
 
     python3 -m src.ltp calibrate <floorplan> -o model.npz [--M 4]
-    python3 -m src.ltp steady    model.npz  (--power 20,20,8,... | --ptrace file.ptrace)
+    python3 -m src.ltp steady    model.npz  (--power 20,20,8,... | --ptrace file.ptrace) [-o out.steady]
     python3 -m src.ltp transient model.npz  --ptrace file.ptrace --dt 0.001 [-o out.ttrace]
     python3 -m src.ltp forecast  model.npz  --history h.ptrace --temps T_now.txt
                                             --next next.ptrace --dt 0.001
@@ -65,11 +65,22 @@ def cmd_calibrate(a):
           f"-> {a.output}")
 
 
+def _write_T(path, names, T):
+    """HotSpot .ttrace-style file: header of block names, one row per step, kelvin, 6 decimals."""
+    with open(path, "w") as f:
+        f.write("\t".join(names) + "\n")
+        for row in np.atleast_2d(T):
+            f.write("\t".join(f"{v:.6f}" for v in row) + "\n")
+
+
 def cmd_steady(a):
     p = Predictor.load(a.model)
     P = (np.array([[float(x) for x in a.power.split(",")]]) if a.power
          else _read_ptrace(a.ptrace, p.power_names))
-    _print_T(p.names, p.steady(P))
+    T = p.steady(P)
+    _print_T(p.names, T)
+    if a.output:
+        _write_T(a.output, p.names, T)
 
 
 def cmd_transient(a):
@@ -78,10 +89,7 @@ def cmd_transient(a):
     z0 = p.initial_state(P[0]) if a.warm else None
     T = p.transient(P, a.dt, z0=z0)
     if a.output:
-        with open(a.output, "w") as f:
-            f.write("\t".join(p.names) + "\n")
-            for row in T:
-                f.write("\t".join(f"{v:.6f}" for v in row) + "\n")
+        _write_T(a.output, p.names, T)
     else:
         _print_T(p.names, T)
 
@@ -124,6 +132,7 @@ def main(argv=None):
     c.add_argument("--M", type=int, default=4); c.add_argument("--refresh", action="store_true")
     s = sub.add_parser("steady"); s.add_argument("model")
     g = s.add_mutually_exclusive_group(required=True); g.add_argument("--power"); g.add_argument("--ptrace")
+    s.add_argument("-o", "--output", help="also write the temperatures (K, 6 decimals) to this file")
     t = sub.add_parser("transient"); t.add_argument("model"); t.add_argument("--ptrace", required=True)
     t.add_argument("--dt", type=float, default=1e-3); t.add_argument("-o", "--output")
     t.add_argument("--warm", action="store_true", help="start at the steady state of the first row")
