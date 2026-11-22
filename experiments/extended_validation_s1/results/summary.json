@@ -1,0 +1,126 @@
+{
+ "floorplans": 200,
+ "test_vectors_per_floorplan": 15,
+ "summary": [
+  {
+   "style": "Style_1",
+   "floorplans": 50,
+   "s1_mae_K_mean": 6.910262127415004e-06,
+   "s1_mae_K_worst": 1.2667975889731527e-05,
+   "s1_max_K_worst": 3.399999758357808e-05,
+   "s1_peak_err_K_worst": 3.399999758357808e-05,
+   "s1_hottest_acc_min": 1.0,
+   "s1_time_us": 1.5585000028295326,
+   "calib_s1_cpu_s_mean": 11.54431251977998
+  },
+  {
+   "style": "Style_2",
+   "floorplans": 50,
+   "s1_mae_K_mean": 6.859786484265366e-06,
+   "s1_mae_K_worst": 1.0623912578940537e-05,
+   "s1_max_K_worst": 3.3000002190419764e-05,
+   "s1_peak_err_K_worst": 2.5999996807968273e-05,
+   "s1_hottest_acc_min": 1.0,
+   "s1_time_us": 1.5732500031617747,
+   "calib_s1_cpu_s_mean": 11.155916078139944
+  },
+  {
+   "style": "Style_3",
+   "floorplans": 50,
+   "s1_mae_K_mean": 6.7084017805901415e-06,
+   "s1_mae_K_worst": 1.1371910453779795e-05,
+   "s1_max_K_worst": 2.8000002316730388e-05,
+   "s1_peak_err_K_worst": 2.7000003171906428e-05,
+   "s1_hottest_acc_min": 1.0,
+   "s1_time_us": 1.5974999882928387,
+   "calib_s1_cpu_s_mean": 11.273697343020086
+  },
+  {
+   "style": "Style_4",
+   "floorplans": 50,
+   "s1_mae_K_mean": 6.450320375260315e-06,
+   "s1_mae_K_worst": 1.043708834060908e-05,
+   "s1_max_K_worst": 3.0999997818526026e-05,
+   "s1_peak_err_K_worst": 2.5104616895532672e-05,
+   "s1_hottest_acc_min": 1.0,
+   "s1_time_us": 1.6127499975482351,
+   "calib_s1_cpu_s_mean": 11.244893643339855
+  },
+  {
+   "style": "all",
+   "floorplans": 200,
+   "s1_mae_K_mean": 6.732192691882706e-06,
+   "s1_mae_K_worst": 1.2667975889731527e-05,
+   "s1_max_K_worst": 3.399999758357808e-05,
+   "s1_peak_err_K_worst": 3.399999758357808e-05,
+   "s1_hottest_acc_min": 1.0,
+   "s1_time_us": 1.588999992918616,
+   "calib_s1_cpu_s_mean": 11.304704896069966
+  }
+ ],
+ "reference_52": {
+  "s1_mae_K": 6.5e-06,
+  "s1_max_K": 3.4e-05
+ },
+ "possible_duplicates": [
+  [
+   "g1_gen003",
+   "g1_gen020"
+  ],
+  [
+   "g1_gen010",
+   "g1_gen024"
+  ],
+  [
+   "g1_gen013",
+   "g1_gen018"
+  ],
+  [
+   "g1_gen013",
+   "g1_gen022"
+  ],
+  [
+   "g1_gen013",
+   "g1_gen045"
+  ],
+  [
+   "g1_gen014",
+   "g1_gen030"
+  ],
+  [
+   "g1_gen015",
+   "g1_gen019"
+  ],
+  [
+   "g1_gen018",
+   "g1_gen022"
+  ],
+  [
+   "g1_gen018",
+   "g1_gen045"
+  ],
+  [
+   "g1_gen022",
+   "g1_gen045"
+  ],
+  [
+   "g1_gen023",
+   "g1_gen049"
+  ],
+  [
+   "g1_gen028",
+   "g1_gen042"
+  ],
+  [
+   "g1_gen048",
+   "g1_gen050"
+  ]
+ ],
+ "workers": 20,
+ "wall_s": {
+  "generate": 26.527754476,
+  "calibration": 109.014715034,
+  "steady_test": 275.275468871,
+  "total": 411.144736574
+ }
+}

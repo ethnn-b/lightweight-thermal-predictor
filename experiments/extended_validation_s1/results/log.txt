@@ -1,0 +1,12 @@
+200 floorplans (27 s to load/generate), 20 workers
+calibration done: 109 s
+steady tests done: 275 s
+| style | floorplans | s1_mae_K_mean | s1_mae_K_worst | s1_max_K_worst | s1_peak_err_K_worst | s1_hottest_acc_min | s1_time_us | calib_s1_cpu_s_mean |
+|---|---|---|---|---|---|---|---|---|
+| Style_1 | 50 | 6.91e-06 | 1.27e-05 | 3.4e-05 | 3.4e-05 | 1 | 1.56 | 11.5 |
+| Style_2 | 50 | 6.86e-06 | 1.06e-05 | 3.3e-05 | 2.6e-05 | 1 | 1.57 | 11.2 |
+| Style_3 | 50 | 6.71e-06 | 1.14e-05 | 2.8e-05 | 2.7e-05 | 1 | 1.6 | 11.3 |
+| Style_4 | 50 | 6.45e-06 | 1.04e-05 | 3.1e-05 | 2.51e-05 | 1 | 1.61 | 11.2 |
+| all | 200 | 6.73e-06 | 1.27e-05 | 3.4e-05 | 3.4e-05 | 1 | 1.59 | 11.3 |
+possible duplicate layouts: 13 [('g1_gen003', 'g1_gen020'), ('g1_gen010', 'g1_gen024'), ('g1_gen013', 'g1_gen018'), ('g1_gen013', 'g1_gen022'), ('g1_gen013', 'g1_gen045'), ('g1_gen014', 'g1_gen030'), ('g1_gen015', 'g1_gen019'), ('g1_gen018', 'g1_gen022'), ('g1_gen018', 'g1_gen045'), ('g1_gen022', 'g1_gen045'), ('g1_gen023', 'g1_gen049'), ('g1_gen028', 'g1_gen042'), ('g1_gen048', 'g1_gen050')]
+total 6.9 min
