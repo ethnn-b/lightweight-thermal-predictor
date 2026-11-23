@@ -35,12 +35,11 @@ Ethan Bobby Kurien \quad Kaivalya Mase\\[6pt]
 Dynamic thermal management (DTM) needs core temperatures every millisecond, and ideally a few
 milliseconds ahead. HotSpot, a thermal simulator, computes them accurately but needs 0.24\,s per steady
 answer and 5.5\,ms per 1\,ms transient step. We built a two-stage predictor for heterogeneous
-multicore floorplans. A one-time calibration runs HotSpot 8 times (steady) or 24 times (steady and
-transient) per floorplan with 1\,W in one core at a time. The prediction stage then uses only the
-stored coefficients. Because HotSpot without leakage is linear, the steady predictor (an influence
+multicore floorplans. A one-time calibration runs HotSpot on each floorplan with 1\,W in one core at a time. The
+prediction stage then uses only the stored coefficients. Because HotSpot without leakage is linear, the steady predictor (an influence
 matrix) is exact to HotSpot's printed precision ($3\times10^{-5}$\,K worst) at 2.6\us\ per
-prediction from under 1\,kB. The transient predictor (a sum of four exponentials per pair of
-cores) is within 0.06--0.09\,K on average and 0.3\,K worst, at 3\us\ per step from about 4\,kB.
+prediction from under 1\,kB. The transient predictor (a sum of four exponentials) is within
+0.06--0.09\,K on average and 0.3\,K worst, at 3\us\ per step from about 4\,kB.
 Both results hold on floorplans generated after the models were designed: 500 for the steady
 predictor and 100 for the transient one. Skipping calibration accrues an error of 0.8--2.7\,K on
 average.
@@ -59,8 +58,7 @@ the temperatures of the processor. We seek to optimise accuracy, prediction time
 
 \textbf{Contributions.}
 \begin{itemize}
-  \item A calibration stage of 8 (steady) or 24 (steady and transient) planned HotSpot runs per
-        floorplan.
+  \item A one-time calibration stage of planned HotSpot runs on each floorplan.
   \item An exact steady predictor and an accurate transient predictor, each compared against
         simpler and calibration-free alternatives.
   \item A Python tool (\texttt{ltp}) for both stages, built on a patched HotSpot (6-decimal output,
@@ -134,7 +132,7 @@ Many-core & Grid of 64 identical cores (compression test) & 1 \\
 \bottomrule
 \end{tabular}
 \end{center}
-Power: nominal big 20\,W and little 8\,W (88\,W per chip); random vectors with big 10--20\,W and
+Power: nominal big 20\,W and little 8\,W; random vectors with big 10--20\,W and
 little 5--10\,W; phase traces where every core switches between 4 levels with phases from 1\,ms to
 2\,s. At nominal power the given floorplans reach 69--77\degC, and a little core is always the
 hottest.
@@ -189,12 +187,8 @@ Power blurring (no calibration) & 0.77\,K & 5.2\,K & 2.5\us & 928\,B & 94{,}000$
 \bottomrule
 \end{tabular}
 \end{center}
-For chips with many cores, keeping only the nearest neighbours' entries shrinks $G$ on a 64-core
-grid from 32.8\,kB to 5.7\,kB at 0.59\,K worst.
-
-\textbf{Hot spots.} The hottest cell is 3--9\,K above its core's average, and it moves with the
-power pattern in 61\,\% of cases, so simply adding a constant to the block average prediction will
-not work. S1-hot-max predicts the hot spot itself (23 floorplans, 60 random power vectors each):
+\textbf{Hot spots.} The hottest cell is 3--9\,K above its core's average.
+S1-hot-max predicts the hot spot itself (23 floorplans, 60 random power vectors each):
 \begin{center}
 \small
 \begin{tabular}{@{}l c c c c@{}}
@@ -202,7 +196,6 @@ not work. S1-hot-max predicts the hot spot itself (23 floorplans, 60 random powe
 Hot-spot model & Size & Mean & Worst & Hottest core right \\
 \midrule
 Core average & 512\,B & 2.73\,K & 8.96\,K & 50\,\% \\
-Core average + fixed offset & 576\,B & 0.59\,K & 4.11\,K & 82\,\% \\
 \textbf{S1-hot-max (all cells of a core)} & 115\,kB & 0.000007\,K & 0.00003\,K & 100\,\% \\
 S1-hot-max, 32-bit & 57\,kB & 0.000007\,K & 0.00003\,K & 100\,\% \\
 \bottomrule
@@ -332,7 +325,7 @@ against HotSpot.
 \section{The \texttt{ltp} tool}
 Both stages are available from the command line and from Python:
 {\small\begin{verbatim}
-python3 -m src.ltp calibrate s4_fp001 -o model.npz      # 24 HotSpot runs, cached
+python3 -m src.ltp calibrate s4_fp001 -o model.npz
 python3 -m src.ltp steady    model.npz --power 20,20,8,8,8,8,8,8
 python3 -m src.ltp transient model.npz --ptrace trace.ptrace -o out.ttrace
 \end{verbatim}}
@@ -366,8 +359,7 @@ Transient & Mean error & 0.09\,K \\
 \begin{enumerate}
   \item Keep calibration and test data strictly separate.
   \item Stress-test beyond nominal conditions.
-  \item Unit tests for \texttt{ltp}; every HotSpot run cached with its command, configuration and
-        git commit; one script, README and results folder per experiment.
+  \item Unit tests for \texttt{ltp}; one script, README and results folder per experiment.
 \end{enumerate}
 
 %=====================================================================
@@ -380,7 +372,7 @@ All must-have deliverables were completed. The main deviations:
 \toprule
 Item & Planned & Done, and why \\
 \midrule
-HotSpot build & Precision patch & Also faster transients and a memory-leak fix: long traces were impractical or crashed. \\
+HotSpot build & Precision patch & Also faster transients and a memory-leak fix. \\
 Dataset & Our synthetic floorplans & The 23 given floorplans as the main set, plus generated floorplans in the same styles (500 steady, 100 transient). \\
 Hot spots & One hottest cell per core & S1-hot-max over all cells of a core: exact, no extra runs, and the hot spot can move. \\
 \bottomrule
@@ -451,14 +443,6 @@ the repository's \texttt{README.md}, under ``Try the predictor yourself''.
         \begin{itemize}
           \item \texttt{hotspot.py}: runs HotSpot on a floorplan and reads its output; every run
                 is cached.
-          \item \texttt{parallel.py}: runs many HotSpot jobs at once.
-          \item \texttt{floorplans.py}, \texttt{flpgen.py}: load the floorplans and write HotSpot
-                floorplan files.
-          \item \texttt{tagen.py}: generates new floorplans in the styles of the given ones.
-          \item \texttt{powergen.py}, \texttt{datasets.py}: power vectors and traces for
-                calibration and testing, and the HotSpot test sets made from them.
-          \item \texttt{gridmap.py}: maps HotSpot's grid cells to blocks (for S1-hot-max).
-          \item \texttt{stepper.py}: drives HotSpot one step at a time (closed-loop DTM).
         \end{itemize}
   \item \texttt{experiments/}: one folder per experiment with its script (\texttt{run.py}), README
         and results. The validations on generated floorplans (Section~\ref{sec:gen}) are
