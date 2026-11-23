@@ -156,13 +156,13 @@ watt as a big core.
 is far worse than the calibrated influence matrix:
 \begin{center}
 \small
-\begin{tabular}{@{}l c c c c@{}}
+\begin{tabular}{@{}l c c c@{}}
 \toprule
-Method & Runs on target & Mean & Worst & Hottest core right \\
+Method & Mean & Worst & Hottest core right \\
 \midrule
-\textbf{Calibrated influence matrix} & 8 & 0.000007\,K & 0.00003\,K & 100\,\% \\
-Power blurring \cite{blurring} & 0 & 0.76\,K & 5.2\,K & 71\,\% \\
-Borrow a similar floorplan's $G$ & 0 & 1.11--2.66\,K & 5.2--12.1\,K & 45--60\,\% \\
+\textbf{Calibrated influence matrix} & 0.000007\,K & 0.00003\,K & 100\,\% \\
+Power blurring \cite{blurring} & 0.76\,K & 5.2\,K & 71\,\% \\
+Borrow a similar floorplan's $G$ & 1.11--2.66\,K & 5.2--12.1\,K & 45--60\,\% \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -391,7 +391,7 @@ Hot spots & One hottest cell per core & S1-hot-max over all cells of a core: exa
 \textbf{Learnings.}
 \begin{enumerate}
   \item HotSpot is linear without leakage, so a matrix predictor can be exact.
-  \item Calibration is cheap (8 runs, 4\,s) and essential (0.8--2.7\,K without it): position
+  \item Calibration is cheap and essential (0.8--2.7\,K without it): position
         matters, not just core type.
   \item Core averages hide hot spots 3--9\,K hotter, and the hot spot moves.
   \item Heat moves on time scales from 1\,ms to 8\,s: one time constant fails, four suffice.
