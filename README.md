@@ -30,8 +30,6 @@ HotSpot without leakage is linear in power, so the models are exact or nearly ex
 - **T3 (transient)**: a sum of exponentials (M = 4) fitted to the step responses.
   0.06–0.09 K mean error and 0.3 K worst, 3 µs per 1 ms step (about 1,800× faster than
   HotSpot), about 4 kB. It can also forecast a few milliseconds ahead from measured temperatures.
-- **DTM**: proactive DTM driven by T3 forecasts spends 60–130× less time above the limit than
-  reactive DTM, for a 1–1.6 % loss in throughput.
 
 Every steady and transient target in our scorecard was met. The one exception is calibration
 time, which is about 2.75 min against a 2 min target. Results were checked on the TAs' 23
