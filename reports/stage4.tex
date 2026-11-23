@@ -139,8 +139,7 @@ hottest.
 
 %=====================================================================
 \section{Calibration}
-Calibrating one floorplan takes 24 HotSpot runs; the steady model alone needs 8 runs (4.3\,s). The
-step responses contain time constants from about 1\,ms to 8\,s, so a single time constant cannot
+The step responses contain time constants from about 1\,ms to 8\,s, so a single time constant cannot
 fit them, and four can (Figure~\ref{fig:steps}). A little core heats itself 2.4$\times$ as much per
 watt as a big core.
 
@@ -428,7 +427,7 @@ the repository's \texttt{README.md}, under ``Try the predictor yourself''.
   \item \texttt{presentations/}: the final presentation.
   \item \texttt{src/ltp/}: the predictor.
         \begin{itemize}
-          \item \texttt{calibrate.py}: the calibration stage; runs the 24 HotSpot runs (1\,W in one
+          \item \texttt{calibrate.py}: the calibration stage; runs HotSpot (1\,W in one
                 core at a time) and extracts $G$ and the step responses.
           \item \texttt{models.py}: the models: the influence matrix, the sum of exponentials and
                 the alternatives we compared (one time constant, ARX, compressed $G$).
