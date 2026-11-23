@@ -1,7 +1,7 @@
 # Lightweight Temperature Predictor (TapaSense): calibrate once, predict fast
 
 Computer Architecture course project, topic *thermal management: lightweight temperature predictor*.
-Ethan Bobby Kurien (E) and Kaivalya Mase (K).
+Ethan Bobby Kurien and Kaivalya Mase.
 
 ## The problem
 
