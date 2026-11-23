@@ -1,5 +1,5 @@
 % Stage 4: final project report, written as a summary of the whole project.
-% Compile from this folder: pdflatex stage4_Kai.tex (twice).
+% Compile from this folder: pdflatex stage4.tex (twice).
 \documentclass[11pt,a4paper]{article}
 \usepackage[margin=2.2cm]{geometry}
 \usepackage[T1]{fontenc}
@@ -11,15 +11,17 @@
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{caption}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{needspace}
 \usepackage[hidelinks]{hyperref}
-\graphicspath{{../experiments/}}
+\graphicspath{{../experiments/}{figures/}}
 \setlist{itemsep=1pt,topsep=3pt}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{4pt}
 \captionsetup{font=small,labelfont=bf}
 \newcommand{\us}{\,$\mu$s}
 \newcommand{\degC}{\,\textdegree C}
-\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 
 \begin{document}
 
@@ -30,7 +32,7 @@ Ethan Bobby Kurien \quad Kaivalya Mase
 
 \begin{abstract}
 Dynamic thermal management (DTM) needs core temperatures every millisecond, and ideally a few
-milliseconds ahead. The HotSpot simulator computes them accurately but needs 0.24\,s per steady
+milliseconds ahead. HotSpot, a thermal simulator, computes them accurately but needs 0.24\,s per steady
 answer and 5.5\,ms per 1\,ms transient step. We built a two-stage predictor for heterogeneous
 multicore floorplans. A one-time calibration runs HotSpot 8 times (steady) or 24 times (steady and
 transient) per floorplan with 1\,W in one core at a time. The prediction stage then uses only the
@@ -38,7 +40,9 @@ stored coefficients. Because HotSpot without leakage is linear, the steady predi
 matrix) is exact to HotSpot's printed precision ($3\times10^{-5}$\,K worst) at 2.6\us\ per
 prediction from under 1\,kB. The transient predictor (a sum of four exponentials per pair of
 cores) is within 0.06--0.09\,K on average and 0.3\,K worst, at 3\us\ per step from about 4\,kB.
-Every calibration-free alternative is 0.5--2.7\,K off on average.
+Both results hold on floorplans generated after the models were designed: 500 for the steady
+predictor and 100 for the transient one. Skipping calibration accrues an error of 0.8--2.7\,K on
+average.
 \end{abstract}
 
 \tableofcontents
@@ -49,11 +53,8 @@ A modern chip has several cores. Under load they heat up, and above a limit they
 faster or fail. The chip's DTM software throttles cores to stay under the limit. To act before the
 limit is crossed it needs fast predictions of temperature.
 
-\textbf{Problem statement.} Develop a lightweight temperature predictor in two stages.
-Calibration (one-time per floorplan): tune predictor coefficients for the given floorplan with
-heterogeneous cores. Prediction: predict the temperature (steady state or transient) for a given
-power input. Metrics: accuracy, prediction time, model size. Wishlist: show the effectiveness of
-the predictor for proactive DTM.
+The predictor will first be calibrated using a few HotSpot runs, and then will be used to compute
+the temperatures of the processor. We seek to optimise accuracy, prediction time and model size.
 
 \textbf{Contributions.}
 \begin{itemize}
@@ -73,31 +74,30 @@ the die into cells (here $64\times64$); the block model uses one node per block 
 1--5\,K off on our floorplans \cite{hotspot4}.
 
 \textbf{Linearity.} Without temperature-dependent leakage the network is linear, so rises scale
-with power and add up across cores; we confirmed this to $10^{-6}$\,K. Then
-$T = T_\text{amb} + G\,P$ in steady state, where $G_{ij}$ is the rise of block $i$ per watt in
-core $j$.
+with power and add up across cores. Then $T = T_\text{amb} + G\,P$ in steady state, where
+$G_{ij}$ is the rise of block $i$ per watt in core $j$.
 
 %=====================================================================
 \section{Design approach}
 
-\subsection{Two stages}
+\subsection{Prediction Stages}
 \begin{description}[leftmargin=1.2em]
   \item[Calibration] (once per floorplan): $N$ steady runs with 1\,W in core $j$ give column $j$ of
-        $G$. $N$ short step runs (1\,ms sampling for 2\,s) and $N$ long step runs (20\,ms sampling
-        for 100\,s) give the step response $s_{ij}(t)$ of every block to every core. For $N=8$ that
-        is 24 runs.
-  \item[Prediction] (many times): load the model file (about 8\,kB), give the power per core, get
-        every block's temperature now (steady) or over time (transient).
+        $G$. Step runs with 1\,W in core $j$ give the step response $s_{ij}(t)$ of every block to
+        every core.
+  \item[Prediction] (many times): load the model file, give the power per core, get every block's
+        temperature now (steady) or over time (transient).
 \end{description}
 
 \subsection{Models used}
 \textbf{Steady state: influence matrix.} $G[:,j] = T_\text{HotSpot}(\text{1\,W in core } j) -
 T_\text{amb}$, and $T = T_\text{amb} + G P$. No fitting is involved.
 
-\textbf{Hot spots: influence matrix on candidate cells.} Core averages hide hot spots inside a
-core. From the same runs' $64\times64$ maps we keep, for each core, the 3--9 cells that were its
-hottest point in any calibration run or at nominal power, and predict
-$T_\text{hot}(c) = \max_{q} (T_\text{amb} + G^\text{cell}_{q\cdot} P)$.
+\textbf{Hot spots: S1-hot-max.} Core averages hide hot spots inside a core. Each calibration run
+also gives HotSpot's $64\times64$ map, so every cell $q$ has its own row $G^\text{cell}_{q\cdot}$.
+Keeping the rows of all cells inside core $c$, its hot spot is predicted as
+$T_\text{hot}(c) = T_\text{amb} + \max_{q \in c} G^\text{cell}_{q\cdot} P$. This is exact, lets
+the hottest cell move with the power pattern, and needs no extra HotSpot runs.
 
 \textbf{Transient: sum of exponentials.} Each step response is fitted as
 $s_{ij}(t) \approx \sum_{m=1}^{M} a_{ijm}(1-e^{-t/\tau_m})$, with time constants $\tau_m$ shared
@@ -114,20 +114,21 @@ by all pairs and $\sum_m a_{ijm} = G_{ij}$. At run time, with $\lambda_m = e^{-\
   \item Test inputs are never used for calibration: nominal and maximum power and 300 random power
         vectors per floorplan (steady); random phase traces of 2\,s and 10\,s (transient).
   \item Accuracy: mean and worst absolute error over cores, and the share of cases with the right
-        hottest core. Time: median of 10{,}000 single calls, one thread. Size: stored coefficients
-        $\times$ 8 bytes.
+        hottest core. Size: stored coefficients $\times$ 8 bytes.
 \end{itemize}
 
 %=====================================================================
 \section{Data}
 \begin{center}
 \small
-\begin{tabular}{@{}l p{8.5cm} c@{}}
+\begin{tabular}{@{}l p{9cm} c@{}}
 \toprule
 Set & Description & Floorplans \\
 \midrule
 Given floorplans & 2 big (4$\times$4\,mm) + 6 little (2$\times$2\,mm) cores, 4 styles & 23 \\
-Generated & Our generator, 13 per style of the given floorplans & 52 \\
+Generated & Our generator, in the styles of the given floorplans: 125 per style for the steady
+            validation, the first 25 per style of these for the transient validation &
+            \begin{tabular}[t]{@{}c@{}}500 (steady)\\ 100 (transient)\end{tabular} \\
 Many-core & Grid of 64 identical cores (compression test) & 1 \\
 \bottomrule
 \end{tabular}
@@ -139,21 +140,22 @@ hottest.
 
 %=====================================================================
 \section{Calibration}
-Calibrating one floorplan takes 24 HotSpot runs; the steady model alone needs 8 runs (4.3\,s). The step responses contain time constants from about 1\,ms to 8\,s, so a single
-time constant cannot fit them, and four can (Figure~\ref{fig:steps}). A little core heats itself
-2.4$\times$ as much per watt as a big core.
+Calibrating one floorplan takes 24 HotSpot runs; the steady model alone needs 8 runs (4.3\,s). The
+step responses contain time constants from about 1\,ms to 8\,s, so a single time constant cannot
+fit them, and four can (Figure~\ref{fig:steps}). A little core heats itself 2.4$\times$ as much per
+watt as a big core.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.85\linewidth]{P1-1_step_calibration/results/step_response_fits.png}
-  \caption{Step responses to 1\,W in a big core (left) and a little core (right). HotSpot and the
-  sum of four exponentials overlap; a single time constant has the right final value but the wrong
-  shape.}
+  \includegraphics[width=0.85\linewidth]{P1-1_step_calibration/results/step_response_fits_stage3.png}
+  \caption{Step responses to 1\,W in a big core (left) and a little core (right), log time axis.
+  HotSpot and the sum of four exponentials (T3, $M=4$) overlap; two exponentials or a single time
+  constant (T1) have the right final value but the wrong shape.}
   \label{fig:steps}
 \end{figure}
 
-\textbf{Is calibration needed?} Yes. On 6{,}946 unseen runs, every way of predicting without runs
-on the target floorplan is far worse than the calibrated influence matrix:
+\textbf{Is calibration needed?} Yes. Every way of predicting without runs on the target floorplan
+is far worse than the calibrated influence matrix:
 \begin{center}
 \small
 \begin{tabular}{@{}l c c c c@{}}
@@ -161,11 +163,8 @@ on the target floorplan is far worse than the calibrated influence matrix:
 Method & Runs on target & Mean & Worst & Hottest core right \\
 \midrule
 \textbf{Calibrated influence matrix} & 8 & 0.000007\,K & 0.00003\,K & 100\,\% \\
-Power blurring \cite{blurring} + learned correction & 0 & 0.55\,K & 3.4\,K & 80\,\% \\
-Power blurring & 0 & 0.76\,K & 5.2\,K & 71\,\% \\
+Power blurring \cite{blurring} & 0 & 0.76\,K & 5.2\,K & 71\,\% \\
 Borrow a similar floorplan's $G$ & 0 & 1.11--2.66\,K & 5.2--12.1\,K & 45--60\,\% \\
-One model per core type & 0 & 1.34\,K & 8.3\,K & 61\,\% \\
-Regression on geometry & 0 & 1.94\,K & 7.4\,K & 42\,\% \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -189,12 +188,12 @@ Power blurring (no calibration) & 0.77\,K & 5.2\,K & 2.5\us & 928\,B & 94{,}000$
 \bottomrule
 \end{tabular}
 \end{center}
-Batching 302 inputs per call brings the cost to 0.06\us\ per prediction. For chips with many
-cores, keeping only the nearest neighbours' entries shrinks $G$ on a 64-core grid from 32.8\,kB to
-5.7\,kB at 0.59\,K worst.
+For chips with many cores, keeping only the nearest neighbours' entries shrinks $G$ on a 64-core
+grid from 32.8\,kB to 5.7\,kB at 0.59\,K worst.
 
 \textbf{Hot spots.} The hottest cell is 3--9\,K above its core's average, and it moves with the
-power pattern in 61\,\% of cases, so a fixed offset cannot capture it:
+power pattern in 61\,\% of cases, so simply adding a constant to the block average prediction will
+not work. S1-hot-max predicts the hot spot itself (23 floorplans, 60 random power vectors each):
 \begin{center}
 \small
 \begin{tabular}{@{}l c c c c@{}}
@@ -203,8 +202,8 @@ Hot-spot model & Size & Mean & Worst & Hottest core right \\
 \midrule
 Core average & 512\,B & 2.73\,K & 8.96\,K & 50\,\% \\
 Core average + fixed offset & 576\,B & 0.59\,K & 4.11\,K & 82\,\% \\
-\textbf{Candidate cells} & 3.1\,kB & 0.078\,K & 1.6\,K & 90\,\% \\
-All cells (exact) & 115\,kB & 0.000007\,K & 0.00003\,K & 100\,\% \\
+\textbf{S1-hot-max (all cells of a core)} & 115\,kB & 0.000007\,K & 0.00003\,K & 100\,\% \\
+S1-hot-max, 32-bit & 57\,kB & 0.000007\,K & 0.00003\,K & 100\,\% \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -215,59 +214,115 @@ All cells (exact) & 115\,kB & 0.000007\,K & 0.00003\,K & 100\,\% \\
 \small
 \begin{tabular}{@{}l c c c c@{}}
 \toprule
-Model (24 floorplans, 2\,s traces) & Mean & Worst & Time per step & Size \\
+Model (2\,s traces) & Mean & Worst & Time per step & Size \\
 \midrule
 One time constant per block & 7.25\,K & 14.6\,K & 1.5\us & 1.0\,kB \\
 ARX fitted to one trace \cite{coskun,singla} & 0.19\,K & 0.57\,K & 5.4\us & 6.2\,kB \\
 \textbf{Sum of exponentials, $M=4$} & 0.090\,K & 0.30\,K & 3.1\us & 3.7\,kB \\
 Sum of exponentials, $M=6$ & 0.0093\,K & 0.13\,K & 3.2\us & 5.6\,kB \\
-HotSpot's network reduced to 32 states \cite{matex,sharifi08} & -- & 0.047\,K & -- & 16\,kB \\
 \bottomrule
 \end{tabular}
 \end{center}
-The sum of exponentials gives the best accuracy for its size from 2 to 6\,kB; HotSpot's own
-network, exported and reduced, is better only from about 16\,kB. It also confirms the calibration
-independently: its steady gain equals $G$.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.6\linewidth]{P3-1_transient_predictor/results/trace_example.png}
+  \includegraphics[width=0.8\linewidth]{P3-1_transient_predictor/results/trace_example_stage4.png}
   \caption{The transient predictor on a test trace, on top of HotSpot.}
 \end{figure}
 
 %=====================================================================
-\section{Validation on 52 generated floorplans}
-After the models were designed we generated 52 new floorplans in the styles of the given ones. The
-results carry over:
+\section{Validation on generated floorplans}\label{sec:gen}
+After the models were designed we generated new floorplans in the styles of the given ones and
+repeated the tests on them. The steady predictor was validated on 500 and the transient predictor
+on 100. Each floorplan
+was calibrated with its own HotSpot runs and tested on inputs never used for calibration: 15 steady
+power vectors (steady) or one 2\,s phase trace from a cold chip (transient). The results carry
+over:
 \begin{center}
 \small
 \begin{tabular}{@{}l c c c c@{}}
 \toprule
 Set & Steady mean & Steady worst & Transient mean & Transient worst \\
 \midrule
-52 generated floorplans & $6.5\times10^{-6}$\,K & $3.4\times10^{-5}$\,K & 0.091\,K & 0.34\,K \\
+500 generated floorplans & $6.9\times10^{-6}$\,K & $3.6\times10^{-5}$\,K & -- & -- \\
+100 generated floorplans & -- & -- & 0.092\,K & 0.34\,K \\
 24 given floorplans & $6\times10^{-6}$\,K & $3\times10^{-5}$\,K & 0.090\,K & 0.30\,K \\
 \bottomrule
 \end{tabular}
 \end{center}
+\begin{itemize}
+  \item \textbf{Steady:} the influence matrix matches HotSpot to its printed precision on every one
+        of the 500 floorplans and picks the hottest core correctly for every test input. No style
+        and no single floorplan stands out.
+  \item \textbf{Transient:} the mean error is 0.056--0.117\,K depending on the style. 10 of the 100
+        floorplans have a worst error just above 0.30\,K (largest 0.34\,K), and the hottest core
+        is right in at least 88\,\% of the steps on every floorplan.
+\end{itemize}
 
-\begin{figure}[h]
+\begin{figure}[H]
   \centering
-  \includegraphics[width=0.85\linewidth]{extended_validation/results/report_steady_transient.png}
+  \includegraphics[width=0.72\linewidth]{extended_validation/results/report_steady_transient.png}
   \caption{Two generated floorplans. Top two rows: steady state (S1 is the influence matrix), error
   in micro-kelvin. Bottom two rows: transient at $t=2$\,s of a phase trace (T3 is the sum of four
   exponentials), error in kelvin. Columns: HotSpot's $64\times64$ map, HotSpot's block averages,
   the prediction, and prediction minus HotSpot.}
+  \label{fig:genmaps}
+\end{figure}
+
+\subsection{Demonstration}
+A demonstration of the predictor is now shown. We generate a completely new floorplan
+(Figure~\ref{fig:demo-in}), calibrate the steady and transient predictor on the floorplan for a
+randomly generated power trace (Figure~\ref{fig:demo-steady}), and then compare the prediction
+against HotSpot.
+\begin{itemize}
+  \item \textbf{Steady:} the influence matrix is within $7\times10^{-6}$\,K of HotSpot on every
+        core (Figure~\ref{fig:demo-maps}; 2.1\us\ per prediction) and finds the same hottest core (C6, 67.02\degC).
+  \item \textbf{Transient:} the sum of exponentials follows HotSpot over the whole trace
+        (Figure~\ref{fig:demo-t}) with 0.063\,K mean and 0.25\,K worst error, and finds the same
+        hottest core at the end (C7). The model is 8{,}032\,B.
+\end{itemize}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=0.45\linewidth]{demo_s4_2615/1_floorplan.png}
+  \caption{Demonstration: the new floorplan (B: big core, L: little core).}
+  \label{fig:demo-in}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[height=4.6cm]{demo_s4_2615/2_steady_power_map.png}\hfill
+  \includegraphics[height=4.6cm]{demo_s4_2615/2_power_trace.png}
+  \caption{Demonstration power: the new steady power of each core (69\,W in total) shown on the
+  floorplan (left), and the new transient power trace (right).}
+  \label{fig:demo-steady}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\linewidth]{demo_s4_2615/3_steady_maps.png}
+  \caption{Demonstration, steady state: HotSpot's $64\times64$ map, HotSpot's block averages, the
+  influence matrix's prediction, and prediction minus HotSpot (in micro-kelvin).}
+  \label{fig:demo-maps}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=0.85\linewidth]{demo_s4_2615/5_transient_over_time.png}
+  \caption{Demonstration: core temperatures over the 2\,s transient trace, HotSpot (solid) and
+  the sum of exponentials (dashed), and the worst core error at each step.}
+  \label{fig:demo-t}
 \end{figure}
 
 %=====================================================================
+\FloatBarrier
 \section{Robustness}
 \begin{itemize}
   \item \textbf{Unusual inputs.} Power at 2--3$\times$ the maximum, bursty power, task migration
         and warm starts are all handled (transient worst 0.27--0.64\,K). A different time step from
         the calibrated one costs about 2\,K, so calibrate at the controller's time step.
   \item \textbf{Package changes.} A new ambient only needs $T_\text{amb}$ updated. A new heat sink
-        needs recalibration (the old model is 4--9\,K off; 24 runs restore full accuracy).
+        needs recalibration: not calibrating for the new heat sink costs 4--9\,K.
   \item \textbf{Leakage.} Ignoring leakage costs 0.1--1\,K; a 3--4 iteration fixed-point loop
         removes it in 22--33\us\ (steady state only, as HotSpot has no transient leakage).
 \end{itemize}
@@ -284,32 +339,29 @@ On one floorplan the complete model is 8{,}032\,B, a steady prediction takes 2.6
 transient step 3.5\us.
 
 %=====================================================================
-\section{Scorecard against our targets}
+\needspace{14\baselineskip}
+\section{Results}
+On the 24 given floorplans (Section~\ref{sec:gen} gives the generated ones):
 \begin{center}
 \small
-\begin{tabular}{@{}l l c c c@{}}
+\begin{tabular}{@{}l l c@{}}
 \toprule
-& Metric & Target & Achieved & Status \\
+& Metric & Achieved \\
 \midrule
-Steady & Mean error per block & $\le 0.1$\,K & 0.000006\,K & met \\
-& Error in the peak & $\le 0.2$\,K & 0.00003\,K & met \\
-& Hottest core right & $\ge 99\,\%$ & 100\,\% & met \\
-& Time per prediction & $\le 20$\us & 2.6\us & met \\
-& Model size & $\le 5$\,kB & 464--928\,B & met \\
-& Calibration runs & $\le 9$ & 8 (4\,s) & met \\
+Steady & Mean error & 0.000006\,K \\
+& Peak error & 0.00003\,K \\
+& Time & 2.6\us \\
+& Size & 928\,B \\
 \midrule
-Transient & Mean error over a trace & $\le 0.5$\,K & 0.06--0.09\,K & met \\
-& Error in the peak & $\le 1$\,K & 0.27--0.30\,K & met \\
-& Hottest core right & $\ge 95\,\%$ & 96\,\% (worst floorplan) & met \\
-& Time per step & $\le 50$\us & 3.1\us & met \\
-& Model size & $\le 50$\,kB & 3.7--4\,kB & met \\
-& Calibration time & $\le 2$\,min wall & $\approx 2.75$\,min & slightly over \\
+Transient & Mean error & 0.09\,K \\
+& Worst error & 0.30\,K \\
+& Time per step & 3.1\us \\
+& Size & 3.7\,kB \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-%=====================================================================
-\section{Verification approach}
+\textbf{Verification approach.}
 \begin{enumerate}
   \item Keep calibration and test data strictly separate.
   \item Stress-test beyond nominal conditions.
@@ -318,6 +370,7 @@ Transient & Mean error over a trace & $\le 0.5$\,K & 0.06--0.09\,K & met \\
 \end{enumerate}
 
 %=====================================================================
+\needspace{14\baselineskip}
 \section{What went as planned, and what deviated}
 All must-have deliverables were completed. The main deviations:
 \begin{center}
@@ -327,19 +380,16 @@ All must-have deliverables were completed. The main deviations:
 Item & Planned & Done, and why \\
 \midrule
 HotSpot build & Precision patch & Also faster transients and a memory-leak fix: long traces were impractical or crashed. \\
-Dataset & Our synthetic floorplans & The 23 given floorplans as the main set, plus 52 generated in the same styles. \\
-Hot spots & One hottest cell per core & Several candidate cells: the hot spot moves. \\
-Timing & One idle machine & One laptop, partly shared with HotSpot jobs. \\
+Dataset & Our synthetic floorplans & The 23 given floorplans as the main set, plus generated floorplans in the same styles (500 steady, 100 transient). \\
+Hot spots & One hottest cell per core & S1-hot-max over all cells of a core: exact, no extra runs, and the hot spot can move. \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-%=====================================================================
-\section{Limitations}
+\textbf{Limitations.}
 \begin{itemize}
   \item All results are against HotSpot, not silicon measurements.
-  \item Block-level models do not show hot spots inside a block, except through the candidate-cell
-        model.
+  \item Block-level models do not show hot spots inside a block, except through S1-hot-max.
   \item Leakage was tested in steady state only.
   \item A model is tied to its package: a new heat sink needs recalibration.
 \end{itemize}
@@ -349,7 +399,7 @@ Timing & One idle machine & One laptop, partly shared with HotSpot jobs. \\
 \textbf{Learnings.}
 \begin{enumerate}
   \item HotSpot is linear without leakage, so a matrix predictor can be exact.
-  \item Calibration is cheap (8 runs, 4\,s) and essential (0.5--2.7\,K without it): position
+  \item Calibration is cheap (8 runs, 4\,s) and essential (0.8--2.7\,K without it): position
         matters, not just core type.
   \item Core averages hide hot spots 3--9\,K hotter, and the hot spot moves.
   \item Heat moves on time scales from 1\,ms to 8\,s: one time constant fails, four suffice.
@@ -364,40 +414,74 @@ using the predictor inside a DTM controller; calibration from real sensor data.
 Feedback received during the presentation, and whether it was incorporated.
 \begin{center}
 \small
-\begin{tabular}{@{}p{0.6cm} p{6.5cm} p{2.2cm} p{5.2cm}@{}}
+\begin{tabular}{@{}p{0.6cm} p{5.5cm} p{2.2cm} p{6.2cm}@{}}
 \toprule
 \# & Feedback & Incorporated? & Action taken / reason \\
 \midrule
-1 & \todo{feedback} & \todo{yes/no} & \todo{what was changed, or why not} \\
-2 & & & \\
-3 & & & \\
+1 & Validate on more floorplans for the transient predictor & Yes & Validated the transient
+    predictor on 100 generated floorplans. \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 %=====================================================================
 \section{Submission contents and how to run}
+A short list of steps to download, build and run the predictor (install the tools, clone the
+repository with HotSpot, build the patched HotSpot, calibrate, predict, compare with HotSpot) is in
+the repository's \texttt{README.md}, under ``Try the predictor yourself''.
 \begin{itemize}
-  \item \texttt{reports/}: this report and the slides (PDF and \LaTeX\ source).
-  \item \texttt{src/}: implementation (\texttt{sim/} HotSpot tooling, \texttt{ltp/} predictor).
-  \item \texttt{experiments/}: one folder per experiment with \texttt{run.py}, README and results.
-  \item \texttt{tests/}, \texttt{setup/}, \texttt{configs/}, \texttt{data/}: unit tests, HotSpot
-        patches and build script, configurations, floorplans.
-  \item \texttt{README\_SETUP.md}: setup and run instructions; \texttt{docs/guide.html}: a guide
-        to every experiment.
+  \item \texttt{README.md}: overview, results, repository layout and the steps above.
+  \item \texttt{reports/}: the scope document and the Stage 2, 3 and 4 reports.
+  \item \texttt{presentations/}: the final presentation.
+  \item \texttt{src/ltp/}: the predictor.
+        \begin{itemize}
+          \item \texttt{calibrate.py}: the calibration stage; runs the 24 HotSpot runs (1\,W in one
+                core at a time) and extracts $G$ and the step responses.
+          \item \texttt{models.py}: the models: the influence matrix, the sum of exponentials and
+                the alternatives we compared (one time constant, ARX, compressed $G$).
+          \item \texttt{predictor.py}: the prediction stage; loads a model file and gives steady,
+                transient and forecast temperatures. Needs only NumPy.
+          \item \texttt{cli.py}: the command line (\texttt{python3 -m src.ltp calibrate / steady /
+                transient / forecast / bench}).
+          \item \texttt{bench.py}: measures the time per prediction.
+          \item \texttt{baselines.py}: power blurring, the predictor without calibration.
+        \end{itemize}
+  \item \texttt{src/sim/}: everything around HotSpot.
+        \begin{itemize}
+          \item \texttt{hotspot.py}: runs HotSpot on a floorplan and reads its output; every run
+                is cached.
+          \item \texttt{parallel.py}: runs many HotSpot jobs at once.
+          \item \texttt{floorplans.py}, \texttt{flpgen.py}: load the floorplans and write HotSpot
+                floorplan files.
+          \item \texttt{tagen.py}: generates new floorplans in the styles of the given ones.
+          \item \texttt{powergen.py}, \texttt{datasets.py}: power vectors and traces for
+                calibration and testing, and the HotSpot test sets made from them.
+          \item \texttt{gridmap.py}: maps HotSpot's grid cells to blocks (for S1-hot-max).
+          \item \texttt{stepper.py}: drives HotSpot one step at a time (closed-loop DTM).
+        \end{itemize}
+  \item \texttt{experiments/}: one folder per experiment with its script (\texttt{run.py}), README
+        and results. The validations on generated floorplans (Section~\ref{sec:gen}) are
+        \begin{itemize}
+          \item \texttt{extended\_validation\_s1/run.py}: steady, 500 floorplans
+                (results in \texttt{results\_500/});
+          \item \texttt{extended\_validation\_t3/run.py}: transient, 100 floorplans;
+          \item \texttt{extended\_validation/}: the first 52 floorplans and the maps of
+                Figure~\ref{fig:genmaps}.
+        \end{itemize}
+        Each is run with \texttt{bash experiments/run.sh <folder>} inside WSL.
+  \item \texttt{demo/}: live demo on a new floorplan and new power, HotSpot against the predictors.
+  \item \texttt{tests/}, \texttt{setup/}, \texttt{configs/}, \texttt{floorplans/}, \texttt{data/}:
+        unit tests, HotSpot patches and build script, configurations, our own floorplans, and the
+        given, generated and trace data.
+  \item \texttt{HotSpot/}: HotSpot source (git submodule, unmodified).
+  \item \texttt{docs/}: \texttt{setup.md} (setup and run instructions), \texttt{guide.html} (a guide
+        to every experiment), the plan and the literature review.
 \end{itemize}
-Inside WSL, from the repository root:
-{\small\begin{verbatim}
-bash setup/build_hotspot_ltp.sh                 # one time: build the patched HotSpot
-python3 tests/test_models.py                    # unit tests
-bash experiments/run.sh <experiment folder>     # run one experiment
-\end{verbatim}}
 
 %=====================================================================
 \section{LLM assistance disclosure}
 LLMs were used to understand HotSpot, for literature review to select appropriate models, to
-generate floorplans, to write calibration and testing scripts, and to create this document
-using \LaTeX.
+generate floorplans, and to write calibration and testing scripts.
 
 %=====================================================================
 \begin{thebibliography}{9}\small
@@ -405,10 +489,6 @@ using \LaTeX.
   Early-Stage VLSI Design,'' \emph{IEEE TVLSI} 14(5):501--513, 2006.
 \bibitem{hotspot4} W.~Huang et al., ``An Improved Block-Based Thermal Model in HotSpot 4.0 with
   Granularity Considerations,'' WDDD 2007.
-\bibitem{matex} S.~Pagani, J.-J.~Chen, M.~Shafique, J.~Henkel, ``MatEx: Efficient Transient and
-  Peak Temperature Computation for Compact Thermal Models,'' DATE 2015.
-\bibitem{sharifi08} S.~Sharifi, C.~Liu, T.~S.~Rosing, ``Accurate Temperature Estimation for
-  Efficient Thermal Management,'' ISQED 2008.
 \bibitem{blurring} A.~Ziabari et al., ``Power Blurring: Fast Static and Transient Thermal Analysis
   Method for Packaged Integrated Circuits and Power Devices,'' \emph{IEEE TVLSI} 22(11):2366--2379,
   2014.

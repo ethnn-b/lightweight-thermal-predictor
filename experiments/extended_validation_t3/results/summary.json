@@ -1,0 +1,79 @@
+{
+ "floorplans": 100,
+ "per_style": 25,
+ "model": "T3 M=4",
+ "summary": [
+  {
+   "style": "Style_1",
+   "floorplans": 25,
+   "t3_mae_K_mean": 0.10984198416823357,
+   "t3_mae_K_worst": 0.12865826732106803,
+   "t3_max_K_worst": 0.3395477291435327,
+   "t3_peak_err_K_worst": 0.3013374270211102,
+   "t3_hottest_acc_min": 0.9645,
+   "t3_time_us_per_step": 3.2317960000014523,
+   "calib_hotspot_cpu_s_mean": 777.33967772796
+  },
+  {
+   "style": "Style_2",
+   "floorplans": 25,
+   "t3_mae_K_mean": 0.11672083128770563,
+   "t3_mae_K_worst": 0.15816910012133092,
+   "t3_max_K_worst": 0.32298880130650787,
+   "t3_peak_err_K_worst": 0.31229206907272555,
+   "t3_hottest_acc_min": 0.9735,
+   "t3_time_us_per_step": 3.215642500094873,
+   "calib_hotspot_cpu_s_mean": 786.2111135818002
+  },
+  {
+   "style": "Style_3",
+   "floorplans": 25,
+   "t3_mae_K_mean": 0.08571858724452146,
+   "t3_mae_K_worst": 0.1082989855558237,
+   "t3_max_K_worst": 0.31259082056465104,
+   "t3_peak_err_K_worst": 0.2313756099473494,
+   "t3_hottest_acc_min": 0.8845,
+   "t3_time_us_per_step": 3.255541999806155,
+   "calib_hotspot_cpu_s_mean": 787.0384733738803
+  },
+  {
+   "style": "Style_4",
+   "floorplans": 25,
+   "t3_mae_K_mean": 0.05629203901916648,
+   "t3_mae_K_worst": 0.07022631546430182,
+   "t3_max_K_worst": 0.33934282493163437,
+   "t3_peak_err_K_worst": 0.2810976114627124,
+   "t3_hottest_acc_min": 0.9355,
+   "t3_time_us_per_step": 3.2964325000648387,
+   "calib_hotspot_cpu_s_mean": 795.69239874488
+  },
+  {
+   "style": "all",
+   "floorplans": 100,
+   "t3_mae_K_mean": 0.09214336042990681,
+   "t3_mae_K_worst": 0.15816910012133092,
+   "t3_max_K_worst": 0.3395477291435327,
+   "t3_peak_err_K_worst": 0.31229206907272555,
+   "t3_hottest_acc_min": 0.8845,
+   "t3_time_us_per_step": 3.2673470001327587,
+   "calib_hotspot_cpu_s_mean": 786.5704158571301
+  }
+ ],
+ "reference": {
+  "TA": {
+   "t3_mae_K": 0.09,
+   "t3_max_K": 0.3
+  },
+  "EV52": {
+   "t3_mae_K": 0.0909,
+   "t3_max_K": 0.34
+  }
+ },
+ "phase_wall_s": {
+  "calibration": 4777.9442471209995,
+  "transient_test": 207.66806967099984,
+  "evaluation": 8.233596994000465
+ },
+ "total_wall_s": 4997.2566034110005,
+ "workers": 8
+}

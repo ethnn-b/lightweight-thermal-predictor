@@ -246,11 +246,17 @@ footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--li
       <li class="sub"><a href="#p3-3">P3-3 Trade-offs</a></li>
       <li class="sub"><a href="#p3-4">P3-4 Exact model (T4)</a></li>
       <li><a href="#ev">EV · Extended validation</a></li>
+      <li class="sub"><a href="#ev-1">EV-1 52 floorplans</a></li>
+      <li class="sub"><a href="#ev-2">EV-2 Heatmaps</a></li>
+      <li class="sub"><a href="#ev-3">EV-3 S1 on 500</a></li>
+      <li class="sub"><a href="#ev-4">EV-4 T3 on 100</a></li>
       <li><a href="#p4">P4 · Robustness</a></li>
       <li class="sub"><a href="#p4-1">P4-1 Unusual inputs</a></li>
       <li class="sub"><a href="#p4-2">P4-2 Package change</a></li>
       <li class="sub"><a href="#p4-3">P4-3 Leakage</a></li>
       <li><a href="#p5">P5 · The product</a></li>
+      <li class="sub"><a href="#p5-1">P5-1 Commands</a></li>
+      <li class="sub"><a href="#p5-2">P5-2 Demo</a></li>
       <li><a href="#p6">P6 · Proactive DTM</a></li>
       <li class="sub"><a href="#p6-1">P6-1 Closed loop</a></li>
       <li class="sub"><a href="#p6-2">P6-2 DTM</a></li>
@@ -260,6 +266,7 @@ footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--li
       <li><a href="#open">Open items</a></li>
       <li><a href="#refs">References</a></li>
       <li><a href="#glossary">Glossary</a></li>
+      <li><a href="#deliverables">Reports and presentation</a></li>
       <li><a href="#repo">Where things are</a></li>
     </ol>
   </details>
@@ -271,7 +278,7 @@ footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--li
   <p class="eyebrow">Course project · Thermal management · Master guide</p>
   <h1>A lightweight temperature predictor: <em>calibrate once, predict fast</em></h1>
   <p class="lede">This guide explains the whole project in plain language. It covers the problem, the background ideas, the data, the models, and every experiment from P0 to P6, with what each one found. You don't need to know thermal simulation to follow it.</p>
-  <p class="meta">Branch <code>e/p0-p1</code> · results as of 30–31 Oct 2026 · built from every <code>experiments/*/README.md</code>, <code>docs/plan.md</code> and <code>docs/dataset.md</code></p>
+  <p class="meta">Branch <code>main</code> · results as of 22 Nov 2026 (main experiments 30–31 Oct; extended validation on 500 and 100 generated floorplans, demo and Stage 4 report in Nov) · built from every <code>experiments/*/README.md</code>, <code>demo/README.md</code>, <code>docs/plan.md</code> and <code>docs/dataset.md</code></p>
 </header>
 
 <!-- ============================================================ OVERVIEW -->
@@ -322,6 +329,7 @@ footer.end { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--li
   </div>
   <div class="prose">
     <p>And one finding that justifies the whole “calibrate per floorplan” idea: <b>every method that skips calibration is 0.5–2.7 K off on average and up to 12 K in the worst case</b>, even when the cores and power are identical and only the layout changes (P1-3).</p>
+    <p>And one that shows the models were not tuned to the TA's floorplans: on floorplans we generated afterwards, <b>S1 stays exact on all 500 and T3 averages 0.092 K on 100</b>, the same as on the TA floorplans (<a href="#ev">EV</a>).</p>
   </div>
 </section>
 
@@ -1207,8 +1215,18 @@ e_i = T_{\text{model},i} - T_{\text{HotSpot},i} \qquad (\text{in K; cores only, 
 
 <!-- ============================================================ Extended validation -->
 <section class="part" id="ev">
-  <div class="phase-head"><h2><span class="num">EV</span>Extended validation: 52 generated floorplans</h2></div>
-  <p class="intro">Everything so far was judged on the 23 TA floorplans. Does S1 and T3 hold up on floorplans we generated ourselves, with different shapes and sizes?</p>
+  <div class="phase-head"><h2><span class="num">EV</span>Extended validation: generated floorplans</h2></div>
+  <p class="intro">Everything so far was judged on the 23 TA floorplans. Do S1 and T3 hold up on floorplans we generated ourselves, with different shapes and sizes? First on 52 (EV-1, EV-2), then on 500 for S1 (EV-3) and 100 for T3 (EV-4).</p>
+  <div class="tw"><table>
+    <thead><tr><th>Set</th><th class="n">S1 mean</th><th class="n">S1 worst</th><th class="n">T3 mean</th><th class="n">T3 worst</th></tr></thead>
+    <tbody>
+      <tr><td>TA floorplans (24)</td><td class="n">6e-6 K</td><td class="n">3e-5 K</td><td class="n">0.090 K</td><td class="n">0.30 K</td></tr>
+      <tr><td>52 generated (EV-1)</td><td class="n">6.5e-6 K</td><td class="n">3.4e-5 K</td><td class="n">0.091 K</td><td class="n">0.34 K</td></tr>
+      <tr class="hl"><td>500 generated, S1 only (EV-3)</td><td class="n">6.9e-6 K</td><td class="n">3.6e-5 K</td><td class="n">–</td><td class="n">–</td></tr>
+      <tr class="hl"><td>100 generated, T3 only (EV-4)</td><td class="n">–</td><td class="n">–</td><td class="n">0.092 K</td><td class="n">0.34 K</td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">The generator is deterministic, so the 52 are the first 13 per style of the 500, and the 100 are the first 25 per style.</p>
 
   <article class="exp" id="ev-1">
     <header><span class="id">EV-1</span><h3>S1 and T3 (M = 4) on 52 generated floorplans</h3></header>
@@ -1236,7 +1254,7 @@ e_i = T_{\text{model},i} - T_{\text{HotSpot},i} \qquad (\text{in K; cores only, 
     </ul></div>
     <figure><div class="plate"><img src="../experiments/extended_validation/results/error_by_style.png" alt="Error of S1 and T3 on each generated floorplan, grouped by style, with the TA reference." loading="lazy"></div><figcaption>One dot per floorplan; black bar = median; red line = TA floorplans. Log scale.</figcaption></figure>
     <p class="takeaway"><b>In one line:</b> S1 and T3 were not tuned to the TA floorplans: on 52 floorplans we generated, they are as accurate as before.</p>
-    <p class="src">Folder: <code>experiments/extended_validation/</code> (local only, not pushed). Only the 2 s test trace was used here, and two generated floorplans are rotated copies of TA ones (see the folder's README).</p>
+    <p class="src">Folder: <code>experiments/extended_validation/</code>. Only the 2 s test trace was used here, and two generated floorplans are rotated copies of TA ones (see the folder's README).</p>
   </article>
 
   <article class="exp" id="ev-2">
@@ -1285,6 +1303,63 @@ e_i = T_{\text{model},i} - T_{\text{HotSpot},i} \qquad (\text{in K; cores only, 
     </ul></div>
     <p class="takeaway"><b>In one line:</b> to the eye, S1 reproduces HotSpot's block temperatures exactly and T3 follows its traces closely; what neither shows is the hot spot inside a block.</p>
     <p class="src">Folder: <code>experiments/extended_validation/</code> (<code>maps.py</code>, <code>maps_time.py</code>, <code>results/heatmaps.png</code>, <code>results/transient_check.png</code>, <code>results/heatmaps_t3_time_*.png</code>, <code>results/t3_error_over_time.png</code>, <code>results/heatmaps_summary.csv</code>, <code>results/heatmaps_time_summary.csv</code>).</p>
+  </article>
+
+  <article class="exp" id="ev-3">
+    <header><span class="id">EV-3</span><h3>S1 on 500 generated floorplans</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Does S1's accuracy on the 52 floorplans hold on a much larger generated set?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>125 floorplans per style from the generator (<code>gen_001</code> to <code>gen_125</code>; the first 13 per style are the 52 of EV-1). Each was calibrated from its 8 steady unit runs and tested against HotSpot on 15 steady power vectors (TA nominal, TA maximum and 13 random within the TA ranges). Fewer vectors than EV-1's 302 keep the run short; since S1 and HotSpot are both linear, more vectors add little (the 52 gave the same errors with 302). 11.7 min with 20 workers. A 200-floorplan run (50 per style) came first and gave the same result.</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Style</th><th class="n">Floorplans (distinct)</th><th class="n">S1 mean</th><th class="n">Worst mean (one floorplan)</th><th class="n">S1 worst</th><th class="n">Hottest core right (min)</th></tr></thead>
+      <tbody>
+        <tr><td>Style_1</td><td class="n">125 (75)</td><td class="n">7.0e-6 K</td><td class="n">1.3e-5 K</td><td class="n">3.4e-5 K</td><td class="n">100 %</td></tr>
+        <tr><td>Style_2</td><td class="n">125 (121)</td><td class="n">6.8e-6 K</td><td class="n">1.2e-5 K</td><td class="n">3.3e-5 K</td><td class="n">100 %</td></tr>
+        <tr><td>Style_3</td><td class="n">125 (123)</td><td class="n">7.0e-6 K</td><td class="n">1.2e-5 K</td><td class="n">3.1e-5 K</td><td class="n">100 %</td></tr>
+        <tr><td>Style_4</td><td class="n">125 (125)</td><td class="n">6.8e-6 K</td><td class="n">1.1e-5 K</td><td class="n">3.6e-5 K</td><td class="n">100 %</td></tr>
+        <tr class="hl"><td><b>All</b></td><td class="n">500 (444)</td><td class="n">6.9e-6 K</td><td class="n">1.3e-5 K</td><td class="n">3.6e-5 K</td><td class="n">100 %</td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>S1 is exact on every one of the 500 floorplans</b>: mean 6.9e-6 K and worst 3.6e-5 K, HotSpot's six-decimal rounding, the same as on the 52 and the TA floorplans. No style and no single floorplan stands out.</li>
+      <li><b>It always picks the right hottest core</b>, for every test vector on every floorplan.</li>
+      <li><b>Some generated layouts repeat</b> (up to a rotation or mirror): 444 of the 500 are distinct, and all repeats are in Style_1, whose layout rules allow few arrangements (75 distinct of 125). The conclusion does not change.</li>
+      <li>Model size 640–1,856 B, growing with the number of blocks. Prediction 2.2 µs (median, on a loaded machine; 1.2 µs in the quiet 52-floorplan run).</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/extended_validation_s1/results_500/error_by_style.png" alt="S1 mean and worst error on each of the 500 generated floorplans, grouped by style." loading="lazy"></div><figcaption>One dot per floorplan, grouped by style; black bar = median.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> on 500 floorplans S1 is as exact as on the 23 it was designed with.</p>
+    <p class="src">Folder: <code>experiments/extended_validation_s1/</code> (<code>results/</code> for 200 floorplans, <code>results_500/</code> for 500; run with <code>--per-style 125</code>).</p>
+  </article>
+
+  <article class="exp" id="ev-4">
+    <header><span class="id">EV-4</span><h3>T3 (M = 4) on 100 generated floorplans</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Does T3's accuracy on the 52 floorplans of EV-1 hold on a larger set? (S1 is covered by EV-3, so only T3 is tested.)</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd>The first 25 floorplans per style of EV-3's 500 (<code>gen_001</code> to <code>gen_025</code>): the 52 of EV-1 plus 48 new ones. Each was calibrated with all 24 runs (8 steady unit runs give G, 16 step responses give the exponentials) and tested against HotSpot on one 2 s phase trace from a cold chip, as in EV-1. 83 min on a laptop with 8 workers (80 min of it calibration; the 52 were already cached, about 2.5 h from scratch).</dd></div>
+    </dl>
+    <div class="tw"><table>
+      <thead><tr><th>Style</th><th class="n">Floorplans</th><th class="n">T3 mean</th><th class="n">Worst mean (one floorplan)</th><th class="n">T3 worst</th><th class="n">Worst peak error</th><th class="n">Hottest core right (min)</th></tr></thead>
+      <tbody>
+        <tr><td>Style_1</td><td class="n">25</td><td class="n">0.110 K</td><td class="n">0.129 K</td><td class="n">0.34 K</td><td class="n">0.30 K</td><td class="n">96 %</td></tr>
+        <tr><td>Style_2</td><td class="n">25</td><td class="n">0.117 K</td><td class="n">0.158 K</td><td class="n">0.32 K</td><td class="n">0.31 K</td><td class="n">97 %</td></tr>
+        <tr><td>Style_3</td><td class="n">25</td><td class="n">0.086 K</td><td class="n">0.108 K</td><td class="n">0.31 K</td><td class="n">0.23 K</td><td class="n">88 %</td></tr>
+        <tr><td>Style_4</td><td class="n">25</td><td class="n">0.056 K</td><td class="n">0.070 K</td><td class="n">0.34 K</td><td class="n">0.28 K</td><td class="n">94 %</td></tr>
+        <tr class="hl"><td><b>All 100</b></td><td class="n">100</td><td class="n">0.092 K</td><td class="n">0.158 K</td><td class="n">0.34 K</td><td class="n">0.31 K</td><td class="n">88 %</td></tr>
+        <tr><td><i>The 52 of EV-1</i></td><td class="n"><i>52</i></td><td class="n"><i>0.091 K</i></td><td class="n"></td><td class="n"><i>0.34 K</i></td><td class="n"><i>0.30 K</i></td><td class="n"><i>88 %</i></td></tr>
+        <tr><td><i>The 48 new ones</i></td><td class="n"><i>48</i></td><td class="n"><i>0.094 K</i></td><td class="n"></td><td class="n"><i>0.34 K</i></td><td class="n"></td><td class="n"></td></tr>
+      </tbody>
+    </table></div>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>T3's accuracy holds on 100 floorplans</b>: mean 0.092 K, worst 0.34 K, the same as on the 52 (0.091 K) and the TA floorplans (0.090 K). The 48 new floorplans alone give 0.094 K, so the 52 were not a lucky sample.</li>
+      <li><b>The style pattern holds</b>: Style_4 is most accurate (0.056 K), Style_2 least (0.117 K). The worst single floorplan is <code>g2_gen019</code> (0.158 K mean).</li>
+      <li><b>10 of the 100 have a worst error just above 0.30 K</b> (0.300–0.340 K); the worst peak-temperature error is 0.31 K.</li>
+      <li><b>Hottest core right in at least 88 % of steps</b> (<code>g3_gen009</code>, as in EV-1): cores within T3's error of each other get swapped.</li>
+      <li>95 of the 100 layouts are distinct (repeats in Style_1 only); each floorplan still gets its own test trace. Model size 2.6–7.2 kB, 3.3 µs per step.</li>
+    </ul></div>
+    <figure><div class="plate"><img src="../experiments/extended_validation_t3/results/error_by_style.png" alt="T3 mean and worst error on each of the 100 generated floorplans, grouped by style, with the TA reference line." loading="lazy"></div><figcaption>One dot per floorplan; black bar = median; red line = TA floorplans.</figcaption></figure>
+    <p class="takeaway"><b>In one line:</b> T3 is as accurate on 100 generated floorplans as on the TA ones. This was done after the final presentation, in answer to its feedback.</p>
+    <p class="src">Folder: <code>experiments/extended_validation_t3/</code> (<code>--per-style N</code> runs 4N floorplans into <code>results_&lt;4N&gt;/</code>). Limits: one 2 s test trace per floorplan.</p>
   </article>
 </section>
 
@@ -1434,6 +1509,28 @@ z = p.run_state(P_history, dt=1e-3)                  # internal state after the 
 T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)   # next steps, anchored on the sensors</code></pre>
     <p>7 unit tests (<code>python3 tests/test_models.py</code>) all pass. Not done: a pip-installable package and a <code>--model T2</code> option.</p>
     <p class="src">Folder: <code>experiments/P5-1_ltp_package/</code> · code in <code>src/ltp/</code></p>
+  </article>
+
+  <article class="exp" id="p5-2">
+    <header><span class="id">P5-2</span><h3>Demo: a brand-new floorplan, end to end</h3></header>
+    <dl class="qa">
+      <div style="display:contents"><dt>Question</dt><dd>Can someone take a floorplan nobody has seen, calibrate it and get predictions that match HotSpot, using only the commands above?</dd></div>
+      <div style="display:contents"><dt>What we did</dt><dd><code>demo/</code> generates a new floorplan in a chosen style and seed, a new steady power vector and a new 2 s transient power trace, runs HotSpot on them, calibrates the predictor (24 HotSpot runs, about 2 min), predicts with S1 and T3, and draws the comparison. Shown here: Style 4, seed 2615 (<code>demo_s4_2615</code>, 14×14 mm, 69 W steady). This is the demo used in the Stage 4 report (Section 8.1).</dd></div>
+    </dl>
+<pre><code># one command (inside WSL)
+bash demo/run_demo.sh --style 4 --seed 2615
+# or step by step: see demo/README.md</code></pre>
+    <figure><div class="plate"><img src="../reports/figures/demo_s4_2615/1_floorplan.png" alt="The demo floorplan: 14 by 14 mm with two big and six little cores." loading="lazy"></div><figcaption>The new floorplan (B: big core, L: little core).</figcaption></figure>
+    <figure><div class="plate"><img src="../reports/figures/demo_s4_2615/2_steady_power_map.png" alt="Steady power of each core drawn on the floorplan, 69 W in total." loading="lazy"></div><figcaption>New steady power on the floorplan (69 W in total).</figcaption></figure>
+    <figure><div class="plate"><img src="../reports/figures/demo_s4_2615/2_power_trace.png" alt="The new 2 s transient power trace of the eight cores." loading="lazy"></div><figcaption>New 2 s transient power trace.</figcaption></figure>
+    <figure><div class="plate"><img src="../reports/figures/demo_s4_2615/3_steady_maps.png" alt="Steady state: HotSpot grid map, HotSpot block averages, S1 prediction and the difference in micro-kelvin." loading="lazy"></div><figcaption>Steady state: HotSpot's 64×64 map, its block averages, S1, and S1 minus HotSpot (µK).</figcaption></figure>
+    <figure><div class="plate"><img src="../reports/figures/demo_s4_2615/5_transient_over_time.png" alt="Core temperatures over 2 s, HotSpot solid and T3 dashed, with the worst core error below." loading="lazy"></div><figcaption>Every core over the 2 s trace: HotSpot (solid) and T3 (dashed), and the worst core error per step.</figcaption></figure>
+    <div class="found"><h4>What we found</h4><ul>
+      <li><b>Steady:</b> S1 is within 7e-6 K of HotSpot on every core, in 2.1 µs, and names the same hottest core (C6, 67.02 °C).</li>
+      <li><b>Transient:</b> T3 follows HotSpot over the whole trace, 0.063 K mean and 0.25 K worst, 5.6 µs per step, and names the same hottest core at the end (C7).</li>
+      <li>The complete model file is 8,032 B.</li>
+    </ul></div>
+    <p class="src">Folder: <code>demo/</code> (outputs go to <code>demo/output/&lt;name&gt;/</code>, not in Git; the figures above are copied to <code>reports/figures/demo_s4_2615/</code>).</p>
   </article>
 </section>
 
@@ -1621,23 +1718,47 @@ T_next = p.forecast(T_sensors, z, P_plan, dt=1e-3)   # next steps, anchored on t
   </dl>
 </section>
 
+<!-- ============================================================ DELIVERABLES -->
+<section class="part" id="deliverables">
+  <h2>Reports and presentation</h2>
+  <div class="tw"><table>
+    <thead><tr><th>Stage</th><th>File</th><th>What it covers</th></tr></thead>
+    <tbody>
+      <tr><td>Scope</td><td><code>reports/Scope_Document.pdf</code> (<code>scope.tex</code>)</td><td>Problem, plan and targets</td></tr>
+      <tr><td>Stage 2</td><td><code>reports/stage2.pdf</code></td><td>Steady predictor, calibration study, first transient results</td></tr>
+      <tr><td>Stage 3</td><td><code>reports/stage3.pdf</code></td><td>Transient predictor, trade-offs, first extended validation</td></tr>
+      <tr><td>Final presentation</td><td><code>presentations/ME23BTECH11036_CE23BTECH11019.pdf</code> (<code>presentation.tex</code>)</td><td>Results on the 24 given floorplans, S1 on 500 and T3 on 52 generated ones, the <code>ltp</code> demo</td></tr>
+      <tr class="hl"><td>Stage 4 (final)</td><td><code>reports/stage4.pdf</code> (<code>stage4.tex</code>)</td><td>The whole project; validation on 500 (S1) and 100 (T3) generated floorplans; the demo (P5-2); presentation feedback</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <p><b>Presentation feedback.</b> “Validate on more floorplans for the transient predictor”: done after the presentation, T3 on 100 generated floorplans (<a href="#ev-4">EV-4</a>).</p>
+  </div>
+</section>
+
 <!-- ============================================================ REPO -->
 <section class="part" id="repo">
   <h2>Where things are</h2>
   <div class="tw"><table>
     <thead><tr><th>Path</th><th>What it holds</th></tr></thead>
     <tbody>
+      <tr><td><code>README.md</code></td><td>Overview, results and repository layout</td></tr>
+      <tr><td><code>docs/setup.md</code></td><td>Setup and run instructions</td></tr>
       <tr><td><code>docs/plan.md</code></td><td>The project plan, targets (§1.4), experiments (§5) and status (§15)</td></tr>
       <tr><td><code>docs/dataset.md</code></td><td>The TA dataset and the two papers</td></tr>
       <tr><td><code>docs/PROGRESS.md</code></td><td>Dated log of results</td></tr>
       <tr><td><code>experiments/README.md</code></td><td>Index of all experiments with one-line results</td></tr>
       <tr><td><code>experiments/&lt;ID&gt;_&lt;name&gt;/</code></td><td><code>run.py</code>, <code>README.md</code>, <code>results/</code> for each experiment</td></tr>
+      <tr><td><code>experiments/extended_validation*/</code></td><td>Validation on generated floorplans: 52 (S1 and T3), 500 (<code>_s1</code>) and 100 (<code>_t3</code>)</td></tr>
+      <tr><td><code>demo/</code></td><td>End-to-end demo on a new floorplan and new power (P5-2)</td></tr>
+      <tr><td><code>reports/</code>, <code>presentations/</code></td><td>Scope document, Stage 2–4 reports and the final presentation (PDF and LaTeX)</td></tr>
+      <tr><td><code>HotSpot/</code></td><td>HotSpot source (git submodule, unmodified)</td></tr>
       <tr><td><code>setup/</code></td><td>Script and patches that build the improved HotSpot</td></tr>
       <tr><td><code>configs/</code></td><td>HotSpot configs (grid 64×64 and block)</td></tr>
       <tr><td><code>src/sim/</code></td><td>HotSpot runner, floorplans, power generators, parallel runs, stepper, floorplan generator</td></tr>
       <tr><td><code>src/ltp/</code></td><td>The predictor: models, calibration, <code>Predictor</code>, command line</td></tr>
       <tr><td><code>tests/test_models.py</code></td><td>7 unit tests</td></tr>
-      <tr><td><code>data/sample_dataset/</code>, <code>data/generated/</code></td><td>TA floorplans and our 40 generated ones</td></tr>
+      <tr><td><code>data/sample_dataset/</code>, <code>data/generated/</code></td><td>TA floorplans and our 500 generated ones (125 per style)</td></tr>
       <tr><td><code>data/generated_traces/</code></td><td>Our 38 transient power traces with HotSpot's temperatures, plus HotSpot inputs/outputs from P0-4, P4-1, P6-1 and P6-2 (copied from <code>~/ltp_runs</code>; local only, about 183 MB, not in Git)</td></tr>
     </tbody>
   </table></div>
@@ -1654,7 +1775,7 @@ bash experiments/run.sh P2-1_steady_predictor
 </section>
 
 <footer class="end">
-  Compiled from the experiment READMEs, <code>docs/plan.md</code> and <code>docs/dataset.md</code> on branch <code>e/p0-p1</code>. Every number here comes from those files; see each experiment's folder for full tables and raw results.
+  Compiled from the experiment READMEs, <code>demo/README.md</code>, <code>docs/plan.md</code> and <code>docs/dataset.md</code> on branch <code>main</code>. Every number here comes from those files; see each experiment's folder for full tables and raw results.
 </footer>
 
 </main>

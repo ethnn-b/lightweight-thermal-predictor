@@ -1,0 +1,18 @@
+100 floorplans (25 per style) in 9 batches of up to 12, T3 M = 4 only
+batch 1/9 done: 12 floorplans, 0.1 min elapsed, about 1 min left
+batch 2/9 done: 24 floorplans, 18.7 min elapsed, about 59 min left
+batch 3/9 done: 36 floorplans, 20.6 min elapsed, about 37 min left
+batch 4/9 done: 48 floorplans, 37.9 min elapsed, about 41 min left
+batch 5/9 done: 60 floorplans, 41.6 min elapsed, about 28 min left
+batch 6/9 done: 72 floorplans, 57.2 min elapsed, about 22 min left
+batch 7/9 done: 84 floorplans, 62.5 min elapsed, about 12 min left
+batch 8/9 done: 96 floorplans, 76.3 min elapsed, about 3 min left
+batch 9/9 done: 100 floorplans, 83.3 min elapsed, about 0 min left
+| style | floorplans | t3_mae_K_mean | t3_mae_K_worst | t3_max_K_worst | t3_peak_err_K_worst | t3_hottest_acc_min | t3_time_us_per_step | calib_hotspot_cpu_s_mean |
+|---|---|---|---|---|---|---|---|---|
+| Style_1 | 25 | 0.11 | 0.129 | 0.34 | 0.301 | 0.965 | 3.23 | 777 |
+| Style_2 | 25 | 0.117 | 0.158 | 0.323 | 0.312 | 0.974 | 3.22 | 786 |
+| Style_3 | 25 | 0.0857 | 0.108 | 0.313 | 0.231 | 0.884 | 3.26 | 787 |
+| Style_4 | 25 | 0.0563 | 0.0702 | 0.339 | 0.281 | 0.935 | 3.3 | 796 |
+| all | 100 | 0.0921 | 0.158 | 0.34 | 0.312 | 0.884 | 3.27 | 787 |
+{'calibration': 4778, 'transient_test': 208, 'evaluation': 8} total 83.3 min

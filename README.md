@@ -35,7 +35,8 @@ HotSpot without leakage is linear in power, so the models are exact or nearly ex
 
 Every steady and transient target in our scorecard was met. The one exception is calibration
 time, which is about 2.75 min against a 2 min target. Results were checked on the TAs' 23
-floorplans and on 52 floorplans generated afterwards. The full scorecard is in
+floorplans and on floorplans generated afterwards: 500 for the steady predictor and 100 for the
+transient one. The full scorecard is in
 [`reports/stage4.tex`](reports/stage4.tex).
 
 ## Repository layout
@@ -52,7 +53,7 @@ floorplans and on 52 floorplans generated afterwards. The full scorecard is in
 | [`setup/`](setup/) | Script and patch for our faster HotSpot build. `example1/` is the first HotSpot sanity run (P0-1) |
 | [`HotSpot/`](HotSpot/) | HotSpot source (git submodule, unmodified) |
 | [`docs/`](docs/) | Documentation (see below) |
-| [`reports/`](reports/) | Scope document and the Stage 2, 3 and 4 reports (LaTeX and PDF). `archive/` holds older versions |
+| [`reports/`](reports/) | Scope document and the Stage 2, 3 and 4 reports (LaTeX and PDF) |
 | [`presentations/`](presentations/) | Final presentation (Beamer) |
 
 ### Documentation
@@ -67,32 +68,69 @@ floorplans and on 52 floorplans generated afterwards. The full scorecard is in
 | [`docs/setup.md`](docs/setup.md) | WSL and HotSpot setup, and the example1 run |
 | [`docs/PROGRESS.md`](docs/PROGRESS.md) | Dated log of who did what |
 
-## Quick start
+## Try the predictor yourself
 
-Everything runs in WSL (Ubuntu) from the repo root. Needs Python 3 with NumPy, SciPy and
-Matplotlib, and `build-essential`.
+Calibration runs HotSpot, a Linux program, so you need Linux or WSL (Ubuntu) on Windows, and this
+repository. Prediction itself needs only NumPy and the model file that calibration writes.
+
+1. **Windows only: install WSL.** In PowerShell as administrator, run `wsl --install -d Ubuntu`,
+   restart, and open "Ubuntu". Run every later step in that Ubuntu terminal.
+2. **Install the tools** (compiler, HotSpot's solver libraries, Python packages):
+   ```bash
+   sudo apt update
+   sudo apt install -y git build-essential libsuperlu-dev libblas-dev python3-numpy python3-scipy python3-matplotlib
+   ```
+3. **Download this repository together with HotSpot** (into the Linux home folder, where file
+   access is fast):
+   ```bash
+   cd ~
+   git clone --recurse-submodules https://github.com/ethnn-b/lightweight-thermal-predictor.git
+   cd lightweight-thermal-predictor
+   ```
+4. **Build our patched HotSpot** (once, about a minute; it prints 6 decimals instead of 2):
+   ```bash
+   HOTSPOT_SRC=$PWD/HotSpot bash setup/build_hotspot_ltp.sh
+   ```
+5. **Calibrate** on one of the TA floorplans (24 HotSpot runs, a few minutes):
+   ```bash
+   python3 -m src.ltp calibrate s4_fp001 -o model.npz
+   ```
+6. **Predict** steady temperatures for any power per core (W, cores in order Core_0..Core_7), or
+   temperatures over time for a power trace:
+   ```bash
+   python3 -m src.ltp steady model.npz --power 20,20,8,8,8,8,8,8
+   python3 -m src.ltp transient model.npz --ptrace data/sample_dataset/2D_floorplans/Style_4/fp_001/fp_001_transient.ptrace -o out.ttrace
+   ```
+7. **Check it against HotSpot** (accuracy, time per prediction, model size):
+   ```bash
+   python3 -m src.ltp bench model.npz s4_fp001
+   ```
+8. **Or run the whole demo** on a floorplan nobody has seen: a new floorplan and power, HotSpot,
+   calibration, prediction and comparison plots in `demo/output/<name>/`:
+   ```bash
+   bash demo/run_demo.sh --style 4 --seed 2615
+   ```
+
+Once you have a `model.npz`, prediction works anywhere with Python and NumPy, without HotSpot or
+the rest of the repository: copy `model.npz` and [`src/ltp/predictor.py`](src/ltp/predictor.py)
+and use `Predictor` as shown below.
+
+## Quick start (for developers)
+
+Everything runs in WSL (Ubuntu) from the repo root, after steps 1–4 above.
 
 ```bash
-git submodule update --init                 # HotSpot source
-bash setup/build_hotspot_ltp.sh             # patched HotSpot -> ~/projects/HotSpot-ltp/hotspot
-
-# calibrate on a floorplan, then predict
-python3 -m src.ltp calibrate s4_fp001 -o model.npz
-python3 -m src.ltp steady    model.npz --power 20,20,8,8,8,8,8,8
-python3 -m src.ltp transient model.npz --ptrace <file.ptrace> --dt 0.001 -o out.ttrace
-python3 -m src.ltp bench     model.npz s4_fp001   # accuracy, time and size against HotSpot
-
 python3 tests/test_models.py                # unit tests
-bash demo/run_demo.sh                       # live demo on a floorplan never seen before
 bash experiments/run.sh P2-1_steady_predictor   # rerun any experiment
 ```
 
 From Python:
 
 ```python
-from src.ltp.predictor import Predictor
+from src.ltp.predictor import Predictor     # or `from predictor import Predictor` with the copied file
 p = Predictor.load("model.npz")
 T = p.steady([20, 20, 8, 8, 8, 8, 8, 8])     # kelvin, every block
+T_t = p.transient(P_trace, dt=1e-3)          # P_trace: one row of core powers (W) per 1 ms step
 ```
 
 HotSpot runs and calibrations are cached in `~/ltp_runs/` inside WSL, so reruns only redo the

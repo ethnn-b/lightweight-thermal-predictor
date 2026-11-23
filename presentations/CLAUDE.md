@@ -11,7 +11,7 @@ The current deck is `presentation.tex` (about 25 slides, a 10-12 minute talk).
 - Sources:
   1. `reports/stage2.tex`: data, reference checks, S0, S1, S2 (low rank), calibration-free
      methods, hot spots (S1-hot-max).
-  2. `reports/stage3_v5.tex` (the final Stage 3 report): T1, T2 ARX, T3, trade-offs, the 52
+  2. `reports/stage3.tex` (the final Stage 3 report): T1, T2 ARX, T3, trade-offs, the 52
      generated floorplans, robustness, leakage.
   3. Stage 4: only the `ltp` tool. Every other topic must come from Stage 2 or Stage 3.
 - Where Stage 3 v5 and older versions differ, follow v5 (for example: no task migration,
