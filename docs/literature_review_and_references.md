@@ -508,16 +508,4 @@ the cached runs take minutes.
 - For scale, S1 alone is 8 runs, and T3 (24 runs) is about 70× the HotSpot time of S1 alone, so
   S1 is the cheap model and T3 and T2 are where the calibration time goes.
 
----
 
-## B10. Gaps to close before the report
-
-1. **Leakage equation provenance** (B4): find the paper or HotSpot documentation behind the
-   exponential model, or describe it only as "HotSpot's built-in model".
-2. **[background] entries** (Ljung, Moore, Antoulas, SuperLU): verify each against the real
-   publication, or drop the ones the report does not need.
-3. **Abstract-only numbers** in Part A: check against the papers before quoting.
-4. **IC-ThermBench**: author list and version differences (see B5).
-5. **T1, S2 and the T3 fitting recipe** have no outside source; present them as our own
-   constructions.
-6. **Untimed pieces** in B9: the S0 kernel run and the fit times for S1, S2, T1, T2 and T3.
