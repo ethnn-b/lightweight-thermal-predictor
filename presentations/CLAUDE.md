@@ -98,7 +98,8 @@ numbers everywhere.
 ## Building and checking
 
 - MiKTeX's `pdflatex.exe` on this machine is a 0-byte file and does not run. Use LuaLaTeX:
-  `/c/Users/ethan/AppData/Local/Programs/MiKTeX/miktex/bin/x64/lualatex.exe -interaction=nonstopmode presentation.tex`
+  `lualatex -interaction=nonstopmode presentation.tex` (MiKTeX's `lualatex.exe`; give its full path
+  if it is not on the PATH)
   Run it twice (for the outline). Run it from this folder: figures are found through
   `\graphicspath{{../experiments/}}`.
 - After every change, check `presentation.log` for `^!` errors and `Overfull` boxes, and render the

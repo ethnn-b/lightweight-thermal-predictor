@@ -82,7 +82,7 @@ def _run(cmd, cwd, meta):
     t0 = time.perf_counter()
     res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
     meta["wall_s"] = time.perf_counter() - t0
-    meta["cmd"] = " ".join(cmd)
+    meta["cmd"] = " ".join(cmd).replace(str(Path.home()), "~")   # no user name in the record
     (Path(cwd) / "meta.json").write_text(json.dumps(meta, indent=1))
     if res.returncode != 0:
         raise RuntimeError(f"HotSpot failed in {cwd}:\n{res.stdout[-2000:]}\n{res.stderr[-2000:]}")

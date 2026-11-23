@@ -7,7 +7,7 @@ What was done so far, how to repeat it, and where everything is.
 | Item | Value |
 |---|---|
 | OS | Windows 11 Home |
-| Linux layer | WSL2, Ubuntu (user `ethan`) |
+| Linux layer | WSL2, Ubuntu (a regular user account) |
 | Packages installed in Ubuntu | `build-essential` (gcc 15.2, make 4.4), `python3`, `python3-pip`, `rsync`, `python3-pandas`, `python3-matplotlib` |
 
 WSL was installed from an administrator PowerShell with `wsl --install -d Ubuntu`.
@@ -17,7 +17,7 @@ WSL was installed from an administrator PowerShell with `wsl --install -d Ubuntu
 | What | Location |
 |---|---|
 | HotSpot source and built binary (Linux side, used for runs) | `~/projects/HotSpot` inside Ubuntu |
-| Same files seen from Windows | `\\wsl$\Ubuntu\home\ethan\projects\HotSpot` |
+| Same files seen from Windows | `\\wsl$\Ubuntu\home\<user>\projects\HotSpot` |
 | Original HotSpot download (untouched) | `HotSpot/` in this folder |
 | Analysis scripts | `setup/example1/` (and a copy in `~/projects/HotSpot/analysis`) |
 | Copy of example1 inputs and outputs | `setup/example1/results/` |
@@ -83,7 +83,7 @@ python3 ../../analysis/analyze_example1.py outputs
 results into `setup/example1/results/`). From PowerShell:
 
 ```powershell
-wsl -d Ubuntu -- bash -c "sed 's/\r$//' '/mnt/c/Users/ethan/projects/Lightweight Thermal Predictor/setup/example1/run_example1.sh' > /tmp/r.sh && bash /tmp/r.sh"
+wsl -d Ubuntu -- bash -c "cd <path-to-repo> && bash setup/example1/run_example1.sh"
 ```
 
 Files produced (temperatures converted to °C):

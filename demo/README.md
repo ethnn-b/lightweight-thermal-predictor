@@ -5,7 +5,7 @@
 Inside WSL. Pick the style and seed first; `N` is the floorplan's name, `demo_s<style>_<seed>`.
 
 ```bash
-cd "/mnt/c/IITH Downloads/acads/comp architecture/Project/lightweight-thermal-predictor"
+cd ~/lightweight-thermal-predictor        # the repository root (wherever you cloned it)
 export PYTHONPATH=$PWD OPENBLAS_NUM_THREADS=1
 HS=~/projects/HotSpot-ltp/hotspot
 N=demo_s2_2026; D=demo/output/$N

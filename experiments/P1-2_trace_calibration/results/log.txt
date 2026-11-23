@@ -1,12 +1,12 @@
-/mnt/c/Users/ethan/projects/Lightweight Thermal Predictor/src/ltp/models.py:315: RuntimeWarning: overflow encountered in matmul
+src/ltp/models.py:315: RuntimeWarning: overflow encountered in matmul
   x = sum(self.A[l] @ xh[l] for l in range(na)) + sum(self.B[l] @ ph[l] for l in range(nb))
-/mnt/c/Users/ethan/projects/Lightweight Thermal Predictor/src/ltp/models.py:315: RuntimeWarning: invalid value encountered in matmul
+src/ltp/models.py:315: RuntimeWarning: invalid value encountered in matmul
   x = sum(self.A[l] @ xh[l] for l in range(na)) + sum(self.B[l] @ ph[l] for l in range(nb))
 /usr/lib/python3/dist-packages/numpy/_core/_methods.py:134: RuntimeWarning: overflow encountered in reduce
   ret = umr_sum(arr, axis, dtype, out, keepdims, where=where)
-/mnt/c/Users/ethan/projects/Lightweight Thermal Predictor/src/ltp/models.py:315: RuntimeWarning: overflow encountered in add
+src/ltp/models.py:315: RuntimeWarning: overflow encountered in add
   x = sum(self.A[l] @ xh[l] for l in range(na)) + sum(self.B[l] @ ph[l] for l in range(nb))
-/mnt/c/Users/ethan/projects/Lightweight Thermal Predictor/src/ltp/models.py:315: RuntimeWarning: invalid value encountered in add
+src/ltp/models.py:315: RuntimeWarning: invalid value encountered in add
   x = sum(self.A[l] @ xh[l] for l in range(na)) + sum(self.B[l] @ ph[l] for l in range(nb))
 s1_fp001 done
 s2_fp004 done

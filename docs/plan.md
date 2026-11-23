@@ -695,4 +695,4 @@ Where the work differs from this plan, and why:
 | T4 | balanced truncation of HotSpot's matrices | modal truncation → balanced truncation → fast-part filter | without the filter the error stalled at 3 K |
 | P6-1 | C stepper on HotSpot's library interface | HotSpot's own transient driven through pipes | simpler, same binary, verified identical |
 | P6-2 | DVFS and/or migration | DVFS only, two limits per floorplan | migration left as a next step |
-| Timing | one machine, `ltp bench` | all on Ethan's laptop (WSL, 20 threads); some runs shared the machine with HotSpot jobs (noted in the READMEs) | final numbers should be re-measured on an idle machine |
+| Timing | one machine, `ltp bench` | all on one machine (WSL, 20 threads); some runs shared the machine with HotSpot jobs (noted in the READMEs) | final numbers should be re-measured on an idle machine |

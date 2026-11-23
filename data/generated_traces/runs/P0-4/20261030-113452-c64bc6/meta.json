@@ -8,5 +8,5 @@
  "config": "base_grid64.config",
  "git": "163688f",
  "wall_s": 2.402354129999935,
- "cmd": "/home/ethan/projects/HotSpot-ltp/hotspot -c hs.config -f fp_001_layer_0.flp -p power.ptrace -model_type grid -grid_layer_file fp_001.lcf -grid_rows 64 -grid_cols 64 -sampling_intvl 0.001 -o out.ttrace"
+ "cmd": "~/projects/HotSpot-ltp/hotspot -c hs.config -f fp_001_layer_0.flp -p power.ptrace -model_type grid -grid_layer_file fp_001.lcf -grid_rows 64 -grid_cols 64 -sampling_intvl 0.001 -o out.ttrace"
 }
